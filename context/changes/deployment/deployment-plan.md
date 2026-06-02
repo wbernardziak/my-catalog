@@ -1,10 +1,22 @@
 # First Cloudflare Workers Deployment Plan
 
+## Status
+
+**Done.** First production deployment to Cloudflare Workers completed on June 1, 2026.
+
+- Production URL: `https://my-catalog.wojciechbernardziak.workers.dev`
+- Worker name: `my-catalog`
+- Cloudflare Worker version ID: `6171444e-2787-4ecd-a785-dd7169852608`
+- Production secrets uploaded through Wrangler: `SUPABASE_URL`, `SUPABASE_KEY`
+- Local verification completed: `npm run lint`, `npm run build`
+- Smoke checks completed: `/`, `/auth/signin`, unauthenticated `/dashboard` redirect, authenticated `/dashboard`
+- Logs check completed: `npx wrangler tail my-catalog` connected successfully
+
 ## Summary
 
 - Target platform: **Cloudflare Workers SSR**, not Cloudflare Pages. The current `@astrojs/cloudflare` v13 for Astro 6 supports Workers, and the Astro documentation indicates that Pages support has been removed from this adapter line: https://docs.astro.build/en/guides/integrations-guide/cloudflare/.
-- Selected mode: **deployment plan only for now**. We are not doing a smoke deployment without secrets; the full deployment is blocked until production Supabase secrets are prepared.
-- Local `npm run build` already passes. The build reveals automatic Cloudflare bindings: `SESSION` for KV and `IMAGES` for Cloudflare Images; the adapter/Wrangler can provision them automatically during deployment.
+- Selected mode: **full deployment with Supabase secrets**. The deployment has been completed with production Supabase configuration stored as Cloudflare Worker secrets.
+- Local `npm run build` passes. The build reveals automatic Cloudflare bindings: `SESSION` for KV and `IMAGES` for Cloudflare Images; the adapter/Wrangler provisioned them during deployment.
 
 ## Key Changes
 
@@ -16,24 +28,24 @@
 
 ## Deployment Procedure
 
-1. Log in to Wrangler locally: `npx wrangler login`, then verify the account: `npx wrangler whoami`.
-2. Update the `wrangler.jsonc` name to `my-catalog`.
-3. Set the production Cloudflare Worker secrets:
+1. [x] Log in to Wrangler locally: `npx wrangler login`, then verify the account: `npx wrangler whoami`.
+2. [x] Update the `wrangler.jsonc` name to `my-catalog`.
+3. [x] Set the production Cloudflare Worker secrets:
    - `npx wrangler secret put SUPABASE_URL`
    - `npx wrangler secret put SUPABASE_KEY`
-4. Run the local quality gate: `npm run lint` and `npm run build`.
-5. Deploy manually from the local repository directory: `npx wrangler deploy`.
-6. Record the returned Worker URL as the project's first production URL.
-7. After deployment, run logs for observation only: `npx wrangler tail my-catalog`.
+4. [x] Run the local quality gate: `npm run lint` and `npm run build`.
+5. [x] Deploy manually from the local repository directory: `npx wrangler deploy`.
+6. [x] Record the returned Worker URL as the project's first production URL.
+7. [x] After deployment, run logs for observation only: `npx wrangler tail my-catalog`.
 
 ## Test Plan
 
-- Build gate: `npm run lint` and `npm run build` must pass without errors.
-- Runtime smoke: open the Worker URL and confirm that the home page renders without a 500.
-- Auth smoke: go to `/auth/signin`, sign in with a confirmed Supabase user, and check the post-login redirect.
-- Protected route: visit `/dashboard` without a session and confirm the redirect to `/auth/signin`; after signing in, the dashboard should render.
-- Logs: during smoke tests, observe `npx wrangler tail my-catalog`; there should be no runtime exceptions related to Supabase, cookies, KV session, or assets.
-- Rollback readiness: after deployment, note the Worker version from the Wrangler output; code rollback is done through `wrangler rollback`, but it does not roll back Supabase changes.
+- [x] Build gate: `npm run lint` and `npm run build` must pass without errors.
+- [x] Runtime smoke: open the Worker URL and confirm that the home page renders without a 500.
+- [x] Auth smoke: go to `/auth/signin`, sign in with a confirmed Supabase user, and check the post-login redirect.
+- [x] Protected route: visit `/dashboard` without a session and confirm the redirect to `/auth/signin`; after signing in, the dashboard should render.
+- [x] Logs: during smoke tests, observe `npx wrangler tail my-catalog`; there should be no runtime exceptions related to Supabase, cookies, KV session, or assets.
+- [x] Rollback readiness: after deployment, note the Worker version from the Wrangler output; code rollback is done through `wrangler rollback`, but it does not roll back Supabase changes.
 
 ## Assumptions
 

@@ -376,27 +376,27 @@ No rollback coupling; this is additive.
 
 #### Automated
 
-- [x] 1.1 Dependencies install cleanly: `npm install`
-- [x] 1.2 Type/astro check passes: `npm run build`
-- [x] 1.3 Lint passes: `npm run lint`
-- [x] 1.4 `npm test` runs and exits 0
+- [x] 1.1 Dependencies install cleanly: `npm install` — 11020b3
+- [x] 1.2 Type/astro check passes: `npm run build` — 11020b3
+- [x] 1.3 Lint passes: `npm run lint` — 11020b3
+- [x] 1.4 `npm test` runs and exits 0 — 11020b3
 
 #### Manual
 
-- [x] 1.5 Unconfigured OpenRouter key appears in `missingConfigs`; app still builds
-- [x] 1.6 `.env.example` documents `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`
+- [x] 1.5 Unconfigured OpenRouter key appears in `missingConfigs`; app still builds — 11020b3
+- [x] 1.6 `.env.example` documents `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` — 11020b3
 
 ### Phase 2: Contract Types & Guarded Service
 
 #### Automated
 
-- [ ] 2.1 Type check / build passes: `npm run build`
-- [ ] 2.2 Lint passes: `npm run lint`
+- [x] 2.1 Type check / build passes: `npm run build`
+- [x] 2.2 Lint passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.3 Review confirms catalog-only filter runs after parsing; no out-of-catalog `gameId` returned
-- [ ] 2.4 No Node-only imports introduced (Workers compatibility)
+- [x] 2.3 Review confirms catalog-only filter runs after parsing; no out-of-catalog `gameId` returned
+- [x] 2.4 No Node-only imports introduced (Workers compatibility)
 
 ### Phase 3: Unit Tests & Verification
 

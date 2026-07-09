@@ -390,24 +390,24 @@ No rollback coupling; this is additive.
 
 #### Automated
 
-- [x] 2.1 Type check / build passes: `npm run build`
-- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.1 Type check / build passes: `npm run build` — aa67e2e
+- [x] 2.2 Lint passes: `npm run lint` — aa67e2e
 
 #### Manual
 
-- [x] 2.3 Review confirms catalog-only filter runs after parsing; no out-of-catalog `gameId` returned
-- [x] 2.4 No Node-only imports introduced (Workers compatibility)
+- [x] 2.3 Review confirms catalog-only filter runs after parsing; no out-of-catalog `gameId` returned — aa67e2e
+- [x] 2.4 No Node-only imports introduced (Workers compatibility) — aa67e2e
 
 ### Phase 3: Unit Tests & Verification
 
 #### Automated
 
-- [ ] 3.1 All unit tests pass: `npm test`
-- [ ] 3.2 Lint passes: `npm run lint`
-- [ ] 3.3 Build passes: `npm run build`
-- [ ] 3.4 CI workflow includes the test step
+- [x] 3.1 All unit tests pass: `npm test`
+- [x] 3.2 Lint passes: `npm run lint`
+- [x] 3.3 Build passes: `npm run build`
+- [x] 3.4 CI workflow includes the test step
 
 #### Manual
 
-- [ ] 3.5 Tests assert on specific `reason` values, not just `ok:false`
+- [x] 3.5 Tests assert on specific `reason` values, not just `ok:false`
 - [ ] 3.6 (Optional) Live smoke: real key returns ranked results within 5s target

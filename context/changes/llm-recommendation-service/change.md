@@ -1,7 +1,7 @@
 ---
 change_id: llm-recommendation-service
 title: LLM recommendation service integration
-status: implementing
+status: implemented
 created: 2026-07-09
 updated: 2026-07-09
 roadmap_ref: F-01

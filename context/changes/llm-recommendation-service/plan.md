@@ -402,12 +402,12 @@ No rollback coupling; this is additive.
 
 #### Automated
 
-- [x] 3.1 All unit tests pass: `npm test`
-- [x] 3.2 Lint passes: `npm run lint`
-- [x] 3.3 Build passes: `npm run build`
-- [x] 3.4 CI workflow includes the test step
+- [x] 3.1 All unit tests pass: `npm test` — 04f826a
+- [x] 3.2 Lint passes: `npm run lint` — 04f826a
+- [x] 3.3 Build passes: `npm run build` — 04f826a
+- [x] 3.4 CI workflow includes the test step — 04f826a
 
 #### Manual
 
-- [x] 3.5 Tests assert on specific `reason` values, not just `ok:false`
+- [x] 3.5 Tests assert on specific `reason` values, not just `ok:false` — 04f826a
 - [ ] 3.6 (Optional) Live smoke: real key returns ranked results within 5s target

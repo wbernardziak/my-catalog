@@ -367,6 +367,16 @@ No rollback coupling; this is additive.
 - Graceful-degradation pattern: `src/lib/supabase.ts:5-8`, `src/lib/config-status.ts:11-21`
 - PRD guardrails: `context/foundation/prd.md` §Non-Functional Requirements, US-01 acceptance criteria
 
+## Implementation Deviations
+
+- **Phase 1 test harness (`vitest.config.ts`)**: the plan mandated `getViteConfig` from
+  `astro/config` plus `vi.mock("astro:env/server", …)` per test. In practice the Astro
+  Cloudflare adapter's Vite plugin rejects a Vitest config at startup, so the implementation
+  instead uses a plain `defineConfig` that aliases `astro:env/server` to a `process.env`-backed
+  stub (`src/test/astro-env-server.stub.ts`); tests toggle the key via `process.env` +
+  `vi.resetModules()` and a fresh dynamic import. Same guarantee (per-test key control), adapted
+  to the harness that actually works on this stack. Reason is recorded in the config file comment.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step completes.

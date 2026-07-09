@@ -129,9 +129,11 @@ describe("recommend", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("returns timeout when fetch aborts", async () => {
+  // AbortSignal.timeout(8000) throws a DOMException named "TimeoutError" in
+  // production; a manual abort throws "AbortError". Both must map to `timeout`.
+  it.each(["TimeoutError", "AbortError"])("returns timeout when fetch rejects with %s", async (errName) => {
     const abortErr = new Error("The operation was aborted");
-    abortErr.name = "AbortError";
+    abortErr.name = errName;
     stubFetch(() => Promise.reject(abortErr));
     const recommend = await loadRecommend();
 

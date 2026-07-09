@@ -29,7 +29,7 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 
 | ID   | Change ID                  | Outcome (user can …)                                         | Prerequisites | PRD refs                | Status   |
 | ---- | -------------------------- | ----------------------------------------------------------- | ------------- | ----------------------- | -------- |
-| F-01 | llm-recommendation-service | (foundation) LLM recommendation service wired with guardrails | —             | FR-007, FR-008, NFR     | ready    |
+| F-01 | llm-recommendation-service | (foundation) LLM recommendation service wired with guardrails | —             | FR-007, FR-008, NFR     | done     |
 | S-01 | add-and-view-games         | add a board game with details and see it in the shared catalog | —             | FR-001, FR-002, FR-003  | ready    |
 | S-02 | edit-and-archive-games     | edit a game and mark it deleted without losing history       | S-01          | FR-002                  | proposed |
 | S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | proposed |
@@ -72,7 +72,7 @@ Foundations below assume these are present and do NOT recreate them.
 - **Unknowns:**
   - Which LLM provider/model? (tech-stack declares `has_ai: true` but no SDK is installed) — Owner: user. Blocks: no (provider/library choice is `/10x-plan`'s job; obtaining an API key is self-serve).
 - **Risk:** Sequenced early and in parallel so the differentiator's integration risk is retired before S-05; kept thin (a guarded contract, not a recommendation UX) so it does not become "build the whole AI layer" ahead of a user-facing slice.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -178,3 +178,5 @@ Foundations below assume these are present and do NOT recreate them.
 ## Done
 
 (Empty at first generation. `/10x-archive` adds an entry here — and flips that slice's `Status` to `done` — when a change whose `Change ID` matches a roadmap slice is archived.)
+
+- **F-01: (foundation) a server-side LLM recommendation service is wired — provider client + secret/key management via the existing Cloudflare env, plus the prompt/response contract that constrains suggestions to eligible catalog games and enforces the NFR guardrails (minimum household data in the prompt, clear failure state on invalid/unavailable response, results within 5s).** — Zarchiwizowano 2026-07-09 → `context/archive/2026-07-09-llm-recommendation-service/`. Lekcja: —.

@@ -25,7 +25,8 @@ export interface RecommendationCriteria {
  * `minPlayers`/`maxPlayers` are a range because the PRD Business Logic matches on
  * player count against a range — do not collapse to a single `playerCount`.
  *
- * This shape is provisional: S-01/S-04 own mapping their rows into it.
+ * S-01 owns the catalog→contract mapping via `mapRowToCandidateGame` below;
+ * `played`/`preference` stay undefined until S-04 lands the per-member tables.
  */
 export interface CandidateGame {
   id: string;
@@ -36,6 +37,60 @@ export interface CandidateGame {
   averagePlayMinutes: number;
   played?: boolean;
   preference?: "liked" | "disliked";
+}
+
+/**
+ * Catalog domain (slice S-01).
+ *
+ * `GameRow` is the stored shape (snake_case, matching the `games` table),
+ * `NewGameInput` is the validated create payload (camelCase), and
+ * `mapRowToCandidateGame` is the single place a stored row becomes the
+ * downstream `CandidateGame` contract the recommendation service (S-05) consumes.
+ */
+
+/** A game's loan state; settable at add time, no toggling flow until S-04. */
+export type LoanStatus = "available" | "loaned";
+
+/** A row of `public.games` exactly as stored (snake_case). */
+export interface GameRow {
+  id: string;
+  title: string;
+  authors: string[];
+  genre: string;
+  min_players: number;
+  max_players: number;
+  avg_play_minutes: number;
+  loan_status: LoanStatus;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Validated create payload for a new game (camelCase). */
+export interface NewGameInput {
+  title: string;
+  authors: string[];
+  genre: string;
+  minPlayers: number;
+  maxPlayers: number;
+  avgPlayMinutes: number;
+  loanStatus: LoanStatus;
+}
+
+/**
+ * Map a stored catalog row into the downstream `CandidateGame` contract.
+ * `played`/`preference` are intentionally left undefined — those are owned by
+ * S-04 and have no source column yet.
+ */
+export function mapRowToCandidateGame(row: GameRow): CandidateGame {
+  return {
+    id: row.id,
+    title: row.title,
+    genre: row.genre,
+    minPlayers: row.min_players,
+    maxPlayers: row.max_players,
+    averagePlayMinutes: row.avg_play_minutes,
+  };
 }
 
 /**

@@ -366,28 +366,28 @@ own migrations (S-02 adds `deleted_at`; S-04 adds per-member played/preference t
 
 #### Automated
 
-- [x] 1.1 Type-check/lint passes: `npm run lint`
-- [x] 1.2 Migration applies cleanly: `npx supabase db reset`
-- [x] 1.3 Build passes: `npm run build`
+- [x] 1.1 Type-check/lint passes: `npm run lint` — d59229c
+- [x] 1.2 Migration applies cleanly: `npx supabase db reset` — d59229c
+- [x] 1.3 Build passes: `npm run build` — d59229c
 
 #### Manual
 
-- [x] 1.4 `games` table exists with RLS enabled and four `authenticated` policies
-- [x] 1.5 Authenticated insert succeeds; `anon` select returns nothing
+- [x] 1.4 `games` table exists with RLS enabled and four `authenticated` policies — d59229c
+- [x] 1.5 Authenticated insert succeeds; `anon` select returns nothing — d59229c
 
 ### Phase 2: Add-game API route
 
 #### Automated
 
-- [ ] 2.1 Type-check/lint passes: `npm run lint`
-- [ ] 2.2 Build passes: `npm run build`
-- [ ] 2.3 zod schema unit tests pass: `npm test`
+- [x] 2.1 Type-check/lint passes: `npm run lint`
+- [x] 2.2 Build passes: `npm run build`
+- [x] 2.3 zod schema unit tests pass: `npm test`
 
 #### Manual
 
-- [ ] 2.4 Valid POST creates a row and redirects to `/catalog`
-- [ ] 2.5 Invalid POST (`maxPlayers < minPlayers`) redirects with `?error=` and creates nothing
-- [ ] 2.6 Logged-out POST redirects to `/auth/signin`
+- [x] 2.4 Valid POST creates a row and redirects to `/catalog`
+- [x] 2.5 Invalid POST (`maxPlayers < minPlayers`) redirects with `?error=` and creates nothing
+- [x] 2.6 Logged-out POST redirects to `/auth/signin`
 
 ### Phase 3: Catalog page & add-game form
 

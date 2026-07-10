@@ -1,7 +1,7 @@
 ---
 change_id: add-and-view-games
 title: Add and view board games
-status: implementing
+status: implemented
 created: 2026-07-09
 updated: 2026-07-10
 roadmap_ref: S-01

@@ -393,14 +393,14 @@ own migrations (S-02 adds `deleted_at`; S-04 adds per-member played/preference t
 
 #### Automated
 
-- [x] 3.1 Type-check/lint passes: `npm run lint`
-- [x] 3.2 Build passes: `npm run build`
+- [x] 3.1 Type-check/lint passes: `npm run lint` — eb97c96
+- [x] 3.2 Build passes: `npm run build` — eb97c96
 
 #### Manual
 
-- [x] 3.3 Logged-out `/catalog` redirects to `/auth/signin`
-- [x] 3.4 Logged-in `/catalog` renders (empty-state when no games)
-- [x] 3.5 Valid form submit returns to `/catalog` with the new game visible
-- [x] 3.6 Invalid submit blocked client-side; bypassed invalid POST shows server error banner
-- [x] 3.7 Second account sees the same shared catalog
-- [x] 3.8 Page is responsive on a mobile viewport
+- [x] 3.3 Logged-out `/catalog` redirects to `/auth/signin` — eb97c96
+- [x] 3.4 Logged-in `/catalog` renders (empty-state when no games) — eb97c96
+- [x] 3.5 Valid form submit returns to `/catalog` with the new game visible — eb97c96
+- [x] 3.6 Invalid submit blocked client-side; bypassed invalid POST shows server error banner — eb97c96
+- [x] 3.7 Second account sees the same shared catalog — eb97c96
+- [x] 3.8 Page is responsive on a mobile viewport — eb97c96

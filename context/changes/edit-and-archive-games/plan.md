@@ -487,32 +487,32 @@ leaves `loan_status` editable via the shared form but adds no per-member state.
 
 #### Automated
 
-- [x] 1.1 Type-check/lint passes: `npm run lint`
-- [x] 1.2 Migration applies cleanly: `npx supabase db reset`
-- [x] 1.3 Build passes: `npm run build`
-- [x] 1.4 Existing unit tests still pass: `npm test`
+- [x] 1.1 Type-check/lint passes: `npm run lint` — 269d7dc
+- [x] 1.2 Migration applies cleanly: `npx supabase db reset` — 269d7dc
+- [x] 1.3 Build passes: `npm run build` — 269d7dc
+- [x] 1.4 Existing unit tests still pass: `npm test` — 269d7dc
 
 #### Manual
 
-- [x] 1.5 `games.deleted_at` exists (nullable, null for existing rows)
-- [x] 1.6 A row with `deleted_at` set is excluded from `listGames`
+- [x] 1.5 `games.deleted_at` exists (nullable, null for existing rows) — 269d7dc
+- [x] 1.6 A row with `deleted_at` set is excluded from `listGames` — 269d7dc
 
 ### Phase 2: Per-id update & soft-delete endpoints
 
 #### Automated
 
-- [ ] 2.1 Type-check/lint passes: `npm run lint`
-- [ ] 2.2 Build passes: `npm run build`
-- [ ] 2.3 Unit tests pass, including the shared not-found message constant (handler branch covered manually in 2.6/2.8): `npm test`
+- [x] 2.1 Type-check/lint passes: `npm run lint`
+- [x] 2.2 Build passes: `npm run build`
+- [x] 2.3 Unit tests pass, including the shared not-found message constant (handler branch covered manually in 2.6/2.8): `npm test`
 
 #### Manual
 
-- [ ] 2.4 Valid POST to `/api/games/<id>` updates the row and redirects to `/catalog`
-- [ ] 2.5 Invalid POST (`max < min`) redirects with `?error=` and changes nothing
-- [ ] 2.6 POST to an unknown id redirects with `?error=` (not 500 / not 404 page)
-- [ ] 2.7 POST to `/api/games/<id>/delete` soft-deletes and redirects to `/catalog`
-- [ ] 2.8 Repeat delete of the same id redirects with `?error=` (already deleted)
-- [ ] 2.9 Both endpoints while logged out redirect to `/auth/signin`
+- [x] 2.4 Valid POST to `/api/games/<id>` updates the row and redirects to `/catalog`
+- [x] 2.5 Invalid POST (`max < min`) redirects with `?error=` and changes nothing
+- [x] 2.6 POST to an unknown id redirects with `?error=` (not 500 / not 404 page)
+- [x] 2.7 POST to `/api/games/<id>/delete` soft-deletes and redirects to `/catalog`
+- [x] 2.8 Repeat delete of the same id redirects with `?error=` (already deleted)
+- [x] 2.9 Both endpoints while logged out redirect to `/auth/signin`
 
 ### Phase 3: Inline edit + delete UI
 

@@ -9,6 +9,13 @@ import type { GameRow, NewGameInput } from "@/types";
 type SupabaseClient = NonNullable<ReturnType<typeof createClient>>;
 
 /**
+ * User-facing message for an update/soft-delete that matched no live row (unknown
+ * or already-deleted id, including the concurrent-delete race). Shared by both
+ * per-id endpoints so the copy never drifts.
+ */
+export const GAME_NOT_FOUND_MESSAGE = "That game no longer exists.";
+
+/**
  * List every live game in the shared catalog, newest first. Soft-deleted rows
  * (`deleted_at` set) are excluded. Throws on DB error.
  */

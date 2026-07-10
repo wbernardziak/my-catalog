@@ -30,9 +30,21 @@ export const newGameSchema = z
     title: z.string().trim().min(1, "Title is required"),
     authors: z.array(z.string()),
     genre: z.string().trim().min(1, "Genre is required"),
-    minPlayers: z.coerce.number().int().min(1, "Minimum players must be at least 1"),
-    maxPlayers: z.coerce.number().int().min(1, "Maximum players must be at least 1"),
-    avgPlayMinutes: z.coerce.number().int().positive("Average play time must be greater than 0"),
+    minPlayers: z.coerce
+      .number()
+      .int()
+      .min(1, "Minimum players must be at least 1")
+      .max(99, "Minimum players is unrealistically large"),
+    maxPlayers: z.coerce
+      .number()
+      .int()
+      .min(1, "Maximum players must be at least 1")
+      .max(99, "Maximum players is unrealistically large"),
+    avgPlayMinutes: z.coerce
+      .number()
+      .int()
+      .positive("Average play time must be greater than 0")
+      .max(6000, "Average play time is unrealistically large"),
     loanStatus: z.enum(["available", "loaned"]).default("available"),
   })
   .refine((value) => value.maxPlayers >= value.minPlayers, {

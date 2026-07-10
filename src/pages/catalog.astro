@@ -10,9 +10,14 @@ const error = Astro.url.searchParams.get("error");
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 let games: GameRow[] = [];
 let configured = true;
+let loadError: string | null = null;
 
 if (supabase) {
-  games = await listGames(supabase);
+  try {
+    games = await listGames(supabase);
+  } catch {
+    loadError = "Could not load the catalog. Please try again.";
+  }
 } else {
   configured = false;
 }
@@ -37,7 +42,9 @@ if (supabase) {
         ) : (
           <div class="grid gap-8 md:grid-cols-[1fr_360px]">
             <section aria-label="Games">
-              {games.length === 0 ? (
+              {loadError ? (
+                <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
+              ) : games.length === 0 ? (
                 <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
                   No games yet. Add your first board game using the form.
                 </div>

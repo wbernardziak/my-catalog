@@ -1,9 +1,10 @@
 ---
 change_id: add-and-view-games
 title: Add and view board games
-status: impl_reviewed
+status: archived
 created: 2026-07-09
 updated: 2026-07-10
+archived_at: 2026-07-10T16:54:50Z
 roadmap_ref: S-01
 ---
 

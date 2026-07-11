@@ -21,8 +21,7 @@ let loadError: string | null = null;
 
 if (supabase) {
   try {
-    games = await listGames(supabase, filters);
-    genres = await listGenres(supabase);
+    [games, genres] = await Promise.all([listGames(supabase, filters), listGenres(supabase)]);
   } catch {
     loadError = "Could not load the catalog. Please try again.";
   }

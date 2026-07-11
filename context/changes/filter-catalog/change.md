@@ -1,7 +1,7 @@
 ---
 change_id: filter-catalog
 title: Filter the board-game catalog
-status: implementing
+status: implemented
 created: 2026-07-11
 updated: 2026-07-11
 roadmap_ref: S-03

@@ -322,17 +322,17 @@ No migration. All filtered columns (`genre`, `min_players`, `max_players`,
 
 #### Automated
 
-- [x] 2.1 Type-checking / build passes: `npm run build`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Formatting clean: `npm run format`
-- [x] 2.4 Existing tests still pass: `npm test`
+- [x] 2.1 Type-checking / build passes: `npm run build` — 98e21ef
+- [x] 2.2 Linting passes: `npm run lint` — 98e21ef
+- [x] 2.3 Formatting clean: `npm run format` — 98e21ef
+- [x] 2.4 Existing tests still pass: `npm test` — 98e21ef
 
 #### Manual
 
-- [ ] 2.5 Each filter alone narrows the list correctly
-- [ ] 2.6 Combining filters applies AND semantics
-- [ ] 2.7 Genre dropdown lists exactly the live distinct genres
-- [ ] 2.8 Filter values persist in form + URL; Clear returns to full catalog
-- [ ] 2.9 Over-filtered state shows the distinct "no matches" message + Clear link
-- [ ] 2.10 Junk URL params render without error and are dropped
-- [ ] 2.11 Filter form is usable/responsive on a mobile viewport
+- [x] 2.5 Each filter alone narrows the list correctly — 98e21ef
+- [x] 2.6 Combining filters applies AND semantics — 98e21ef
+- [x] 2.7 Genre dropdown lists exactly the live distinct genres — 98e21ef
+- [x] 2.8 Filter values persist in form + URL; Clear returns to full catalog — 98e21ef
+- [x] 2.9 Over-filtered state shows the distinct "no matches" message + Clear link — 98e21ef
+- [x] 2.10 Junk URL params render without error and are dropped — 98e21ef
+- [x] 2.11 Filter form is usable/responsive on a mobile viewport — 98e21ef

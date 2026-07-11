@@ -2,20 +2,26 @@
 import Layout from "@/layouts/Layout.astro";
 import GameForm from "@/components/catalog/GameForm";
 import GameCard from "@/components/catalog/GameCard";
+import CatalogFilters from "@/components/catalog/CatalogFilters.astro";
 import { createClient } from "@/lib/supabase";
-import { listGames } from "@/lib/services/games";
+import { listGames, listGenres } from "@/lib/services/games";
+import { parseGameFilters } from "@/lib/services/gameFilters";
 import type { GameRow } from "@/types";
 
 const error = Astro.url.searchParams.get("error");
 
+const filters = parseGameFilters(Astro.url.searchParams);
+const hasActiveFilters = Object.keys(filters).length > 0;
+
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 let games: GameRow[] = [];
+let genres: string[] = [];
 let configured = true;
 let loadError: string | null = null;
 
 if (supabase) {
   try {
-    games = await listGames(supabase);
+    [games, genres] = await Promise.all([listGames(supabase, filters), listGenres(supabase)]);
   } catch {
     loadError = "Could not load the catalog. Please try again.";
   }
@@ -43,12 +49,22 @@ if (supabase) {
         ) : (
           <div class="grid gap-8 md:grid-cols-[1fr_360px]">
             <section aria-label="Games">
+              <CatalogFilters genres={genres} current={filters} />
               {loadError ? (
                 <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
               ) : games.length === 0 ? (
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
-                  No games yet. Add your first board game using the form.
-                </div>
+                hasActiveFilters ? (
+                  <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+                    No games match your filters.{" "}
+                    <a href="/catalog" class="text-purple-300 hover:underline">
+                      Clear filters
+                    </a>
+                  </div>
+                ) : (
+                  <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+                    No games yet. Add your first board game using the form.
+                  </div>
+                )
               ) : (
                 <ul class="space-y-3">
                   {games.map((game) => (

@@ -518,16 +518,16 @@ leaves `loan_status` editable via the shared form but adds no per-member state.
 
 #### Automated
 
-- [x] 3.1 Type-check/lint passes: `npm run lint` — a4046c7
-- [x] 3.2 Build passes: `npm run build` — a4046c7
-- [x] 3.3 Unit tests pass: `npm test` — a4046c7
+- [x] 3.1 Type-check/lint passes: `npm run lint` — 00eee94
+- [x] 3.2 Build passes: `npm run build` — 00eee94
+- [x] 3.3 Unit tests pass: `npm test` — 00eee94
 
 #### Manual
 
-- [x] 3.4 Each game renders as a card with Edit and Delete; identical look when not editing — a4046c7
-- [x] 3.5 Edit reveals a prefilled inline form; valid save returns to `/catalog` with the update visible — a4046c7
-- [x] 3.6 Invalid inline edit blocked client-side; bypassed invalid POST shows the server error banner — a4046c7
-- [x] 3.7 Cancel on the inline edit restores the display view with no change — a4046c7
-- [x] 3.8 Delete requires two-step confirm; Cancel aborts; Confirm soft-deletes and the game disappears — a4046c7
-- [x] 3.9 The add-game aside still creates games (S-01 regression) — a4046c7
-- [x] 3.10 Cards and inline forms are responsive on a mobile viewport — a4046c7
+- [x] 3.4 Each game renders as a card with Edit and Delete; identical look when not editing — 00eee94
+- [x] 3.5 Edit reveals a prefilled inline form; valid save returns to `/catalog` with the update visible — 00eee94
+- [x] 3.6 Invalid inline edit blocked client-side; bypassed invalid POST shows the server error banner — 00eee94
+- [x] 3.7 Cancel on the inline edit restores the display view with no change — 00eee94
+- [x] 3.8 Delete requires two-step confirm; Cancel aborts; Confirm soft-deletes and the game disappears — 00eee94
+- [x] 3.9 The add-game aside still creates games (S-01 regression) — 00eee94
+- [x] 3.10 Cards and inline forms are responsive on a mobile viewport — 00eee94

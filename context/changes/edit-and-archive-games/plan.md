@@ -501,33 +501,33 @@ leaves `loan_status` editable via the shared form but adds no per-member state.
 
 #### Automated
 
-- [x] 2.1 Type-check/lint passes: `npm run lint`
-- [x] 2.2 Build passes: `npm run build`
-- [x] 2.3 Unit tests pass, including the shared not-found message constant (handler branch covered manually in 2.6/2.8): `npm test`
+- [x] 2.1 Type-check/lint passes: `npm run lint` — 874cb90
+- [x] 2.2 Build passes: `npm run build` — 874cb90
+- [x] 2.3 Unit tests pass, including the shared not-found message constant (handler branch covered manually in 2.6/2.8): `npm test` — 874cb90
 
 #### Manual
 
-- [x] 2.4 Valid POST to `/api/games/<id>` updates the row and redirects to `/catalog`
-- [x] 2.5 Invalid POST (`max < min`) redirects with `?error=` and changes nothing
-- [x] 2.6 POST to an unknown id redirects with `?error=` (not 500 / not 404 page)
-- [x] 2.7 POST to `/api/games/<id>/delete` soft-deletes and redirects to `/catalog`
-- [x] 2.8 Repeat delete of the same id redirects with `?error=` (already deleted)
-- [x] 2.9 Both endpoints while logged out redirect to `/auth/signin`
+- [x] 2.4 Valid POST to `/api/games/<id>` updates the row and redirects to `/catalog` — 874cb90
+- [x] 2.5 Invalid POST (`max < min`) redirects with `?error=` and changes nothing — 874cb90
+- [x] 2.6 POST to an unknown id redirects with `?error=` (not 500 / not 404 page) — 874cb90
+- [x] 2.7 POST to `/api/games/<id>/delete` soft-deletes and redirects to `/catalog` — 874cb90
+- [x] 2.8 Repeat delete of the same id redirects with `?error=` (already deleted) — 874cb90
+- [x] 2.9 Both endpoints while logged out redirect to `/auth/signin` — 874cb90
 
 ### Phase 3: Inline edit + delete UI
 
 #### Automated
 
-- [ ] 3.1 Type-check/lint passes: `npm run lint`
-- [ ] 3.2 Build passes: `npm run build`
-- [ ] 3.3 Unit tests pass: `npm test`
+- [x] 3.1 Type-check/lint passes: `npm run lint` — a4046c7
+- [x] 3.2 Build passes: `npm run build` — a4046c7
+- [x] 3.3 Unit tests pass: `npm test` — a4046c7
 
 #### Manual
 
-- [ ] 3.4 Each game renders as a card with Edit and Delete; identical look when not editing
-- [ ] 3.5 Edit reveals a prefilled inline form; valid save returns to `/catalog` with the update visible
-- [ ] 3.6 Invalid inline edit blocked client-side; bypassed invalid POST shows the server error banner
-- [ ] 3.7 Cancel on the inline edit restores the display view with no change
-- [ ] 3.8 Delete requires two-step confirm; Cancel aborts; Confirm soft-deletes and the game disappears
-- [ ] 3.9 The add-game aside still creates games (S-01 regression)
-- [ ] 3.10 Cards and inline forms are responsive on a mobile viewport
+- [x] 3.4 Each game renders as a card with Edit and Delete; identical look when not editing — a4046c7
+- [x] 3.5 Edit reveals a prefilled inline form; valid save returns to `/catalog` with the update visible — a4046c7
+- [x] 3.6 Invalid inline edit blocked client-side; bypassed invalid POST shows the server error banner — a4046c7
+- [x] 3.7 Cancel on the inline edit restores the display view with no change — a4046c7
+- [x] 3.8 Delete requires two-step confirm; Cancel aborts; Confirm soft-deletes and the game disappears — a4046c7
+- [x] 3.9 The add-game aside still creates games (S-01 regression) — a4046c7
+- [x] 3.10 Cards and inline forms are responsive on a mobile viewport — a4046c7

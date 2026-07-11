@@ -1,9 +1,10 @@
 ---
 change_id: edit-and-archive-games
 title: Edit and archive board games
-status: impl_reviewed
+status: archived
 created: 2026-07-10
 updated: 2026-07-11
+archived_at: 2026-07-11T16:26:00Z
 roadmap_ref: S-02
 ---
 

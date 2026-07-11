@@ -32,7 +32,7 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 | F-01 | llm-recommendation-service | (foundation) LLM recommendation service wired with guardrails | —             | FR-007, FR-008, NFR     | done     |
 | S-01 | add-and-view-games         | add a board game with details and see it in the shared catalog | —             | FR-001, FR-002, FR-003  | done     |
 | S-02 | edit-and-archive-games     | edit a game and mark it deleted without losing history       | S-01          | FR-002                  | done |
-| S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | proposed |
+| S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | done |
 | S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike | S-01          | FR-003, FR-005          | proposed |
 | S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008   | proposed |
 | S-06 | preference-stats           | view preference statistics per household member              | S-04          | FR-006                  | proposed |
@@ -110,7 +110,7 @@ Foundations below assume these are present and do NOT recreate them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Reads the same catalog data as S-01 and can be built independently of edit/state slices; sequenced after S-01 only because it needs games to filter.
-- **Status:** proposed
+- **Status:** done
 
 ### S-04: Played status, loan, and personal preference
 
@@ -182,3 +182,4 @@ Foundations below assume these are present and do NOT recreate them.
 - **F-01: (foundation) a server-side LLM recommendation service is wired — provider client + secret/key management via the existing Cloudflare env, plus the prompt/response contract that constrains suggestions to eligible catalog games and enforces the NFR guardrails (minimum household data in the prompt, clear failure state on invalid/unavailable response, results within 5s).** — Zarchiwizowano 2026-07-09 → `context/archive/2026-07-09-llm-recommendation-service/`. Lekcja: —.
 - **S-01: a logged-in household member can add a board game with its details (title, authors, genre, player count, average play time, loan status) and immediately see it in the shared catalog list.** — Zarchiwizowano 2026-07-10 → `context/archive/2026-07-09-add-and-view-games/`. Lekcja: —.
 - **S-02: a household member can edit an existing game's details and mark a game as deleted, without removing it from stored history (soft delete).** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-10-edit-and-archive-games/`. Lekcja: —.
+- **S-03: a household member can filter the board-game catalog (e.g. by genre, player count, available time, played status, loan status) to quickly find matching titles.** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-11-filter-catalog/`. Lekcja: —.

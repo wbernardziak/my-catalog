@@ -15,3 +15,10 @@
 - **Problem**: Without it, reviewed work starts with no GitHub issues (progress invisible/untracked) and commits land on the default branch instead of an isolated branch.
 - **Rule**: After /10x-plan-review approves a plan, create a GitHub tracking issue plus one issue per phase (label enhancement) and create a dedicated feat/<change-id> branch before starting implementation.
 - **Applies**: plan-review, implement
+
+## Sync git and GitHub issues around /10x-archive
+
+- **Context**: Running /10x-archive on a change whose work lived on a feat/<change-id> branch with a GitHub tracking issue + per-phase issues.
+- **Problem**: Archiving without syncing leaves the tracker and local git out of step — the tracking/phase issues stay open, and you can be left sitting on a stale, already-merged feature branch.
+- **Rule**: When /10x-archive is triggered, first fetch the latest from the branch and close/update the change's GitHub tracking issue and per-phase issues (referencing the merged PR). After archiving, switch back to the main branch.
+- **Applies**: archive

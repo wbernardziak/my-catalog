@@ -1,5 +1,5 @@
 import type { createClient } from "@/lib/supabase";
-import type { GameRow, NewGameInput } from "@/types";
+import type { GameFilters, GameRow, NewGameInput } from "@/types";
 
 /**
  * Catalog persistence for slice S-01. Callers construct the Supabase client
@@ -16,21 +16,61 @@ type SupabaseClient = NonNullable<ReturnType<typeof createClient>>;
 export const GAME_NOT_FOUND_MESSAGE = "That game no longer exists.";
 
 /**
- * List every live game in the shared catalog, newest first. Soft-deleted rows
- * (`deleted_at` set) are excluded. Throws on DB error.
+ * List live games in the shared catalog, newest first. Soft-deleted rows
+ * (`deleted_at` set) are excluded. An optional `filters` narrows the result:
+ * each present field adds one constraint, and all present filters combine as AND
+ * (chained PostgREST predicates are AND by construction). Absent fields add no
+ * constraint, so callers passing nothing keep the original unfiltered listing.
+ *
+ * Matching semantics: `genre` and `loanStatus` are exact equality; `players`
+ * value N matches when `min_players ≤ N ≤ max_players` (a party of N fits the
+ * game); `maxMinutes` value X matches when `avg_play_minutes ≤ X`. Throws on DB
+ * error.
  */
-export async function listGames(supabase: SupabaseClient): Promise<GameRow[]> {
-  const result = await supabase
-    .from("games")
-    .select("*")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+export async function listGames(supabase: SupabaseClient, filters: GameFilters = {}): Promise<GameRow[]> {
+  let query = supabase.from("games").select("*").is("deleted_at", null);
+
+  if (filters.genre !== undefined) {
+    query = query.eq("genre", filters.genre);
+  }
+  if (filters.players !== undefined) {
+    query = query.lte("min_players", filters.players).gte("max_players", filters.players);
+  }
+  if (filters.maxMinutes !== undefined) {
+    query = query.lte("avg_play_minutes", filters.maxMinutes);
+  }
+  if (filters.loanStatus !== undefined) {
+    query = query.eq("loan_status", filters.loanStatus);
+  }
+
+  const result = await query.order("created_at", { ascending: false });
 
   if (result.error) {
     throw new Error(`Failed to list games: ${result.error.message}`);
   }
 
   return result.data as GameRow[];
+}
+
+/**
+ * Distinct genres present across live catalog rows, for the filter dropdown.
+ * Deduped by **exact stored value** (case-sensitive) so every returned option
+ * matches the case-sensitive `.eq("genre", …)` in `listGames` — a
+ * case-insensitive dedup would collapse "Strategy"/"strategy" into one option
+ * that hides the other casing's rows. Sorted case-insensitively for display
+ * only. Household-scale data makes the client-side distinct trivial. Throws on
+ * DB error, like `listGames`.
+ */
+export async function listGenres(supabase: SupabaseClient): Promise<string[]> {
+  const result = await supabase.from("games").select("genre").is("deleted_at", null);
+
+  if (result.error) {
+    throw new Error(`Failed to list genres: ${result.error.message}`);
+  }
+
+  const rows = result.data as { genre: string }[];
+  const distinct = [...new Set(rows.map((row) => row.genre))];
+  return distinct.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 }
 
 /**

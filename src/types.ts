@@ -67,6 +67,20 @@ export interface GameRow {
   deleted_at: string | null;
 }
 
+/**
+ * Already-validated catalog filter values, spoken by both the list query and the
+ * filter form. Every field is optional; an absent field means "no constraint on
+ * this dimension". `players` matches a game whose min–max range includes N;
+ * `maxMinutes` matches games with `avg_play_minutes ≤ maxMinutes`; `genre` and
+ * `loanStatus` are exact equality. Reuses the existing `LoanStatus` union.
+ */
+export interface GameFilters {
+  genre?: string;
+  players?: number;
+  maxMinutes?: number;
+  loanStatus?: LoanStatus;
+}
+
 /** Validated create payload for a new game (camelCase). */
 export interface NewGameInput {
   title: string;

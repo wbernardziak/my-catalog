@@ -313,19 +313,19 @@ No migration. All filtered columns (`genre`, `min_players`, `max_players`,
 
 #### Automated
 
-- [x] 1.1 Type-checking passes: `npm run build`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 Unit tests pass: `npm test`
-- [x] 1.4 New `parseGameFilters` tests cover valid/partial/invalid/empty cases
+- [x] 1.1 Type-checking passes: `npm run build` — 783c0ae
+- [x] 1.2 Linting passes: `npm run lint` — 783c0ae
+- [x] 1.3 Unit tests pass: `npm test` — 783c0ae
+- [x] 1.4 New `parseGameFilters` tests cover valid/partial/invalid/empty cases — 783c0ae
 
 ### Phase 2: Filter UI + catalog wiring
 
 #### Automated
 
-- [ ] 2.1 Type-checking / build passes: `npm run build`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Formatting clean: `npm run format`
-- [ ] 2.4 Existing tests still pass: `npm test`
+- [x] 2.1 Type-checking / build passes: `npm run build`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Formatting clean: `npm run format`
+- [x] 2.4 Existing tests still pass: `npm test`
 
 #### Manual
 

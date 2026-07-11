@@ -1,0 +1,88 @@
+---
+import type { GameFilters } from "@/types";
+
+interface Props {
+  genres: string[];
+  current: GameFilters;
+}
+
+const { genres, current } = Astro.props;
+
+// If an active genre no longer has live rows (a stale/hand-edited ?genre=), keep
+// it as an option so the control reflects the active filter instead of silently
+// falling back to "All genres".
+const genreOptions = current.genre && !genres.includes(current.genre) ? [...genres, current.genre] : genres;
+
+const inputClass =
+  "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-blue-100/40 focus:border-purple-400/50 focus:outline-none";
+const labelClass = "mb-1 block text-xs font-medium text-blue-100/70";
+---
+
+<form
+  method="GET"
+  action="/catalog"
+  aria-label="Filter games"
+  class="mb-6 rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl"
+>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      <label class:list={labelClass} for="filter-genre">Genre</label>
+      <select id="filter-genre" name="genre" class:list={inputClass}>
+        <option value="">All genres</option>
+        {
+          genreOptions.map((genre) => (
+            <option value={genre} selected={genre === current.genre}>
+              {genre}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class:list={labelClass} for="filter-players">Party of</label>
+      <input
+        id="filter-players"
+        type="number"
+        name="players"
+        min="1"
+        max="99"
+        placeholder="Any"
+        value={current.players ?? ""}
+        class:list={inputClass}
+      />
+    </div>
+
+    <div>
+      <label class:list={labelClass} for="filter-max-minutes">Max minutes</label>
+      <input
+        id="filter-max-minutes"
+        type="number"
+        name="maxMinutes"
+        min="1"
+        placeholder="Any"
+        value={current.maxMinutes ?? ""}
+        class:list={inputClass}
+      />
+    </div>
+
+    <div>
+      <label class:list={labelClass} for="filter-loan">Loan status</label>
+      <select id="filter-loan" name="loan" class:list={inputClass}>
+        <option value="">All</option>
+        <option value="available" selected={current.loanStatus === "available"}>Available</option>
+        <option value="loaned" selected={current.loanStatus === "loaned"}>Loaned</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <button
+      type="submit"
+      class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+    >
+      Apply filters
+    </button>
+    <a href="/catalog" class="text-sm text-purple-300 hover:underline">Clear</a>
+  </div>
+</form>

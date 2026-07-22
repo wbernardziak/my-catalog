@@ -315,8 +315,8 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 4: Catalog UI
 
 #### Automated
-- [x] 4.1 Lint passes (`npm run lint`)
-- [x] 4.2 Build passes (`npm run build`)
+- [x] 4.1 Lint passes (`npm run lint`) — 219a3d6
+- [x] 4.2 Build passes (`npm run build`) — 219a3d6
 
 #### Manual
 - [ ] 4.3 Played → like/dislike appears; un-mark clears preference; loan toggle flips badge

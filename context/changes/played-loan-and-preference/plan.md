@@ -284,9 +284,9 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 1: Per-member state schema + RLS
 
 #### Automated
-- [x] 1.1 Migration applies cleanly locally (`npx supabase db reset`)
-- [x] 1.2 Lint passes (`npm run lint`)
-- [x] 1.3 Build passes (`npm run build`)
+- [x] 1.1 Migration applies cleanly locally (`npx supabase db reset`) — 4489714
+- [x] 1.2 Lint passes (`npm run lint`) — 4489714
+- [x] 1.3 Build passes (`npm run build`) — 4489714
 
 #### Manual
 - [ ] 1.4 Migration pushed to prod (`npx supabase db push --linked`)
@@ -295,9 +295,9 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 2: Service layer + types
 
 #### Automated
-- [ ] 2.1 Lint passes (`npm run lint`)
-- [ ] 2.2 Unit tests pass (`npx vitest run`)
-- [ ] 2.3 Build passes (`npm run build`)
+- [x] 2.1 Lint passes (`npm run lint`)
+- [x] 2.2 Unit tests pass (`npx vitest run`)
+- [x] 2.3 Build passes (`npm run build`)
 
 #### Manual
 - [ ] 2.4 `listCatalogGames` returns correct per-member state against seeded local DB

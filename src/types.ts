@@ -79,7 +79,23 @@ export interface GameFilters {
   players?: number;
   maxMinutes?: number;
   loanStatus?: LoanStatus;
+  /** Per-member: match games the calling member has (true) / has not (false) played. */
+  played?: boolean;
+  /** Per-member: match games the calling member liked/disliked. */
+  preference?: "liked" | "disliked";
 }
+
+/**
+ * A catalog row enriched with the CALLING member's per-member state, as the
+ * catalog page renders it. `played` is whether this member has a `game_played`
+ * row; `preference` is their like/dislike (or `null` when unset — a played game
+ * with no recorded preference, or a game they have not played). Loan status stays
+ * the shared `loan_status` column inherited from `GameRow`.
+ */
+export type CatalogGame = GameRow & {
+  played: boolean;
+  preference: "liked" | "disliked" | null;
+};
 
 /** Validated create payload for a new game (camelCase). */
 export interface NewGameInput {
@@ -93,12 +109,17 @@ export interface NewGameInput {
 }
 
 /**
- * Map a stored catalog row into the downstream `CandidateGame` contract.
- * `played`/`preference` are intentionally left undefined — those are owned by
- * S-04 and have no source column yet.
+ * Map a stored catalog row into the downstream `CandidateGame` contract. When
+ * `state` is supplied (the calling member's played flag and optional
+ * like/dislike), `played`/`preference` are populated so S-05 inherits live
+ * per-member data; omitting `state` preserves the pre-S-04 behavior of leaving
+ * both fields undefined.
  */
-export function mapRowToCandidateGame(row: GameRow): CandidateGame {
-  return {
+export function mapRowToCandidateGame(
+  row: GameRow,
+  state?: { played: boolean; preference?: "liked" | "disliked" },
+): CandidateGame {
+  const candidate: CandidateGame = {
     id: row.id,
     title: row.title,
     genre: row.genre,
@@ -106,6 +127,15 @@ export function mapRowToCandidateGame(row: GameRow): CandidateGame {
     maxPlayers: row.max_players,
     averagePlayMinutes: row.avg_play_minutes,
   };
+
+  if (state) {
+    candidate.played = state.played;
+    if (state.preference !== undefined) {
+      candidate.preference = state.preference;
+    }
+  }
+
+  return candidate;
 }
 
 /**

@@ -53,6 +53,23 @@ describe("parseGameFilters", () => {
   });
 
   it("drops empty-string values (empty inputs submitted by the form)", () => {
-    expect(parseGameFilters(params({ genre: "", players: "", maxMinutes: "", loan: "" }))).toEqual({});
+    expect(
+      parseGameFilters(params({ genre: "", players: "", maxMinutes: "", loan: "", played: "", preference: "" })),
+    ).toEqual({});
+  });
+
+  it("parses the per-member played tri-state into a boolean", () => {
+    expect(parseGameFilters(params({ played: "true" }))).toEqual({ played: true });
+    expect(parseGameFilters(params({ played: "false" }))).toEqual({ played: false });
+  });
+
+  it("drops an unknown played value", () => {
+    expect(parseGameFilters(params({ played: "maybe" }))).toEqual({});
+  });
+
+  it("parses a valid preference and drops an unknown one", () => {
+    expect(parseGameFilters(params({ preference: "liked" }))).toEqual({ preference: "liked" });
+    expect(parseGameFilters(params({ preference: "disliked" }))).toEqual({ preference: "disliked" });
+    expect(parseGameFilters(params({ preference: "meh" }))).toEqual({});
   });
 });

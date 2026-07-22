@@ -33,9 +33,21 @@ describe("mapRowToCandidateGame", () => {
     });
   });
 
-  it("leaves played and preference undefined", () => {
+  it("leaves played and preference undefined without state", () => {
     const candidate = mapRowToCandidateGame(row);
     expect(candidate.played).toBeUndefined();
+    expect(candidate.preference).toBeUndefined();
+  });
+
+  it("populates played and preference from state when provided", () => {
+    const candidate = mapRowToCandidateGame(row, { played: true, preference: "liked" });
+    expect(candidate.played).toBe(true);
+    expect(candidate.preference).toBe("liked");
+  });
+
+  it("sets played but leaves preference undefined when state omits it", () => {
+    const candidate = mapRowToCandidateGame(row, { played: false });
+    expect(candidate.played).toBe(false);
     expect(candidate.preference).toBeUndefined();
   });
 });

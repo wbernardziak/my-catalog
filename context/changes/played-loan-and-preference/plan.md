@@ -289,7 +289,7 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 - [x] 1.3 Build passes (`npm run build`) — 4489714
 
 #### Manual
-- [ ] 1.4 Migration pushed to prod (`npx supabase db push --linked`)
+- [x] 1.4 Migration pushed to prod (`npx supabase db push --linked`)
 - [x] 1.5 RLS verified in Studio: write-own enforced, read-all works
 
 ### Phase 2: Service layer + types

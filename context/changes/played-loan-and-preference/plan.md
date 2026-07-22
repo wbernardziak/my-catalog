@@ -290,7 +290,7 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 
 #### Manual
 - [ ] 1.4 Migration pushed to prod (`npx supabase db push --linked`)
-- [ ] 1.5 RLS verified in Studio: write-own enforced, read-all works
+- [x] 1.5 RLS verified in Studio: write-own enforced, read-all works
 
 ### Phase 2: Service layer + types
 
@@ -300,8 +300,8 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 - [x] 2.3 Build passes (`npm run build`) — ebcbf7f
 
 #### Manual
-- [ ] 2.4 `listCatalogGames` returns correct per-member state against seeded local DB
-- [ ] 2.5 `setPlayed(false)` cascade-clear and `setPreference` played-guard verified against local Supabase / Studio
+- [x] 2.4 `listCatalogGames` returns correct per-member state against seeded local DB
+- [x] 2.5 `setPlayed(false)` cascade-clear and `setPreference` played-guard verified against local Supabase / Studio
 
 ### Phase 3: API routes
 
@@ -310,7 +310,7 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 - [x] 3.2 Build passes (`npm run build`) — e03884b
 
 #### Manual
-- [ ] 3.3 Each endpoint produces expected DB change + redirect; signed-out redirects to signin
+- [x] 3.3 Each endpoint produces expected DB change + redirect; signed-out redirects to signin
 
 ### Phase 4: Catalog UI
 
@@ -319,7 +319,7 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 - [x] 4.2 Build passes (`npm run build`) — 219a3d6
 
 #### Manual
-- [ ] 4.3 Played → like/dislike appears; un-mark clears preference; loan toggle flips badge
-- [ ] 4.4 Played/preference filters narrow correctly and echo active state
-- [ ] 4.5 Second account: state independent per member, loan shared
+- [x] 4.3 Played → like/dislike appears; un-mark clears preference; loan toggle flips badge
+- [x] 4.4 Played/preference filters narrow correctly and echo active state
+- [x] 4.5 Second account: state independent per member, loan shared
 - [ ] 4.6 Controls usable on mobile-width viewport

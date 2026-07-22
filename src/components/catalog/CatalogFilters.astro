@@ -75,6 +75,24 @@ const labelClass = "mb-1 block text-xs font-medium text-blue-100/70";
         <option value="loaned" selected={current.loanStatus === "loaned"}>Loaned</option>
       </select>
     </div>
+
+    <div>
+      <label class:list={labelClass} for="filter-played">Played</label>
+      <select id="filter-played" name="played" class:list={inputClass}>
+        <option value="">All</option>
+        <option value="true" selected={current.played === true}>Played</option>
+        <option value="false" selected={current.played === false}>Not played</option>
+      </select>
+    </div>
+
+    <div>
+      <label class:list={labelClass} for="filter-preference">Preference</label>
+      <select id="filter-preference" name="preference" class:list={inputClass}>
+        <option value="">All</option>
+        <option value="liked" selected={current.preference === "liked"}>Liked</option>
+        <option value="disliked" selected={current.preference === "disliked"}>Disliked</option>
+      </select>
+    </div>
   </div>
 
   <div class="mt-4 flex flex-wrap items-center gap-3">

@@ -4,9 +4,10 @@ import GameForm from "@/components/catalog/GameForm";
 import GameCard from "@/components/catalog/GameCard";
 import CatalogFilters from "@/components/catalog/CatalogFilters.astro";
 import { createClient } from "@/lib/supabase";
-import { listGames, listGenres } from "@/lib/services/games";
+import { listGenres } from "@/lib/services/games";
+import { listCatalogGames } from "@/lib/services/catalogGames";
 import { parseGameFilters } from "@/lib/services/gameFilters";
-import type { GameRow } from "@/types";
+import type { CatalogGame } from "@/types";
 
 const error = Astro.url.searchParams.get("error");
 
@@ -14,18 +15,21 @@ const filters = parseGameFilters(Astro.url.searchParams);
 const hasActiveFilters = Object.keys(filters).length > 0;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-let games: GameRow[] = [];
+// Guaranteed by the middleware `PROTECTED_ROUTES` gate, but kept defensive so the
+// per-member catalog fetch never runs without a member id.
+const user = Astro.locals.user;
+let games: CatalogGame[] = [];
 let genres: string[] = [];
 let configured = true;
 let loadError: string | null = null;
 
-if (supabase) {
+if (supabase && user) {
   try {
-    [games, genres] = await Promise.all([listGames(supabase, filters), listGenres(supabase)]);
+    [games, genres] = await Promise.all([listCatalogGames(supabase, user.id, filters), listGenres(supabase)]);
   } catch {
     loadError = "Could not load the catalog. Please try again.";
   }
-} else {
+} else if (!supabase) {
   configured = false;
 }
 ---

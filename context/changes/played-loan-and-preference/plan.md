@@ -306,8 +306,8 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 3: API routes
 
 #### Automated
-- [x] 3.1 Lint passes (`npm run lint`)
-- [x] 3.2 Build passes (`npm run build`)
+- [x] 3.1 Lint passes (`npm run lint`) — e03884b
+- [x] 3.2 Build passes (`npm run build`) — e03884b
 
 #### Manual
 - [ ] 3.3 Each endpoint produces expected DB change + redirect; signed-out redirects to signin
@@ -315,8 +315,8 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 4: Catalog UI
 
 #### Automated
-- [ ] 4.1 Lint passes (`npm run lint`)
-- [ ] 4.2 Build passes (`npm run build`)
+- [x] 4.1 Lint passes (`npm run lint`)
+- [x] 4.2 Build passes (`npm run build`)
 
 #### Manual
 - [ ] 4.3 Played → like/dislike appears; un-mark clears preference; loan toggle flips badge

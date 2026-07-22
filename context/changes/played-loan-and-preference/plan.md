@@ -322,4 +322,4 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 - [x] 4.3 Played → like/dislike appears; un-mark clears preference; loan toggle flips badge
 - [x] 4.4 Played/preference filters narrow correctly and echo active state
 - [x] 4.5 Second account: state independent per member, loan shared
-- [ ] 4.6 Controls usable on mobile-width viewport
+- [x] 4.6 Controls usable on mobile-width viewport

@@ -295,9 +295,9 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 2: Service layer + types
 
 #### Automated
-- [x] 2.1 Lint passes (`npm run lint`)
-- [x] 2.2 Unit tests pass (`npx vitest run`)
-- [x] 2.3 Build passes (`npm run build`)
+- [x] 2.1 Lint passes (`npm run lint`) — ebcbf7f
+- [x] 2.2 Unit tests pass (`npx vitest run`) — ebcbf7f
+- [x] 2.3 Build passes (`npm run build`) — ebcbf7f
 
 #### Manual
 - [ ] 2.4 `listCatalogGames` returns correct per-member state against seeded local DB
@@ -306,8 +306,8 @@ New tables only; no data backfill (no prior per-member state exists). `on delete
 ### Phase 3: API routes
 
 #### Automated
-- [ ] 3.1 Lint passes (`npm run lint`)
-- [ ] 3.2 Build passes (`npm run build`)
+- [x] 3.1 Lint passes (`npm run lint`)
+- [x] 3.2 Build passes (`npm run build`)
 
 #### Manual
 - [ ] 3.3 Each endpoint produces expected DB change + redirect; signed-out redirects to signin

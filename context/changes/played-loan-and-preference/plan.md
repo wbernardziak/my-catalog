@@ -270,6 +270,8 @@ Pass per-member state to the cards, add the three toggles and the two filters.
 
 New tables only; no data backfill (no prior per-member state exists). `on delete cascade` chains keep rows consistent under a future hard delete: deleting a game cascades `game_played`, which in turn cascades `game_preference` (composite FK). Soft-deleted games simply drop out of the catalog listing, so stale per-member rows are harmless. **Push to prod with `npx supabase db push --linked` as the final step of Phase 1.**
 
+**Accepted risk (impl review F1, 2026-07-22):** the cascade is deliberate, and soft delete is the only sanctioned removal path — no code path hard-deletes a game. Since the `games` delete policy is `using (true)` for `authenticated`, an out-of-app hard delete (Studio, direct PostgREST) would irreversibly wipe played + preference state for every member. Treated as an admin action, not a user action; revisit if a hard-delete flow is ever added (e.g. in S-06).
+
 ## References
 
 - Roadmap slice: `context/foundation/roadmap.md` (S-04)

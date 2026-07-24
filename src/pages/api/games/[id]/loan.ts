@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase";
 import { GAME_NOT_FOUND_MESSAGE, setLoan } from "@/lib/services/games";
+import { catalogRedirectTarget } from "@/lib/services/gameFilters";
 
 export const prerender = false;
 
@@ -33,21 +34,23 @@ export const POST: APIRoute = async (context) => {
   }
 
   const form = await context.request.formData();
+  // The filters the card was rendered under, so the PRG lands on the same view.
+  const filters = form.get("filters");
   const parsed = loanSchema.safeParse(form.get("loanStatus"));
   if (!parsed.success) {
-    return context.redirect(`/catalog?error=${encodeURIComponent("Invalid loan status.")}`);
+    return context.redirect(catalogRedirectTarget(filters, "Invalid loan status."));
   }
 
   let updated;
   try {
     updated = await setLoan(supabase, id, parsed.data);
   } catch {
-    return context.redirect(`/catalog?error=${encodeURIComponent("Could not update loan status. Please try again.")}`);
+    return context.redirect(catalogRedirectTarget(filters, "Could not update loan status. Please try again."));
   }
 
   if (!updated) {
-    return context.redirect(`/catalog?error=${encodeURIComponent(GAME_NOT_FOUND_MESSAGE)}`);
+    return context.redirect(catalogRedirectTarget(filters, GAME_NOT_FOUND_MESSAGE));
   }
 
-  return context.redirect("/catalog");
+  return context.redirect(catalogRedirectTarget(filters));
 };

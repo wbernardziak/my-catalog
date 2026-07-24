@@ -6,18 +6,22 @@ import CatalogFilters from "@/components/catalog/CatalogFilters.astro";
 import { createClient } from "@/lib/supabase";
 import { listGenres } from "@/lib/services/games";
 import { listCatalogGames } from "@/lib/services/catalogGames";
-import { parseGameFilters } from "@/lib/services/gameFilters";
+import { parseGameFilters, serializeGameFilters } from "@/lib/services/gameFilters";
 import type { CatalogGame } from "@/types";
 
 const error = Astro.url.searchParams.get("error");
 
 const filters = parseGameFilters(Astro.url.searchParams);
 const hasActiveFilters = Object.keys(filters).length > 0;
+// Canonical query string for the active filters (no `error`), handed to the cards
+// so their toggle PRGs come back to this same filtered view.
+const activeQuery = serializeGameFilters(filters).toString();
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 // Guaranteed by the middleware `PROTECTED_ROUTES` gate, but kept defensive so the
 // per-member catalog fetch never runs without a member id.
 const user = Astro.locals.user;
+
 let games: CatalogGame[] = [];
 let genres: string[] = [];
 let configured = true;
@@ -31,6 +35,11 @@ if (supabase && user) {
   }
 } else if (!supabase) {
   configured = false;
+} else {
+  // Unreachable behind the middleware `PROTECTED_ROUTES` gate, but if the session
+  // ever resolves to no user we say so instead of rendering an empty catalog that
+  // reads as "you own no games".
+  loadError = "Your session has expired. Please sign in again.";
 }
 ---
 
@@ -73,7 +82,7 @@ if (supabase && user) {
                 <ul class="space-y-3">
                   {games.map((game) => (
                     <li>
-                      <GameCard game={game} client:load />
+                      <GameCard game={game} filters={activeQuery} client:load />
                     </li>
                   ))}
                 </ul>

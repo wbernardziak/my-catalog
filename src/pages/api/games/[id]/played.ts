@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase";
 import { GAME_NOT_FOUND_MESSAGE } from "@/lib/services/games";
 import { setPlayed } from "@/lib/services/memberGameState";
+import { catalogRedirectTarget } from "@/lib/services/gameFilters";
 
 export const prerender = false;
 
@@ -33,18 +34,18 @@ export const POST: APIRoute = async (context) => {
   }
 
   const form = await context.request.formData();
+  // The filters the card was rendered under, so the PRG lands on the same view.
+  const filters = form.get("filters");
   const parsed = playedSchema.safeParse(form.get("played"));
   if (!parsed.success) {
-    return context.redirect(`/catalog?error=${encodeURIComponent("Invalid played state.")}`);
+    return context.redirect(catalogRedirectTarget(filters, "Invalid played state."));
   }
 
   try {
     await setPlayed(supabase, id, context.locals.user.id, parsed.data === "true");
   } catch {
-    return context.redirect(
-      `/catalog?error=${encodeURIComponent("Could not update played status. Please try again.")}`,
-    );
+    return context.redirect(catalogRedirectTarget(filters, "Could not update played status. Please try again."));
   }
 
-  return context.redirect("/catalog");
+  return context.redirect(catalogRedirectTarget(filters));
 };

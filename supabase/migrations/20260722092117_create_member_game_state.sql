@@ -13,6 +13,14 @@
 -- game_played: the EXISTENCE of a row == "this member has played this game".
 -- Mark = insert, un-mark = delete. Its `unique (game_id, member_id)` is the key
 -- the preference table's composite FK references.
+--
+-- DELIBERATE: `on delete cascade` on game_id. Soft delete (`games.deleted_at`) is
+-- the ONLY sanctioned removal path in the app — no code path hard-deletes a game.
+-- The cascade exists so that a hard delete, if ever performed manually (Studio,
+-- direct PostgREST), leaves no orphan per-member rows. It does mean such a delete
+-- wipes played + preference state for EVERY member irreversibly; that is accepted
+-- because the RLS delete policy on `games` is open to any authenticated session
+-- and out-of-app hard deletes are treated as an admin action, not a user action.
 create table public.game_played (
   game_id uuid not null references public.games (id) on delete cascade,
   member_id uuid not null default auth.uid() references auth.users (id),
@@ -38,6 +46,14 @@ create table public.game_preference (
 
 -- Read-all / write-own RLS on both tables. Four granular `authenticated`
 -- policies each; no `anon` policy, so unauthenticated requests see nothing.
+--
+-- ASSUMPTION: one household == one tenant. `using (true)` on SELECT therefore
+-- means "any authenticated user of this Supabase project", not "any member of my
+-- household" — acceptable only while the project serves a single household (it
+-- also gives S-06 its cross-member stats for free). If this app ever hosts more
+-- than one household, these SELECT policies must gain a membership predicate;
+-- personal like/dislike history is the data at stake, unlike `games`, which is
+-- shared by design.
 alter table public.game_played enable row level security;
 
 create policy "authenticated can select game_played"

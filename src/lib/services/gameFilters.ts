@@ -51,3 +51,36 @@ export function parseGameFilters(params: URLSearchParams): GameFilters {
 
   return filters;
 }
+
+/**
+ * Inverse of `parseGameFilters`: `GameFilters` → canonical query params, using
+ * the same key names the filter form posts.
+ */
+export function serializeGameFilters(filters: GameFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.genre !== undefined) params.set("genre", filters.genre);
+  if (filters.players !== undefined) params.set("players", String(filters.players));
+  if (filters.maxMinutes !== undefined) params.set("maxMinutes", String(filters.maxMinutes));
+  if (filters.loanStatus !== undefined) params.set("loan", filters.loanStatus);
+  if (filters.played !== undefined) params.set("played", filters.played ? "true" : "false");
+  if (filters.preference !== undefined) params.set("preference", filters.preference);
+  return params;
+}
+
+/**
+ * Build the PRG target for the toggle endpoints, preserving the filters the card
+ * was rendered under (posted back in the form's hidden `filters` field). Without
+ * this, toggling "played" while filtering by `?played=false` would drop the whole
+ * filter set — exactly the row the member was acting on.
+ *
+ * The posted value is a query string, never a URL: it is round-tripped through
+ * `parseGameFilters` + `serializeGameFilters`, so only known keys with valid
+ * values survive and the target is always same-origin `/catalog`.
+ */
+export function catalogRedirectTarget(postedFilters: unknown, error?: string): string {
+  const raw = typeof postedFilters === "string" ? postedFilters : "";
+  const params = serializeGameFilters(parseGameFilters(new URLSearchParams(raw)));
+  if (error !== undefined) params.set("error", error);
+  const query = params.toString();
+  return query ? `/catalog?${query}` : "/catalog";
+}

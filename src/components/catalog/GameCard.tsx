@@ -6,6 +6,9 @@ import GameForm, { fromRow } from "./GameForm";
 
 interface Props {
   game: CatalogGame;
+  /** Active catalog query string (no leading `?`), posted back by the toggle
+   *  forms so their PRG redirect returns to the same filtered view. */
+  filters?: string;
 }
 
 const toggleBase = "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors";
@@ -17,7 +20,7 @@ const toggleBase = "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text
  * delete confirm submits a separate tiny form to `/api/games/{id}/delete` — the
  * edit form and delete form are never nested.
  */
-export default function GameCard({ game }: Props) {
+export default function GameCard({ game, filters = "" }: Props) {
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -65,6 +68,7 @@ export default function GameCard({ game }: Props) {
           form posting the DESIRED state (opposite of current) to its endpoint. */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <form method="POST" action={`/api/games/${game.id}/played`}>
+          <input type="hidden" name="filters" value={filters} />
           <input type="hidden" name="played" value={game.played ? "false" : "true"} />
           <button
             type="submit"
@@ -83,6 +87,7 @@ export default function GameCard({ game }: Props) {
         {game.played && (
           <>
             <form method="POST" action={`/api/games/${game.id}/preference`}>
+              <input type="hidden" name="filters" value={filters} />
               <input type="hidden" name="preference" value={game.preference === "liked" ? "clear" : "liked"} />
               <button
                 type="submit"
@@ -99,6 +104,7 @@ export default function GameCard({ game }: Props) {
               </button>
             </form>
             <form method="POST" action={`/api/games/${game.id}/preference`}>
+              <input type="hidden" name="filters" value={filters} />
               <input type="hidden" name="preference" value={game.preference === "disliked" ? "clear" : "disliked"} />
               <button
                 type="submit"
@@ -118,6 +124,7 @@ export default function GameCard({ game }: Props) {
         )}
 
         <form method="POST" action={`/api/games/${game.id}/loan`}>
+          <input type="hidden" name="filters" value={filters} />
           <input type="hidden" name="loanStatus" value={game.loan_status === "loaned" ? "available" : "loaned"} />
           <button type="submit" className={cn(toggleBase, "border-white/20 text-white hover:bg-white/10")}>
             {game.loan_status === "loaned" ? "Return" : "Loan out"}

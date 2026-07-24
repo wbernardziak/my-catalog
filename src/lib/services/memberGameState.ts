@@ -14,6 +14,11 @@ type SupabaseClient = NonNullable<ReturnType<typeof createClient>>;
  * game the member has not marked played (composite FK to `game_played`). */
 const FK_VIOLATION = "23503";
 
+/** The one FK on `game_preference`. Matched by name as well as by SQLSTATE so a
+ * future second FK on this table can't be mistaken for "not played yet" and
+ * reported to the member as "Mark the game as played first.". */
+const PLAYED_FK_CONSTRAINT = "game_preference_game_id_member_id_fkey";
+
 /**
  * Set the calling member's played state for one game.
  *
@@ -32,7 +37,10 @@ export async function setPlayed(
   if (played) {
     const result = await supabase
       .from("game_played")
-      .upsert({ game_id: gameId, member_id: memberId }, { onConflict: "game_id,member_id" });
+      .upsert(
+        { game_id: gameId, member_id: memberId, updated_at: new Date().toISOString() },
+        { onConflict: "game_id,member_id" },
+      );
     if (result.error) {
       throw new Error(`Failed to mark game played: ${result.error.message}`);
     }
@@ -51,7 +59,8 @@ export async function setPlayed(
  * `preference` of `"liked"`/`"disliked"` upserts the `game_preference` row;
  * `null` deletes it. A preference is only valid for a played title: when no
  * `game_played` row exists for `(gameId, memberId)`, the insert violates the
- * composite FK (SQLSTATE 23503) — that specific error is caught and reported as
+ * composite FK (SQLSTATE 23503, constraint `game_preference_game_id_member_id_fkey`)
+ * — that specific error is caught and reported as
  * `{ ok: false }` so the caller can show "mark as played first" instead of a
  * 500. Any other DB error throws. Clearing a non-existent preference is a no-op
  * (`{ ok: true }`). Throws on unexpected DB error.
@@ -72,10 +81,16 @@ export async function setPreference(
 
   const result = await supabase
     .from("game_preference")
-    .upsert({ game_id: gameId, member_id: memberId, preference }, { onConflict: "game_id,member_id" });
+    .upsert(
+      { game_id: gameId, member_id: memberId, preference, updated_at: new Date().toISOString() },
+      { onConflict: "game_id,member_id" },
+    );
 
   if (result.error) {
-    if (result.error.code === FK_VIOLATION) {
+    const violatesPlayedFk =
+      result.error.code === FK_VIOLATION &&
+      `${result.error.details} ${result.error.message}`.includes(PLAYED_FK_CONSTRAINT);
+    if (violatesPlayedFk) {
       return { ok: false };
     }
     throw new Error(`Failed to set preference: ${result.error.message}`);

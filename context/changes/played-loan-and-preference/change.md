@@ -1,7 +1,7 @@
 ---
 change_id: played-loan-and-preference
 title: Played loan and preference
-status: implemented
+status: impl_reviewed
 created: 2026-07-21
 updated: 2026-07-22
 archived_at: null

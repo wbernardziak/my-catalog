@@ -321,9 +321,9 @@ the "push migrations to prod" lesson does not apply to this change.)
 
 #### Automated
 
-- [x] 2.1 Build passes: `npm run build`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Format check clean: `npx prettier --check .` (scoped to this change's files; repo-wide `.` reports pre-existing out-of-scope debt — see run report)
+- [x] 2.1 Build passes: `npm run build` — e27f914
+- [x] 2.2 Lint passes: `npm run lint` — e27f914
+- [x] 2.3 Format check clean: `npx prettier --check .` (scoped to this change's files; repo-wide `.` reports pre-existing out-of-scope debt — see run report) — e27f914
 
 #### Manual
 

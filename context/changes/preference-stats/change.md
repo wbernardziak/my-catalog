@@ -1,7 +1,7 @@
 ---
 change_id: preference-stats
 title: Preference statistics per member
-status: implemented
+status: impl_reviewed
 created: 2026-07-24
 updated: 2026-07-24
 ---

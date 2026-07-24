@@ -97,6 +97,24 @@ export type CatalogGame = GameRow & {
   preference: "liked" | "disliked" | null;
 };
 
+/**
+ * Preference statistics for one household member (slice S-06). Produced by
+ * `computeMemberStats` and rendered as one column of the `/stats` comparison
+ * table. `label` is the display name — "You" for the calling member
+ * (`isCurrent`), "Other member" for anyone else (the anon client cannot resolve
+ * other members' emails). Counts are over that member's own per-member rows:
+ * `playedCount` = `game_played` rows, `liked`/`dislikedCount` = `game_preference`
+ * rows split by value (and `liked + disliked ≤ played` always holds).
+ */
+export interface MemberStat {
+  memberId: string;
+  isCurrent: boolean;
+  label: string;
+  playedCount: number;
+  likedCount: number;
+  dislikedCount: number;
+}
+
 /** Validated create payload for a new game (camelCase). */
 export interface NewGameInput {
   title: string;

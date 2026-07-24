@@ -3,7 +3,7 @@ project: MyCatalog
 version: 1
 status: draft
 created: 2026-07-09
-updated: 2026-07-11
+updated: 2026-07-24
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -33,7 +33,7 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 | S-01 | add-and-view-games         | add a board game with details and see it in the shared catalog | —             | FR-001, FR-002, FR-003  | done     |
 | S-02 | edit-and-archive-games     | edit a game and mark it deleted without losing history       | S-01          | FR-002                  | done |
 | S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | done |
-| S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike | S-01          | FR-003, FR-005          | proposed |
+| S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike | S-01          | FR-003, FR-005          | done |
 | S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008   | proposed |
 | S-06 | preference-stats           | view preference statistics per household member              | S-04          | FR-006                  | proposed |
 
@@ -123,7 +123,7 @@ Foundations below assume these are present and do NOT recreate them.
 - **Unknowns:**
   - Is played status per-member or catalog-level? PRD persona says "each person may have a different usage state," so this slice models it per member — Owner: user. Blocks: no (planning can proceed on the per-member default; confirm during `/10x-plan`).
 - **Risk:** Introduces per-member state with RLS attribution (the one layer worth care under this goal); sequenced after S-01 because it annotates existing catalog games. Feeds richer recommendations in S-05 but is not a hard prerequisite for it.
-- **Status:** proposed
+- **Status:** done
 
 ### S-05: AI play recommendation with reasoning
 
@@ -183,3 +183,4 @@ Foundations below assume these are present and do NOT recreate them.
 - **S-01: a logged-in household member can add a board game with its details (title, authors, genre, player count, average play time, loan status) and immediately see it in the shared catalog list.** — Zarchiwizowano 2026-07-10 → `context/archive/2026-07-09-add-and-view-games/`. Lekcja: —.
 - **S-02: a household member can edit an existing game's details and mark a game as deleted, without removing it from stored history (soft delete).** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-10-edit-and-archive-games/`. Lekcja: —.
 - **S-03: a household member can filter the board-game catalog (e.g. by genre, player count, available time, played status, loan status) to quickly find matching titles.** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-11-filter-catalog/`. Lekcja: —.
+- **S-04: a household member can mark a game as played, set its loan status, and record a binary like/dislike for a played title — with played state and preference attributable to the correct member.** — Zarchiwizowano 2026-07-24 → `context/archive/2026-07-21-played-loan-and-preference/`. Lekcja: —.

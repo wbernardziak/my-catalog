@@ -1,9 +1,10 @@
 ---
 change_id: preference-stats
 title: Preference statistics per member
-status: impl_reviewed
+status: archived
 created: 2026-07-24
 updated: 2026-07-24
+archived_at: 2026-07-24T17:01:39Z
 ---
 
 ## Notes

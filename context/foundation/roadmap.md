@@ -35,7 +35,7 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 | S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | done |
 | S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike | S-01          | FR-003, FR-005          | done |
 | S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008   | proposed |
-| S-06 | preference-stats           | view preference statistics per household member              | S-04          | FR-006                  | proposed |
+| S-06 | preference-stats           | view preference statistics per household member              | S-04          | FR-006                  | done     |
 
 ## Streams
 
@@ -148,7 +148,7 @@ Foundations below assume these are present and do NOT recreate them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Lowest priority (the only nice-to-have FR); depends on the per-member preference data from S-04. Safe to defer or park if capacity runs short.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -184,3 +184,4 @@ Foundations below assume these are present and do NOT recreate them.
 - **S-02: a household member can edit an existing game's details and mark a game as deleted, without removing it from stored history (soft delete).** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-10-edit-and-archive-games/`. Lekcja: —.
 - **S-03: a household member can filter the board-game catalog (e.g. by genre, player count, available time, played status, loan status) to quickly find matching titles.** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-11-filter-catalog/`. Lekcja: —.
 - **S-04: a household member can mark a game as played, set its loan status, and record a binary like/dislike for a played title — with played state and preference attributable to the correct member.** — Zarchiwizowano 2026-07-24 → `context/archive/2026-07-21-played-loan-and-preference/`. Lekcja: —.
+- **S-06: a household member can view preference statistics per household member (e.g. liked/disliked counts across played titles).** — Zarchiwizowano 2026-07-24 → `context/archive/2026-07-24-preference-stats/`. Lekcja: —.

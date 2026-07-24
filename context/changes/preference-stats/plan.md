@@ -315,7 +315,7 @@ the "push migrations to prod" lesson does not apply to this change.)
 
 #### Manual
 
-- [ ] 1.4 `computeMemberStats` fixture output matches expected counts + "You"-first ordering
+- [x] 1.4 `computeMemberStats` fixture output matches expected counts + "You"-first ordering — verified 2026-07-24 (live /stats fixture: You 3/1/1, Other 1/1/0, You-first)
 
 ### Phase 2: Stats page + navigation
 
@@ -327,8 +327,8 @@ the "push migrations to prod" lesson does not apply to this change.)
 
 #### Manual
 
-- [ ] 2.4 Signed-out `/stats` redirects to `/auth/signin`
-- [ ] 2.5 Table shows correct counts for "You" + "Other member", You column first
-- [ ] 2.6 No-data state shows friendly message + catalog link
-- [ ] 2.7 Table scrolls (no page overflow) on narrow mobile
-- [ ] 2.8 Topbar "Stats" link works; current member's counts match `/catalog`
+- [x] 2.4 Signed-out `/stats` redirects to `/auth/signin` — verified 2026-07-24 (curl: 302 → /auth/signin)
+- [x] 2.5 Table shows correct counts for "You" + "Other member", You column first — verified 2026-07-24 (You 3/1/1, Other 1/1/0; You column first)
+- [x] 2.6 No-data state shows friendly message + catalog link — verified 2026-07-24 (empty account: message + "Go to the catalog")
+- [x] 2.7 Table scrolls (no page overflow) on narrow mobile — verified 2026-07-24 (browser @375px: wrapper overflow-x:auto, table fits 373px, no page overflow)
+- [x] 2.8 Topbar "Stats" link works; current member's counts match `/catalog` — verified 2026-07-24 (Topbar link on home; catalog filters played=3/liked=1/disliked=1 match You column)

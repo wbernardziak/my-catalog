@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseGameFilters } from "./gameFilters";
+import { catalogRedirectTarget, parseGameFilters } from "./gameFilters";
 
 /**
  * Guardrail unit tests for the forgiving filter parser. No network and no
@@ -53,6 +53,48 @@ describe("parseGameFilters", () => {
   });
 
   it("drops empty-string values (empty inputs submitted by the form)", () => {
-    expect(parseGameFilters(params({ genre: "", players: "", maxMinutes: "", loan: "" }))).toEqual({});
+    expect(
+      parseGameFilters(params({ genre: "", players: "", maxMinutes: "", loan: "", played: "", preference: "" })),
+    ).toEqual({});
+  });
+
+  it("parses the per-member played tri-state into a boolean", () => {
+    expect(parseGameFilters(params({ played: "true" }))).toEqual({ played: true });
+    expect(parseGameFilters(params({ played: "false" }))).toEqual({ played: false });
+  });
+
+  it("drops an unknown played value", () => {
+    expect(parseGameFilters(params({ played: "maybe" }))).toEqual({});
+  });
+
+  it("parses a valid preference and drops an unknown one", () => {
+    expect(parseGameFilters(params({ preference: "liked" }))).toEqual({ preference: "liked" });
+    expect(parseGameFilters(params({ preference: "disliked" }))).toEqual({ preference: "disliked" });
+    expect(parseGameFilters(params({ preference: "meh" }))).toEqual({});
+  });
+});
+
+describe("catalogRedirectTarget", () => {
+  it("returns the bare catalog path when no filters were posted", () => {
+    expect(catalogRedirectTarget(null)).toBe("/catalog");
+    expect(catalogRedirectTarget("")).toBe("/catalog");
+  });
+
+  it("preserves the posted filters so a toggle stays on the same view", () => {
+    const target = catalogRedirectTarget("played=false&genre=Strategy");
+    expect(target.startsWith("/catalog?")).toBe(true);
+    expect(new URL(target, "https://x.test").searchParams.get("played")).toBe("false");
+    expect(new URL(target, "https://x.test").searchParams.get("genre")).toBe("Strategy");
+  });
+
+  it("appends the error message alongside the filters", () => {
+    const url = new URL(catalogRedirectTarget("genre=Party", "Nope."), "https://x.test");
+    expect(url.searchParams.get("genre")).toBe("Party");
+    expect(url.searchParams.get("error")).toBe("Nope.");
+  });
+
+  it("drops unknown keys and never leaves the catalog path", () => {
+    expect(catalogRedirectTarget("evil=1&next=https://evil.test")).toBe("/catalog");
+    expect(catalogRedirectTarget("https://evil.test")).toBe("/catalog");
   });
 });

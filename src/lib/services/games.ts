@@ -1,5 +1,5 @@
 import type { createClient } from "@/lib/supabase";
-import type { GameFilters, GameRow, NewGameInput } from "@/types";
+import type { GameFilters, GameRow, LoanStatus, NewGameInput } from "@/types";
 
 /**
  * Catalog persistence for slice S-01. Callers construct the Supabase client
@@ -128,6 +128,31 @@ export async function updateGame(supabase: SupabaseClient, id: string, input: Ne
 
   if (result.error) {
     throw new Error(`Failed to update game: ${result.error.message}`);
+  }
+
+  return result.data as GameRow | null;
+}
+
+/**
+ * Set the shared loan status of one live game to a desired value and return the
+ * stored row. Desired-state (not read-modify-write): writes `loan_status =
+ * status` directly in a single round-trip, so it is idempotent and race-free —
+ * consistent with the `played` endpoint's desired-state contract. Scoped to
+ * `deleted_at is null` and stamps `updated_at` (no DB trigger); an unknown or
+ * already-deleted id matches zero rows and returns `null` (the caller redirects
+ * with a friendly not-found message). Throws on a real DB error.
+ */
+export async function setLoan(supabase: SupabaseClient, id: string, status: LoanStatus): Promise<GameRow | null> {
+  const result = await supabase
+    .from("games")
+    .update({ loan_status: status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null)
+    .select()
+    .maybeSingle();
+
+  if (result.error) {
+    throw new Error(`Failed to set loan status: ${result.error.message}`);
   }
 
   return result.data as GameRow | null;

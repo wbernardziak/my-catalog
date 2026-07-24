@@ -1,0 +1,65 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PreferenceStatsTable from "@/components/catalog/PreferenceStatsTable.astro";
+import { createClient } from "@/lib/supabase";
+import { listPreferenceStats, hasAnyData } from "@/lib/services/preferenceStats";
+import type { MemberStat } from "@/types";
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+// Guaranteed by the middleware `PROTECTED_ROUTES` gate, but kept defensive so the
+// per-member stats fetch never runs without a member id.
+const user = Astro.locals.user;
+
+let stats: MemberStat[] = [];
+let configured = true;
+let loadError: string | null = null;
+
+if (supabase && user) {
+  try {
+    stats = await listPreferenceStats(supabase, user.id);
+  } catch {
+    loadError = "Could not load the statistics. Please try again.";
+  }
+} else if (!supabase) {
+  configured = false;
+} else {
+  // Unreachable behind the middleware `PROTECTED_ROUTES` gate, but if the session
+  // ever resolves to no user we say so instead of rendering empty stats.
+  loadError = "Your session has expired. Please sign in again.";
+}
+
+const showData = hasAnyData(stats);
+---
+
+<Layout title="Stats">
+  <div class="bg-cosmic min-h-screen p-4 md:p-8">
+    <div class="mx-auto max-w-3xl">
+      <header class="mb-8 flex items-center justify-between">
+        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+          Preference statistics
+        </h1>
+        <a href="/dashboard" class="text-sm text-purple-300 hover:underline">← Dashboard</a>
+      </header>
+
+      {
+        !configured ? (
+          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">
+            Supabase is not configured — statistics are unavailable. Set <code>SUPABASE_URL</code> and{" "}
+            <code>SUPABASE_KEY</code> to enable it.
+          </div>
+        ) : loadError ? (
+          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
+        ) : showData ? (
+          <PreferenceStatsTable stats={stats} />
+        ) : (
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+            No preferences recorded yet — mark games played and rate them to see stats here.{" "}
+            <a href="/catalog" class="text-purple-300 hover:underline">
+              Go to the catalog
+            </a>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>

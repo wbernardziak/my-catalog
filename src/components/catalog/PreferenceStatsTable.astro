@@ -1,0 +1,51 @@
+---
+import type { MemberStat } from "@/types";
+
+interface Props {
+  stats: MemberStat[];
+}
+
+const { stats } = Astro.props;
+
+// Rows are the three metrics; columns are the members. Kept as static config so
+// the markup stays a plain map over stats.
+const metrics: { key: "playedCount" | "likedCount" | "dislikedCount"; label: string }[] = [
+  { key: "playedCount", label: "Played" },
+  { key: "likedCount", label: "Liked" },
+  { key: "dislikedCount", label: "Disliked" },
+];
+
+const headerCell = "px-4 py-3 text-left text-xs font-medium tracking-wide text-blue-100/70 uppercase";
+const bodyCell = "px-4 py-3 text-sm text-white";
+---
+
+<div class="overflow-x-auto rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl">
+  <table class="w-full border-collapse">
+    <thead>
+      <tr class="border-b border-white/10">
+        <th scope="col" class:list={headerCell}>Metric</th>
+        {
+          stats.map((member) => (
+            <th scope="col" class:list={[headerCell, member.isCurrent && "text-purple-200"]}>
+              {member.label}
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+    <tbody>
+      {
+        metrics.map((metric) => (
+          <tr class="border-b border-white/5 last:border-b-0">
+            <th scope="row" class:list={[bodyCell, "font-medium text-blue-100/80"]}>
+              {metric.label}
+            </th>
+            {stats.map((member) => (
+              <td class:list={[bodyCell, member.isCurrent && "font-semibold text-purple-100"]}>{member[metric.key]}</td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

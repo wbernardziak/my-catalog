@@ -82,6 +82,7 @@ guarded exactly like `catalog.astro`. Add `/stats` to `PROTECTED_ROUTES` and a T
 link.
 
 Member ordering and labeling (deterministic so table columns are stable):
+
 1. The current member (`member_id === currentMemberId`) is always first and labeled
    **"You"** — included even if they have zero rows, so the current member always sees
    their own column.
@@ -120,15 +121,16 @@ rows, and provide the thin Supabase fetch that feeds it — mirroring the
 `catalogGames.ts` pure-core + wrapper split.
 
 **Contract**:
+
 - `computeMemberStats(played: { member_id: string }[], preference: { member_id: string;
-  preference: "liked" | "disliked" }[], currentMemberId: string): MemberStat[]` — pure.
+preference: "liked" | "disliked" }[], currentMemberId: string): MemberStat[]` — pure.
   Groups both arrays by `member_id`; `playedCount` = played rows for that member,
   `likedCount`/`dislikedCount` = preference rows split by value. Always emits the
   current member first (label "You", `isCurrent: true`), even with zero counts; then
   every other member_id seen in either array, sorted by `member_id`, labeled
   "Other member" (suffix `2`, `3`, … when more than one). No Supabase import.
 - `listPreferenceStats(supabase: SupabaseClient, currentMemberId: string):
-  Promise<MemberStat[]>` — fetches all rows: `game_played.select("member_id")` and
+Promise<MemberStat[]>` — fetches all rows: `game_played.select("member_id")` and
   `game_preference.select("member_id, preference")`, throws on either DB error (message
   style matching `memberGameState.ts`), then returns `computeMemberStats(...)`. Uses the
   same `SupabaseClient = NonNullable<ReturnType<typeof createClient>>` alias as the
@@ -307,9 +309,9 @@ the "push migrations to prod" lesson does not apply to this change.)
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npx vitest run src/lib/services/preferenceStats.test.ts`
-- [x] 1.2 Full unit suite green: `npm test`
-- [x] 1.3 Lint (type-aware) passes: `npm run lint`
+- [x] 1.1 Unit tests pass: `npx vitest run src/lib/services/preferenceStats.test.ts` — ec3acc0
+- [x] 1.2 Full unit suite green: `npm test` — ec3acc0
+- [x] 1.3 Lint (type-aware) passes: `npm run lint` — ec3acc0
 
 #### Manual
 
@@ -319,9 +321,9 @@ the "push migrations to prod" lesson does not apply to this change.)
 
 #### Automated
 
-- [ ] 2.1 Build passes: `npm run build`
-- [ ] 2.2 Lint passes: `npm run lint`
-- [ ] 2.3 Format check clean: `npx prettier --check .`
+- [x] 2.1 Build passes: `npm run build`
+- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.3 Format check clean: `npx prettier --check .` (scoped to this change's files; repo-wide `.` reports pre-existing out-of-scope debt — see run report)
 
 #### Manual
 

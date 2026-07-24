@@ -1,23 +1,25 @@
 <!-- PLAN-REVIEW-REPORT -->
+
 # Plan Review: Preference statistics per member
 
 - **Plan**: context/changes/preference-stats/plan.md
 - **Mode**: Deep
 - **Date**: 2026-07-24
 - **Verdict**: SOLID (post-fix)
-- **Findings**: 0 critical  2 warnings  1 observation
+- **Findings**: 0 critical 2 warnings 1 observation
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| End-state conformance | PASS |
-| Lean execution | PASS |
-| Architectural fit | PASS |
-| Blind spots | WARNING (F1 — fixed) |
-| Plan completeness | WARNING (F2 fixed, F3 fixed) |
+| Dimension             | Verdict                      |
+| --------------------- | ---------------------------- |
+| End-state conformance | PASS                         |
+| Lean execution        | PASS                         |
+| Architectural fit     | PASS                         |
+| Blind spots           | WARNING (F1 — fixed)         |
+| Plan completeness     | WARNING (F2 fixed, F3 fixed) |
 
 ## Grounding
+
 6/6 paths ✓, 2/2 symbols ✓ (PROTECTED_ROUTES @ middleware.ts:4; test/build/lint/format scripts), brief↔plan ✓. New files correctly absent. contract-surfaces.md not present (skipped). Central RLS claim (read-all lets a member read others' preference rows) confirmed in 20260722092117_create_member_game_state.sql:59-63,86-90.
 
 ## Findings

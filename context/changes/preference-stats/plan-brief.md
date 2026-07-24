@@ -26,15 +26,15 @@ No data yet → a friendly message linking to `/catalog`. No writes, no schema c
 
 ## Key decisions made
 
-| Decision | Choice | Why | Source |
-| --- | --- | --- | --- |
-| Whose stats | Both members: **You + Other member** | Realizes FR-006 "per member" plural with zero new schema | Plan |
-| Member labeling | "You" (current) / "Other member" (unnamed) | Anon client can't resolve other members' emails; no profiles table | Plan |
-| Metrics | **Played, Liked, Disliked** counts | Directly answers "preference statistics"; clear and complete | Plan |
-| Location | New protected `/stats` page + Topbar link | Room to grow, matches the per-page pattern (`catalog.astro`) | Plan |
-| Empty state | Friendly message + link to `/catalog` | Guides the user to the action that fills the view | Plan |
-| Layout | Side-by-side comparison table (scrolls on mobile) | At-a-glance comparison; compact | Plan |
-| Aggregation | Pure `computeMemberStats` + thin DB wrapper, in memory | Mirrors `mergeAndFilterCatalog`; small data volume, no RPC | Plan |
+| Decision        | Choice                                                 | Why                                                                | Source |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------ | ------ |
+| Whose stats     | Both members: **You + Other member**                   | Realizes FR-006 "per member" plural with zero new schema           | Plan   |
+| Member labeling | "You" (current) / "Other member" (unnamed)             | Anon client can't resolve other members' emails; no profiles table | Plan   |
+| Metrics         | **Played, Liked, Disliked** counts                     | Directly answers "preference statistics"; clear and complete       | Plan   |
+| Location        | New protected `/stats` page + Topbar link              | Room to grow, matches the per-page pattern (`catalog.astro`)       | Plan   |
+| Empty state     | Friendly message + link to `/catalog`                  | Guides the user to the action that fills the view                  | Plan   |
+| Layout          | Side-by-side comparison table (scrolls on mobile)      | At-a-glance comparison; compact                                    | Plan   |
+| Aggregation     | Pure `computeMemberStats` + thin DB wrapper, in memory | Mirrors `mergeAndFilterCatalog`; small data volume, no RPC         | Plan   |
 
 ## Scope
 
@@ -55,10 +55,10 @@ exactly like `catalog.astro`. No migration — reads existing tables only.
 
 ## Phases at a glance
 
-| Phase | Delivers | Key risk |
-| --- | --- | --- |
+| Phase                      | Delivers                                                               | Key risk                                                              |
+| -------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | 1. Service + types + tests | `MemberStat`, `computeMemberStats` + `listPreferenceStats`, unit tests | Ordering/labeling ("You" first, "Other member" suffixing) correctness |
-| 2. Page + navigation | `/stats` page, table component, route guard, Topbar link | Empty-state trigger + mobile table overflow |
+| 2. Page + navigation       | `/stats` page, table component, route guard, Topbar link               | Empty-state trigger + mobile table overflow                           |
 
 **Prerequisites:** S-04 done (present) — `game_played` / `game_preference` live in prod.
 No new migration, so no prod push needed.

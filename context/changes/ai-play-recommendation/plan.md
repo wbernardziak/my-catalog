@@ -123,6 +123,7 @@ candidate list into a display view-model, (c) map a failure `reason` to user-fac
 copy plus a panel kind (error vs. neutral).
 
 **Contract**:
+
 - Export a Zod schema + parse helper for criteria: `playerCount` **required**,
   coerced positive integer; `availableMinutes` optional, coerced positive integer;
   `genre` optional, trimmed non-empty string (empty → omitted). Returns a
@@ -149,6 +150,7 @@ copy plus a panel kind (error vs. neutral).
 server-side from the DB, call `recommend()`, and return the enriched union as JSON.
 
 **Contract**:
+
 - `export const prerender = false;` + `export const POST: APIRoute`.
 - Build the client via `createClient(context.request.headers, context.cookies)`;
   self-gate: no client → return `503 { error: "…" }` (a generic server-config error —
@@ -162,8 +164,9 @@ server-side from the DB, call `recommend()`, and return the enriched union as JS
   return `400 { error: <first issue message> }`.
 - Assemble candidates server-side:
   ```ts
-  const candidates = (await listCatalogGames(supabase, user.id, {}))
-    .map((g) => mapRowToCandidateGame(g, { played: g.played, preference: g.preference ?? undefined }));
+  const candidates = (await listCatalogGames(supabase, user.id, {})).map((g) =>
+    mapRowToCandidateGame(g, { played: g.played, preference: g.preference ?? undefined }),
+  );
   ```
 - Call `const result = await recommend(criteria, candidates);`. On `ok:true`, return
   `200 { ok: true, recommendations: enrichRecommendations(result.recommendations, candidates) }`.
@@ -241,6 +244,7 @@ validate (player count required positive integer — mirror `GameForm.tsx`'s loc
 set `loading`, and handle the response. **The route returns the union body only at
 200; 400/401/500 return `{ error }` instead. Guard the transport/error cases before
 touching the union:**
+
 - A thrown `fetch` (network failure) OR a non-`ok` HTTP status OR a 200 body missing an
   `ok` field → render the red error panel (`kind:"error"`) with a generic fallback
   message (`describeFailure` fallback / a shared "something went wrong" copy). Do **not**
@@ -251,9 +255,9 @@ touching the union:**
   - `ok:false` → call `describeFailure(reason)` and render the red error panel
     (`kind:"error"`) or the neutral empty panel (`kind:"empty"`, the "no suitable game
     found" state), reusing the canonical panel classes from `catalog.astro:57-79`.
-Reuse `FormField` / `ServerError` from `src/components/auth/` and the
-genre `datalist` pattern from `GameForm.tsx:171` where practical. Keep all copy in the
-shared `describeFailure` map; do not inline reason strings.
+    Reuse `FormField` / `ServerError` from `src/components/auth/` and the
+    genre `datalist` pattern from `GameForm.tsx:171` where practical. Keep all copy in the
+    shared `describeFailure` map; do not inline reason strings.
 
 **Loading state**: do **not** rely on `SubmitButton`'s `pending` — it derives from
 `useFormStatus()` (`SubmitButton.tsx:12`), which only reports pending inside a native
@@ -358,10 +362,10 @@ None — no schema change. (Per `lessons.md`, a migration would require
 
 #### Automated
 
-- [ ] 1.1 Type-check + build passes: `npm run build`
-- [ ] 1.2 Lint passes: `npm run lint`
-- [ ] 1.3 `recommendationView.ts` unit tests pass: `npx vitest run src/lib/services/recommendationView.test.ts`
-- [ ] 1.4 Unit tests cover criteria validation, enrichment, and `describeFailure` for all five reasons
+- [x] 1.1 Type-check + build passes: `npm run build` — e83c9c7
+- [x] 1.2 Lint passes: `npm run lint` — e83c9c7
+- [x] 1.3 `recommendationView.ts` unit tests pass: `npx vitest run src/lib/services/recommendationView.test.ts` — e83c9c7
+- [x] 1.4 Unit tests cover criteria validation, enrichment, and `describeFailure` for all five reasons — e83c9c7
 
 #### Manual
 
@@ -373,9 +377,9 @@ None — no schema change. (Per `lessons.md`, a migration would require
 
 #### Automated
 
-- [ ] 2.1 Type-check + build passes: `npm run build`
-- [ ] 2.2 Lint passes: `npm run lint`
-- [ ] 2.3 Formatting clean: `npm run format`
+- [x] 2.1 Type-check + build passes: `npm run build`
+- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.3 Formatting clean: `npm run format`
 
 #### Manual
 

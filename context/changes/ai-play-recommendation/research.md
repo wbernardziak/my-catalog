@@ -81,8 +81,9 @@ isolated departure from convention and is the main thing `/10x-plan` must decide
 - **⚠ Type mismatch to handle at the call site:** `CatalogGame.preference` is `"liked" | "disliked" | null` ([`types.ts:97`](https://github.com/wbernardziak/my-catalog/blob/d0eeefb6390608dc84d993722179fb1c42338c9c/src/types.ts#L97)) but `mapRowToCandidateGame`'s `state.preference` param is `"liked" | "disliked" | undefined` ([`types.ts:138`](https://github.com/wbernardziak/my-catalog/blob/d0eeefb6390608dc84d993722179fb1c42338c9c/src/types.ts#L138)). Convert `null → undefined`: `preference: catalogGame.preference ?? undefined`. Passing `null` is both a TS error and would set an invalid `CandidateGame.preference`.
 - **Recommended one-liner** for the plan:
   ```ts
-  const candidates = (await listCatalogGames(supabase, user.id, {}))
-    .map(g => mapRowToCandidateGame(g, { played: g.played, preference: g.preference ?? undefined }));
+  const candidates = (await listCatalogGames(supabase, user.id, {})).map((g) =>
+    mapRowToCandidateGame(g, { played: g.played, preference: g.preference ?? undefined }),
+  );
   const result = await recommend(criteria, candidates);
   ```
 

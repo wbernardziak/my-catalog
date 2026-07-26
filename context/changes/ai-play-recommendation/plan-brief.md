@@ -29,16 +29,16 @@ a red error panel — with a visible loading state that never hangs past ~8s.
 
 ## Key Decisions
 
-| Decision | Choice | Why | Source |
-| --- | --- | --- | --- |
-| Request/response shape | JSON `POST /api/recommendations` + client `fetch` | Transient inline AI results don't fit the app's PRG-everywhere convention; isolated, documented departure | Plan |
-| HTTP status | Always `200` with the union in the body | Simplest, most robust client contract — switch on `ok`/`reason` | Plan |
-| Candidate scope | Whole live catalog, LLM ranks | Simplest; fits ≤5s NFR at household size; prompt already encodes ranking order | Plan |
-| Location | Dedicated `/play` page | Keeps catalog focused; matches the flow naming | Plan |
-| Criteria | Player count required; time + genre optional | Matches PRD's primary constraint while keeping the form quick | Plan |
-| Candidate derivation | Server-side from DB, never client-sent | Preserves the catalog-only guarantee at the trust boundary | Research |
-| Nav entry points | Inline on dashboard + catalog | Topbar renders only on the landing page, not authed pages | Research |
-| Testing | Extract pure logic to a tested module; manual-verify route + island | Repo has no Astro/DB/jsdom test harness | Research |
+| Decision               | Choice                                                              | Why                                                                                                       | Source   |
+| ---------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------- |
+| Request/response shape | JSON `POST /api/recommendations` + client `fetch`                   | Transient inline AI results don't fit the app's PRG-everywhere convention; isolated, documented departure | Plan     |
+| HTTP status            | Always `200` with the union in the body                             | Simplest, most robust client contract — switch on `ok`/`reason`                                           | Plan     |
+| Candidate scope        | Whole live catalog, LLM ranks                                       | Simplest; fits ≤5s NFR at household size; prompt already encodes ranking order                            | Plan     |
+| Location               | Dedicated `/play` page                                              | Keeps catalog focused; matches the flow naming                                                            | Plan     |
+| Criteria               | Player count required; time + genre optional                        | Matches PRD's primary constraint while keeping the form quick                                             | Plan     |
+| Candidate derivation   | Server-side from DB, never client-sent                              | Preserves the catalog-only guarantee at the trust boundary                                                | Research |
+| Nav entry points       | Inline on dashboard + catalog                                       | Topbar renders only on the landing page, not authed pages                                                 | Research |
+| Testing                | Extract pure logic to a tested module; manual-verify route + island | Repo has no Astro/DB/jsdom test harness                                                                   | Research |
 
 ## Scope
 
@@ -61,10 +61,10 @@ results / failure / no-match using the shared copy map.
 
 ## Phases at a Glance
 
-| Phase | Delivers | Key risk |
-| --- | --- | --- |
-| 1. Server foundation | Pure view module (tested) + JSON `POST /api/recommendations` | First JSON route in a PRG-only app; correct `null→undefined` preference handling |
-| 2. Page + island + nav | `/play` page, criteria form island with all result states, inline entry points | First client `fetch`; island rendering only manually verifiable |
+| Phase                  | Delivers                                                                       | Key risk                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| 1. Server foundation   | Pure view module (tested) + JSON `POST /api/recommendations`                   | First JSON route in a PRG-only app; correct `null→undefined` preference handling |
+| 2. Page + island + nav | `/play` page, criteria form island with all result states, inline entry points | First client `fetch`; island rendering only manually verifiable                  |
 
 **Prerequisites:** F-01 (done), S-01 catalog (done), S-04 per-member state (done).
 An OpenRouter key is needed only for happy-path manual verification; all other

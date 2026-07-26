@@ -1,4 +1,5 @@
 <!-- PLAN-REVIEW-REPORT -->
+
 # Plan Review: AI Play Recommendation with Reasoning
 
 - **Plan**: context/changes/ai-play-recommendation/plan.md
@@ -9,13 +10,13 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| End-State Alignment | PASS |
-| Frugal Execution | PASS |
-| Architectural Fit | PASS |
-| Blind Spots | WARNING |
-| Plan Completeness | WARNING |
+| Dimension           | Verdict |
+| ------------------- | ------- |
+| End-State Alignment | PASS    |
+| Frugal Execution    | PASS    |
+| Architectural Fit   | PASS    |
+| Blind Spots         | WARNING |
+| Plan Completeness   | WARNING |
 
 ## Grounding
 

@@ -377,9 +377,9 @@ None — no schema change. (Per `lessons.md`, a migration would require
 
 #### Automated
 
-- [x] 2.1 Type-check + build passes: `npm run build`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Formatting clean: `npm run format`
+- [x] 2.1 Type-check + build passes: `npm run build` — c21bfc6
+- [x] 2.2 Lint passes: `npm run lint` — c21bfc6
+- [x] 2.3 Formatting clean: `npm run format` — c21bfc6
 
 #### Manual
 

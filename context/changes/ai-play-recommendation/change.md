@@ -1,7 +1,7 @@
 ---
 change_id: ai-play-recommendation
 title: AI play recommendation with reasoning
-status: implementing
+status: implemented
 created: 2026-07-24
 updated: 2026-07-26
 ---

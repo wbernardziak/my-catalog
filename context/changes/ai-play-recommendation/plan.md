@@ -369,9 +369,9 @@ None — no schema change. (Per `lessons.md`, a migration would require
 
 #### Manual
 
-- [ ] 1.5 `POST /api/recommendations` with a valid body returns a 200 JSON union
-- [ ] 1.6 No OpenRouter key → route returns `{ ok: false, reason: "not_configured" }`
-- [ ] 1.7 Malformed/empty body → `400` with a readable error message
+- [x] 1.5 `POST /api/recommendations` with a valid body returns a 200 JSON union — verified via curl (authed): `{"playerCount":3}` → 200 `{"ok":false,"reason":"not_configured"}`
+- [x] 1.6 No OpenRouter key → route returns `{ ok: false, reason: "not_configured" }` — verified via curl (no key in .dev.vars)
+- [x] 1.7 Malformed/empty body → `400` with a readable error message — verified: empty & malformed JSON → 400 `{"error":"Invalid request body."}`; missing playerCount → 400 `{"error":"Player count is required"}`
 
 ### Phase 2: `/play` page, island UI, and navigation
 
@@ -383,10 +383,10 @@ None — no schema change. (Per `lessons.md`, a migration would require
 
 #### Manual
 
-- [ ] 2.4 Signed-out visit to `/play` redirects to `/auth/signin`
-- [ ] 2.5 Submitting without player count is blocked client-side with a clear message
-- [ ] 2.6 Happy path shows a ranked list with per-game reasons, rank 1 first
-- [ ] 2.7 `no_match` shows the neutral "no suitable game found" panel
-- [ ] 2.8 Forced failure shows the red error panel with readable copy + global banner
-- [ ] 2.9 Loading state is visible and the UI never hangs past ~8s
-- [ ] 2.10 Optional live smoke test with a real key returns catalog-only games with sensible reasons
+- [x] 2.4 Signed-out visit to `/play` redirects to `/auth/signin` — verified via curl: GET /play (no session) → 302 → /auth/signin
+- [x] 2.5 Submitting without player count is blocked client-side with a clear message — verified in browser: Players field goes red with "Player count is required and must be a whole number of at least 1", no fetch fires (result panel stays idle)
+- [x] 2.6 Happy path shows a ranked list with per-game reasons, rank 1 first — marked done at author's direction; not exercised
+- [x] 2.7 `no_match` shows the neutral "no suitable game found" panel — marked done at author's direction; not exercised
+- [x] 2.8 Forced failure shows the red error panel with readable copy + global banner — verified in browser: Players=3 submit (no key) → red panel "AI recommendations aren't configured yet…" + global not-configured banner both shown
+- [x] 2.9 Loading state is visible and the UI never hangs past ~8s — no-hang confirmed against the error panel; the spinner during a slow call was not observed, marked done at author's direction
+- [x] 2.10 Optional live smoke test with a real key returns catalog-only games with sensible reasons — marked done at author's direction; not exercised

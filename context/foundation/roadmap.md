@@ -3,7 +3,7 @@ project: MyCatalog
 version: 1
 status: draft
 created: 2026-07-09
-updated: 2026-07-24
+updated: 2026-07-28
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -34,7 +34,7 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 | S-02 | edit-and-archive-games     | edit a game and mark it deleted without losing history       | S-01          | FR-002                  | done |
 | S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | done |
 | S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike | S-01          | FR-003, FR-005          | done |
-| S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008   | proposed |
+| S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008   | done |
 | S-06 | preference-stats           | view preference statistics per household member              | S-04          | FR-006                  | done     |
 
 ## Streams
@@ -136,7 +136,7 @@ Foundations below assume these are present and do NOT recreate them.
 - **Unknowns:**
   - How should ties be broken among close matches (player count → genre → time → member preference per Business Logic) before the LLM ranks? — Owner: user. Blocks: no (Business Logic defines the order; `/10x-plan` designs the implementation).
 - **Risk:** The differentiator, but deliberately sequenced after the catalog north star per the `low-complexity` goal so it recommends over real data. Consumes S-04 preference/played data when present but degrades gracefully without it ("when those values exist").
-- **Status:** proposed
+- **Status:** done
 
 ### S-06: Preference statistics per member
 
@@ -185,3 +185,4 @@ Foundations below assume these are present and do NOT recreate them.
 - **S-03: a household member can filter the board-game catalog (e.g. by genre, player count, available time, played status, loan status) to quickly find matching titles.** — Zarchiwizowano 2026-07-11 → `context/archive/2026-07-11-filter-catalog/`. Lekcja: —.
 - **S-04: a household member can mark a game as played, set its loan status, and record a binary like/dislike for a played title — with played state and preference attributable to the correct member.** — Zarchiwizowano 2026-07-24 → `context/archive/2026-07-21-played-loan-and-preference/`. Lekcja: —.
 - **S-06: a household member can view preference statistics per household member (e.g. liked/disliked counts across played titles).** — Zarchiwizowano 2026-07-24 → `context/archive/2026-07-24-preference-stats/`. Lekcja: —.
+- **S-05: from a "What should we play?" flow, a household member enters play context (player count, available time, genre) and receives AI-ranked board-game suggestions drawn only from the household catalog, each with a short reasoning; a clear failure state if the AI is unavailable, and a "no suitable game found" state when nothing matches.** — Zarchiwizowano 2026-07-28 → `context/archive/2026-07-24-ai-play-recommendation/`. Lekcja: —.

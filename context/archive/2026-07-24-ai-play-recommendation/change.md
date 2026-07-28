@@ -1,9 +1,10 @@
 ---
 change_id: ai-play-recommendation
 title: AI play recommendation with reasoning
-status: impl_reviewed
+status: archived
+archived_at: 2026-07-28T14:23:29Z
 created: 2026-07-24
-updated: 2026-07-26
+updated: 2026-07-28
 ---
 
 ## Notes

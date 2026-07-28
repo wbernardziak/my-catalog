@@ -7,10 +7,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const supabase = createClient(context.request.headers, context.cookies);
 
   if (supabase) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    context.locals.user = user ?? null;
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      context.locals.user = user ?? null;
+    } catch {
+      // A transient Supabase failure must not 500 every protected route; treat an
+      // unresolvable session as unauthenticated (the gate below redirects to signin).
+      context.locals.user = null;
+    }
   } else {
     context.locals.user = null;
   }

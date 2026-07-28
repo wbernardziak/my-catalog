@@ -1,0 +1,23 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import RecommendationFlow from "@/components/play/RecommendationFlow";
+
+// No server data fetch: the island drives everything via the JSON route. The
+// global not-configured banner from Layout still renders automatically if the
+// OpenRouter key is missing.
+---
+
+<Layout title="What should we play?">
+  <div class="bg-cosmic min-h-screen p-4 md:p-8">
+    <div class="mx-auto max-w-3xl">
+      <header class="mb-8 flex items-center justify-between">
+        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+          What should we play?
+        </h1>
+        <a href="/dashboard" class="text-sm text-purple-300 hover:underline">← Dashboard</a>
+      </header>
+
+      <RecommendationFlow client:load />
+    </div>
+  </div>
+</Layout>

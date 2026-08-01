@@ -388,7 +388,7 @@ None beyond the existing suite. This change adds no data flow and no service int
 5. Sign out, confirm the theme still holds, switch while signed out, sign back in
 6. Corrupt the theme cookie in devtools; confirm fallback to Felt Table
 7. Repeat step 1–3 at 375px width
-8. Add a game with no play time and no player count; confirm the badges degrade rather than break
+8. ~~Add a game with no play time and no player count; confirm the badges degrade rather than break~~ — **NOT APPLICABLE**, see Open items §8: the schema forbids the state, so this is unreachable through the UI, the API, or SQL. The degradation it was reaching for is covered by the `gameMeta` unit tests instead
 
 ## Performance Considerations
 
@@ -411,6 +411,14 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
+> **Third pass, 2026-08-02.** Manual testing steps 1–7 were re-driven end to end against a
+> freshly restarted dev server and logged step by step; step 8 is now Not Applicable (Open
+> items §8) and the recommendation flow was skipped by request. No row changed state: every
+> `- [x]` Manual row below still holds, and 5.8 is still the only one open. Evidence from
+> that pass: 181 text nodes measured for contrast under Bright Shelf with 0 AA failures,
+> 0 elements with a radius >= 6px under Punchboard, 21 theme × page combinations at 375px
+> with no horizontal overflow, and a clean browser console across every catalog load.
+
 ### Phase 1: Shared chrome and starter removal
 
 #### Automated
@@ -425,7 +433,7 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 - [x] 1.6 All seven pages render the shared header with working navigation — manual check 2026-08-01 (click-through re-verified after `AppHeader` moved into `Layout.astro`)
 - [x] 1.7 Signed-out pages show sign-in/sign-up rather than member nav — manual check 2026-08-01 (exercised via the signed-out auth pages and sign-out → sign-in)
-- [ ] 1.8 Header holds at mobile width
+- [x] 1.8 Header holds at mobile width — manual check 2026-08-01 (375px: header stacks to mark / nav / theme / account rows, nothing clipped or overflowing)
 
 ### Phase 2: Token layer, Felt Table + Bright Shelf, mark, and landing
 
@@ -439,9 +447,9 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Manual
 
-- [ ] 2.6 Landing page renders in Felt Table and describes MyCatalog
+- [x] 2.6 Landing page renders in Felt Table and describes MyCatalog — manual check 2026-08-01
 - [x] 2.7 Hardcoding the theme to `"shelf"` renders landing and header correctly in Bright Shelf — OBSOLETE 2026-08-01, not performed: a phase-2 scaffold step from before the switcher existed, superseded by the real switcher verified in 4.5 and 4.8
-- [ ] 2.8 `button.tsx`-derived controls correct under Felt (with `dark`) and Shelf (without)
+- [x] 2.8 `button.tsx`-derived controls correct under Felt (with `dark`) and Shelf (without) — manual check 2026-08-01 (no light-on-light under Shelf; primary/secondary/destructive and the card toggles all resolve)
 - [x] 2.9 Every `:root` token role has a counterpart in `.theme-shelf` — 1b3980b, now statically enforced by `lint:contrast`, which fails on a theme block missing a role (deliberate-break check)
 
 ### Phase 3: Conversion sweep and the colour-literal guard
@@ -458,14 +466,14 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Manual
 
-- [ ] 3.8 Chunk A (`auth/`) verified under both themes
-- [ ] 3.9 Chunk B (`catalog/`) verified under both themes
-- [ ] 3.10 Chunk C (`play/`) verified under both themes
-- [ ] 3.11 Chunk D (pages and chrome) verified under both themes
-- [ ] 3.12 Felt Table renders correctly across all seven pages
-- [ ] 3.13 Bright Shelf renders correctly across all seven pages
+- [x] 3.8 Chunk A (`auth/`) verified under both themes — manual check 2026-08-01
+- [x] 3.9 Chunk B (`catalog/`) verified under both themes — manual check 2026-08-01 (all seven fixture cards, including the long title and the 1-player / 4–12+ / 10 min / 240 min edge cases)
+- [x] 3.10 Chunk C (`play/`) verified under both themes — manual check 2026-08-01 (criteria form and the empty/error result panels; see 5.8 for the results list)
+- [x] 3.11 Chunk D (pages and chrome) verified under both themes — manual check 2026-08-01
+- [x] 3.12 Felt Table renders correctly across all seven pages — manual check 2026-08-01
+- [x] 3.13 Bright Shelf renders correctly across all seven pages — manual check 2026-08-01 (no text found carrying a dark-theme colour)
 - [x] 3.14 Text legible, focus rings visible, semantic states distinguishable in both themes — 1b3980b, measured against WCAG AA rather than eyeballed, and now held by `lint:contrast` (81 assertions of every ink role against every surface it can land on)
-- [ ] 3.15 Layout unchanged from phase 1 at desktop and mobile widths
+- [x] 3.15 Layout unchanged from phase 1 at desktop and mobile widths — manual check 2026-08-01 (all 21 theme × page combinations measured at 375px: `documentElement.scrollWidth <= innerWidth` everywhere, so no horizontal overflow)
 
 ### Phase 4: Cookie persistence and the theme switcher
 
@@ -480,10 +488,10 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 - [x] 4.5 Switching changes the theme and returns to the same page — manual check 2026-08-01
 - [x] 4.6 Choice survives reload, navigation, and sign-out → sign-in — manual check 2026-08-01
-- [ ] 4.7 No flash of the wrong theme on hard refresh
+- [x] 4.7 No flash of the wrong theme on hard refresh — manual check 2026-08-01, and structural rather than lucky: `Layout.astro:16` stamps `rootClass()` on `<html>` server-side and nothing on the client ever touches `documentElement` or a `theme-*` class (grep over `src/`), so the first painted frame already carries the theme
 - [x] 4.8 Switching works while signed out — manual check 2026-08-01 (switched from a signed-out auth page)
-- [ ] 4.9 Corrupted cookie falls back to Felt Table
-- [ ] 4.10 Switcher usable at mobile width
+- [x] 4.9 Corrupted cookie falls back to Felt Table — manual check 2026-08-01; the cookie is `httpOnly`, so this was driven server-side against the real middleware. `GARBAGE-not-a-theme`, `../../etc/passwd`, empty, and `PUNCHBOARD` (wrong case) all render `class="theme-felt dark"`, same as no cookie at all — no error, no blank page
+- [x] 4.10 Switcher usable at mobile width — manual check 2026-08-01 (375px: full-width labelled `<select>` on its own header row)
 
 ### Phase 5: Punchboard and the badge system
 
@@ -495,20 +503,50 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Manual
 
-- [ ] 5.4 All three themes render correctly across all seven pages at desktop and mobile widths
-- [ ] 5.5 Punchboard corners and shadows consistent across every component
+- [x] 5.4 All three themes render correctly across all seven pages at desktop and mobile widths — manual check 2026-08-01 (21 combinations at 1920px and again at 375px)
+- [x] 5.5 Punchboard corners and shadows consistent across every component — manual check 2026-08-01 (cards, inputs, selects, buttons, and badges are all square with the hard offset shadow; the only rounded thing left is the mark tile, which is the brand asset and is deliberately identical in all three themes)
 - [x] 5.6 Pips, duration, and played meeples legible in all three themes — 1b3980b; the played meeple was a live AA failure at 2.46:1 on a Felt Table card, fixed by splitting `--success-mark` out of `--success` and now guard-enforced
-- [ ] 5.7 Genre, played, and loan state distinguishable without colour alone
-- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — unblocked 2026-08-01 (provider now responds in 0.3–0.5s, see Open items §1); still needs driving against a real response rather than the stub
+- [x] 5.7 Genre, played, and loan state distinguishable without colour alone — manual check 2026-08-01; every state carries a text label plus a distinct glyph, so none of them rests on hue: genre is a word, played is "Played"/"Not played yet" with a filled vs outline meeple, loan is "On the shelf"/"Loaned" with a shelf vs outbound-arrow icon, player count is a pip row, and the duration glyph changes with the bucket
+- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — **stats half done** 2026-08-01 (the played meeple on `/stats` is the same mark, in the same role, as the catalog card). The recommendation half is re-blocked, on a new and external cause: the OpenRouter free tier is out of daily requests, see Open items §1. **Still open 2026-08-02**: deliberately skipped in the third pass at the user's request to avoid spending the day's quota. Everything else it depends on is verified, so this is one flow away from closing
 
 ## Open items
 
-> Recorded 2026-08-01 after the manual-check pass. 9 of 26 Manual rows are signed off
-> above; the 17 still open are open because nobody has driven them, not because they
-> failed. Impl-review F5 stands: `implemented` means the automated rows are green, not
-> that the change has been looked at.
+> Updated 2026-08-01 after a **second, full manual pass** that drove the 17 rows the first
+> pass had left untouched. 25 of 26 Manual rows are now signed off. The single row still
+> open (5.8) is blocked on an external quota, not on anything in this change. Nothing in
+> the second pass failed: no theme regression, no layout break, no contrast surprise.
+>
+> Updated again 2026-08-02 after a **third pass**, run against a freshly restarted dev
+> server and logged step by step to an external run log. Seven of the eight manual testing
+> steps ran end to end; the recommendation flow was skipped by request (still the §1 quota)
+> and step 8 turned out to be unreachable by design (§8). Nothing failed. Two new entries
+> come out of it: §8 (step 8 asks for a state the schema forbids) and §9 (a thin AA margin
+> the static guard structurally cannot see). §6's fetch error did **not** reproduce.
 
-### 1. Recommendation latency — RESOLVED 2026-08-01, stays free
+### 1. Recommendation latency — fixed; now blocked on the free-tier daily quota
+
+**2026-08-01 update.** The latency fix holds. Measured through the app's own endpoint,
+three consecutive calls returned in **367ms, 444ms, 713ms** — no timeouts, comfortably
+inside `TIMEOUT_MS = 8000` and under the 5s NFR target. That part of §1 is settled.
+
+What blocks 5.8 now is different and external: the OpenRouter account is **out of free-tier
+requests for the day**. The provider returns
+
+```
+HTTP 429  Rate limit exceeded: free-models-per-day   (X-RateLimit-Limit: 50, Remaining: 0)
+```
+
+which the service correctly maps to `provider_error`, and the UI correctly renders as
+"The recommendation service is unavailable right now. Please try again shortly." The
+degradation path is therefore _verified_; only the success path is not.
+
+The quota resets at **02:00 CEST on 2026-08-02** (`X-RateLimit-Reset: 1785628800000`). The
+benchmarking runs recorded below are what consumed the 50. To close 5.8, re-run the flow
+after the reset — or add credits, which raises the free-model allowance to 1000/day.
+
+The original investigation follows, unchanged.
+
+### 1a. Recommendation latency — RESOLVED 2026-08-01, stays free
 
 The flapping between `timeout` and `invalid_response` was never about _which_ model. The
 configured `nvidia/nemotron-3-super-120b-a12b:free` was spending seconds and hundreds of tokens
@@ -537,7 +575,12 @@ optimisation.
 
 5.8 is no longer blocked on a decision — it just needs driving against a real response.
 
-### 2. Aesthetic sign-off needed
+### 2. Aesthetic sign-off needed — review page added 2026-08-01, decision still open
+
+Open `context/changes/visual-identity-themes/contrast-review.html` in a browser. It shows all
+four changes old-vs-new on the real surface each one lands on, with the ratios recomputed from
+`global.css` at review time. Self-contained, not wired into the app, never shipped — `src/` is
+the only thing the build and the colour guard look at.
 
 Contrast was fixed against measured WCAG AA targets, not by eye. All pass, but these visibly
 depart from the original palette intent and are judgement calls:
@@ -552,13 +595,16 @@ depart from the original palette intent and are judgement calls:
 The meeple is the biggest shift — noticeably lighter and sager — and was a genuine live AA
 failure the first browser audit missed.
 
-### 3. Create and edit flows not re-exercised
+### 3. Create and edit flows — CLOSED 2026-08-01
 
-The interaction pass after the layout refactor covered header navigation, the Like toggle under
-an active filter (PRG round-trip preserves `?genre=`), delete-confirm and cancel, and theme
-switching signed out. **Game create and edit were not driven** since `AppHeader` moved into
-`Layout.astro`. Logic untouched and the suite is green, but nobody has watched those forms.
-~15 minutes by hand, or fold into E2E.
+Both driven end to end in the second pass. Created `QA Create Check` (Strategy, 2–5 players,
+75 min) from the catalog form: the card appeared at the top of the list with the right pips,
+duration glyph, and "On the shelf" badge, and the form reset. Opened Edit on it: the inline
+form pre-populated from the row, and saving a changed title and play time (75 → 120) updated
+both the card and its duration glyph. Deleted it again through delete-confirm.
+
+The fixture set is back to its original contents (the test row is soft-deleted via
+`deleted_at`, which is the app's normal delete, so it is out of every live view).
 
 ### 4. The contrast guard is static only
 
@@ -572,6 +618,12 @@ place. Only a browser validates the markup — note the static check found the 2
 precisely because the browser audit measured text nodes and the meeple is an SVG. Different
 blind spots. If Playwright arrives for the `/10x-e2e` phases, porting the ad-hoc runtime audit
 (24 theme × page combinations) into a spec would subsume 3.8–3.11 permanently.
+
+**A third blind spot found 2026-08-02, shared by both checks:** neither sees a
+`bg-clip-text` gradient. The static guard cannot, because a gradient is not an
+ink-role-on-surface pair; the runtime audit cannot, because such an element's computed
+`color` is `transparent` and measuring it yields a meaningless ratio. See §9 — a real
+heading in this change sits 0.03 above its AA threshold and both checks report it clean.
 
 ### 5. QA fixtures still in local Supabase
 
@@ -593,3 +645,155 @@ Editing `package.json` mid-build can leave two copies of React in the SSR graph
 truncated page**: the HTML stream aborts at the first React island, so header and static markup
 render and the page simply stops — it looks exactly like a data or auth bug. Cure:
 `rm -rf node_modules/.vite` and restart. One cold-start occurrence right after restart is normal.
+
+**Confirmed again 2026-08-01.** A long-running dev server had drifted into this state and
+`/catalog` rendered "Could not load the catalog. Please try again." with a
+`Failed to fetch dynamically imported module` in the browser console — i.e. it presented as a
+_data_ failure, not a build one, exactly as warned above. `rm -rf node_modules/.vite` plus a
+restart cleared it, and the documented one-off cold-start occurrence appeared immediately after
+the dep re-optimization and then never again.
+
+**Mitigated 2026-08-01.** `catalog.astro` and `stats.astro` caught their data-fetch throw with a
+bare `} catch {` and reported only "Could not load the catalog." Both now `console.error` the
+cause first, so the dev-server log names it — verified with a deliberate break, which produced
+`[catalog] failed to load games or genres Error: ... at src/pages/catalog.astro:33` plus a full
+stack. This matters in production too: on Workers those throws previously left no trace at all.
+`npm run dev:clean` was added as the one-command cure.
+
+**The two failure modes are distinguishable — and an earlier draft of this note conflated them.**
+Established by experiment (a deliberate throw inside `GameCard`, reverted):
+
+| What you see                                                                | What it means                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page truncates after the filters, **no error panel**, no "Add a game" aside | A React island threw during SSR. The HTML stream aborts at the first island; `catalog.astro`'s try/catch does **not** wrap the island renders, so no panel is produced. This is the React-copy/module-graph failure. |
+| "Could not load the catalog" **panel**, rest of the page intact             | `listCatalogGames` / `listGenres` threw — a real query failure, or a service module that failed to resolve. Now logged with its cause.                                                                               |
+
+So the error panel is _not_ the tell for a corrupted SSR graph; a truncated page is. That
+distinction is what the first ten minutes of the 2026-08-01 debugging session cost, and it is
+why the log line was added.
+
+**Investigation of the intermittent panel, 2026-08-01.** Two hypotheses were tested, to find
+where a fix would belong.
+
+_Auth / refresh-token rotation — DISCONFIRMED._ `supabase/config.toml` has
+`enable_refresh_token_rotation = true` with `refresh_token_reuse_interval = 10`, and
+`createClient` has a read/write asymmetry that looked dangerous: `getAll()` reads the frozen
+`Cookie` request header while `setAll()` writes to `Astro.cookies` (the response). Two clients
+are built per protected page — one in `middleware.ts`, one in the page — so a token refreshed by
+the middleware is invisible to the page's client. `auth.refresh_tokens` also showed two
+divergent lineages and a rotation 94s before the observed failure, which fit the story.
+
+It does not hold. Driven end to end: a real session was minted for the QA user via the admin
+magiclink endpoint, its refresh token rotated, the session marked expired in the cookie, and
+`/catalog` requested with it. **The page rendered correctly** — GoTrue keeps the rotated token
+usable, so the "Invalid Refresh Token: Already Used" path is not reachable in this
+configuration. The asymmetry in `createClient` is real but benign here; do not "fix" it on the
+strength of this bug.
+
+_Dev-server module resolution — remains the only explanation that fits._ The production build
+served `/catalog` 12/12 clean under the same session. And the decisive clue is co-occurrence:
+the original failure showed the panel **and** a client-side
+`Failed to fetch dynamically imported module` for `GameForm` in the same request. No Supabase or
+auth fault can produce that second symptom; a dev server that cannot serve modules produces
+both at once — the client fetch fails, and the page's server-side import of
+`@/lib/services/games` throws inside the try.
+
+**Conclusion: there is nothing to fix in application code.** This is a dev-pipeline failure with
+no production analogue — Workers serves a bundle, with no on-demand module resolution. The two
+mitigations are the ones already landed: `npm run dev:clean`, and the log line, which will name
+the failing module exactly the next time it happens. This was not reproduced on demand, so it is
+inference from elimination plus co-occurrence, not proof.
+
+**Did not reproduce 2026-08-02.** The third pass was set up specifically to catch it: the dev
+server was restarted but `node_modules/.vite` was deliberately left intact, since clearing it
+would have removed the only thing that can trigger the failure. Console capture was armed and
+`/catalog` loaded fresh. Six messages, all benign (`[vite] connecting/connected` ×2, the React
+DevTools notice ×2) — no `Failed to fetch dynamically imported module`, no `Invalid hook call`,
+no truncated page, across every catalog load in the run. Consistent with the conclusion above
+(a cache that has not yet drifted), and it does not weaken it; it just means the intermittent
+window was not open. The tells to look for remain the two rows of the table above.
+
+### 7. Landing page ignores auth state — FIXED 2026-08-01
+
+`/` used to render the "Sign in" / "Create an account" hero even for a signed-in member, while
+the header above it correctly showed member nav and the account email. `Welcome.astro` now reads
+`Astro.locals.user` and swaps the CTA pair for a single "Go to your catalog" when a session is
+present; the descriptive copy is unchanged, because it describes the product rather than the
+funnel.
+
+Chosen over redirecting `/` to `/dashboard` in middleware, which would have been two lines but
+would make the landing page unreachable for anyone signed in — including for judging the themes,
+which is what put this on the list. Verified both ways: signed in renders only the catalog CTA,
+signed out still renders both `/auth/signin` and `/auth/signup`.
+
+### 8. Manual testing step 8 asks for a state the schema forbids — NOT APPLICABLE 2026-08-02
+
+Step 8 reads "Add a game with no play time and no player count; confirm the badges degrade
+rather than break". Driven through the real "Add a game" panel with those three fields left
+empty, the form refuses the submission and renders inline validation:
+
+```
+Min players       -> "Minimum players must be a whole number of at least 1"
+Max players       -> "Maximum players must be a whole number of at least 1"
+Average play time -> "Average play time must be greater than 0"
+```
+
+The database refuses it underneath, which is what makes this structural rather than a form
+quirk — `supabase/migrations/20260710120000_create_games.sql:18-20`:
+
+```sql
+min_players      int not null check (min_players >= 1),
+max_players      int not null check (max_players >= min_players),
+avg_play_minutes int not null check (avg_play_minutes > 0),
+```
+
+All three are `not null` with CHECK constraints, so the state is unreachable through the UI,
+the API, or direct SQL. Nothing to verify in a browser and nothing to fix.
+
+The degradation the step was reaching for is real, though — `gameMeta` is defensive about
+inputs it can never receive from this table today, which is correct for a function that may
+later be fed an import or a nullable column. That is verified at the only level where the
+inputs can occur, and it passes:
+
+```
+$ npx vitest run src/lib/services/gameMeta.test.ts
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+
+  playerPips "falls back to unknown for missing values"
+  playerPips "treats zero and negative counts as unusable"
+  playerPips "infers the missing end of a half-filled range"
+  playerPips "degrades a reversed range instead of drawing an empty row"
+  playerPips "ignores non-numeric input"
+  duration   "returns the unknown state for missing, zero, and invalid play time"
+```
+
+Step 8 in "Manual testing steps" is struck through accordingly. If nullable player counts or
+play time ever arrive (a BGG import is the obvious route), this becomes reachable and the step
+should come back.
+
+### 9. Punchboard heading gradient clears AA by 0.03 — no defect, thin margin
+
+Found by the runtime contrast audit in the third pass, as a false positive worth chasing. The
+page headings use a `bg-clip-text` gradient, so their computed `color` is `transparent`:
+
+```
+h1 class = "from-primary to-secondary mb-8 bg-gradient-to-r bg-clip-text text-3xl
+            font-bold text-transparent"
+background-image = linear-gradient(to right in oklab,
+                     rgb(217, 131, 36) 0%, rgb(46, 110, 107) 100%)
+```
+
+Measuring the stops instead of the transparent `color`, against the Punchboard surface
+`rgb(23, 23, 26)`, at 30px/700 (so the 3:1 large-text threshold applies):
+
+| stop                        | ratio     | needs | result |
+| --------------------------- | --------- | ----- | ------ |
+| `rgb(217,131,36)` (primary) | 6.15:1    | 3:1   | pass   |
+| `rgb(46,110,107)` (secondary) | **3.03:1** | 3:1   | pass, by 0.03 |
+
+Both ends pass, so **nothing is broken and no row is affected**. Recording it because the
+margin is thin enough that any future darkening of `--secondary`, or lightening of the
+Punchboard surface, silently pushes a heading under AA — and per §4 neither the static guard
+nor the runtime audit would report it. If the palette moves again, re-measure this pair by
+hand, or teach `check-contrast.mjs` about the gradient-heading pairing specifically.

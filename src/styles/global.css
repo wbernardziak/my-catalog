@@ -201,11 +201,20 @@
  * frosted-glass effect the starter used everywhere is dropped. Applied at theme
  * level so no component has to know which theme is active.
  */
-.theme-punchboard :is(.rounded-xl, .rounded-2xl, .rounded-lg, .rounded-full, .rounded-md) {
+/*
+ * `.animate-spin` is excluded deliberately: a spinner squared off reads as a
+ * rendering bug rather than a design choice, and it is the one round shape that
+ * has to stay round in every theme.
+ */
+.theme-punchboard :is(.rounded-xl, .rounded-2xl, .rounded-lg, .rounded-full, .rounded-md):not(.animate-spin) {
   border-radius: var(--radius);
 }
 
-.theme-punchboard :is([class*="shadow"], [class*="backdrop-blur"]) {
+/*
+ * `shadow-none` is excluded: matching it would force a shadow onto components
+ * that explicitly asked for none, which is the opposite of what the author meant.
+ */
+.theme-punchboard :is([class*="shadow-"]:not([class*="shadow-none"]), [class*="backdrop-blur"]) {
   box-shadow: 3px 3px 0 rgb(0 0 0 / 0.45);
   backdrop-filter: none;
 }

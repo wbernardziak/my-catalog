@@ -3,7 +3,7 @@ project: MyCatalog
 version: 1
 status: draft
 created: 2026-07-09
-updated: 2026-07-28
+updated: 2026-08-01
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -27,24 +27,26 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 
 ## At a glance
 
-| ID   | Change ID                  | Outcome (user can …)                                         | Prerequisites | PRD refs                | Status   |
-| ---- | -------------------------- | ----------------------------------------------------------- | ------------- | ----------------------- | -------- |
-| F-01 | llm-recommendation-service | (foundation) LLM recommendation service wired with guardrails | —             | FR-007, FR-008, NFR     | done     |
-| S-01 | add-and-view-games         | add a board game with details and see it in the shared catalog | —             | FR-001, FR-002, FR-003  | done     |
-| S-02 | edit-and-archive-games     | edit a game and mark it deleted without losing history       | S-01          | FR-002                  | done |
-| S-03 | filter-catalog             | filter the catalog by genre, players, time, and status       | S-01          | FR-004                  | done |
-| S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike | S-01          | FR-003, FR-005          | done |
-| S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008   | done |
-| S-06 | preference-stats           | view preference statistics per household member              | S-04          | FR-006                  | done     |
+| ID   | Change ID                  | Outcome (user can …)                                            | Prerequisites | PRD refs                        | Status  |
+| ---- | -------------------------- | --------------------------------------------------------------- | ------------- | ------------------------------- | ------- |
+| F-01 | llm-recommendation-service | (foundation) LLM recommendation service wired with guardrails   | —             | FR-007, FR-008, NFR             | done    |
+| S-01 | add-and-view-games         | add a board game with details and see it in the shared catalog  | —             | FR-001, FR-002, FR-003          | done    |
+| S-02 | edit-and-archive-games     | edit a game and mark it deleted without losing history          | S-01          | FR-002                          | done    |
+| S-03 | filter-catalog             | filter the catalog by genre, players, time, and status          | S-01          | FR-004                          | done    |
+| S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike  | S-01          | FR-003, FR-005                  | done    |
+| S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008           | done    |
+| S-06 | preference-stats           | view preference statistics per household member                 | S-04          | FR-006                          | done    |
+| S-07 | visual-identity-themes     | see a board-game visual identity and pick one of three themes   | S-01…S-06     | — (post-PRD-v1; NFR responsive) | planned |
 
 ## Streams
 
 Navigation aid — groups slices that share a prerequisite chain. The canonical order is still the dependency graph below; this table is a proposed reading order across parallel paths.
 
-| Stream | Theme                    | Chain                                             | Note                                                                          |
-| ------ | ------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------- |
-| A      | Catalog & collection state | `S-01` → `S-02` / `S-03` / `S-04` → `S-06`        | The north-star spine; branches (edit, filter, per-member state) all run parallel off `S-01`. |
-| B      | AI recommendation        | `F-01` → `S-05`                                   | `F-01` runs parallel with Stream A from the start; `S-05` joins Stream A at `S-01` (needs a populated catalog). |
+| Stream | Theme                      | Chain                                      | Note                                                                                                                          |
+| ------ | -------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| A      | Catalog & collection state | `S-01` → `S-02` / `S-03` / `S-04` → `S-06` | The north-star spine; branches (edit, filter, per-member state) all run parallel off `S-01`.                                  |
+| B      | AI recommendation          | `F-01` → `S-05`                            | `F-01` runs parallel with Stream A from the start; `S-05` joins Stream A at `S-01` (needs a populated catalog).               |
+| C      | Presentation               | (`S-01`…`S-06`) → `S-07`                   | Cross-cutting; deliberately last so the token extraction sweeps every finished screen once instead of being redone per slice. |
 
 ## Baseline
 
@@ -150,21 +152,43 @@ Foundations below assume these are present and do NOT recreate them.
 - **Risk:** Lowest priority (the only nice-to-have FR); depends on the per-member preference data from S-04. Safe to defer or park if capacity runs short.
 - **Status:** done
 
+### S-07: Board-game visual identity with theme selection
+
+- **Outcome:** a household member sees MyCatalog in a board-game visual identity instead of the starter's space theme — **Felt Table as the default** — and can switch between three built-in themes (Felt Table, Bright Shelf, Punchboard) from inside the app, with the choice persisting across visits and rendering server-side so no screen flashes the wrong theme.
+- **Change ID:** visual-identity-themes
+- **PRD refs:** — (no FR covers visual identity; PRD v1 is feature-complete as of S-05. Touches the NFR "works on current desktop and mobile browsers as a responsive web app" — all three themes must hold up at mobile widths.)
+- **Prerequisites:** S-01…S-06 (all themed surfaces must exist before the sweep)
+- **Parallel with:** — (last slice; nothing else in flight)
+- **Blockers:** —
+- **Themes (design decided 2026-08-01, see the identity pitch):**
+  - **Felt Table (default)** — felt `#1d3b32`, card stock `#f2e9d8`, brass `#c8a24a`, walnut `#6b4a2f`, lacquer `#8c3b32`; old-style serif titles. Closest to the current dark UI, so it carries the smallest diff.
+  - **Bright Shelf** — paper `#f6f4ef`, ink `#17181c`, meeple red `#c0442a`, pine `#204b45`, amber `#e8b23c`; one grotesque at two weights. The only light theme; proves the token layer actually works.
+  - **Punchboard** — press black `#17171a`, chipboard `#ded0b4`, token orange `#d98324`, rust `#b04a2a`, board teal `#2e6e6b`; condensed uppercase, square corners, hard offset shadows.
+- **Scope beyond colour:** retire the starter's fingerprints (`Layout.astro` default title "10x Astro Starter", `Welcome.astro` hero copy, `public/template.png`, the starter favicon); rename the `bg-cosmic` utility so the metaphor lives in the code; one SVG mark shipped as favicon + Topbar wordmark; a shared badge system where genre, played state, and loan status read through shape as well as colour (pips for player count, die for duration) across catalog, play, and stats.
+- **Unknowns:**
+  - Where the theme choice persists — a cookie read server-side (no migration, no flash, per-browser) vs. a Supabase profile column (syncs across devices, needs a migration + RLS). Owner: user. Blocks: no (plan on the cookie under the `low-complexity` goal; confirm during `/10x-plan`).
+  - Whether Punchboard's condensed display face is self-hosted as an inlined webfont or falls back to a system condensed stack. Owner: user. Blocks: no (system stack is the safe default; the theme degrades rather than breaks).
+- **Risk:** The widest-touching change so far — the blue→purple gradient and `text-purple-300` are hardcoded across ~10 files and every screen uses `bg-cosmic`. Mitigated by doing it in that order: first move colour into the token block that already exists in `src/styles/global.css` (whose `--primary`/`--accent`/`--card` set is pure grayscale and unused today), then themes two and three are data rather than code. Shipping three themes instead of one is only affordable _because_ of that extraction; if the extraction is skipped, this slice triples in cost.
+- **Status:** planned
+
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                  | Suggested task title                                  | Ready for `/10x-plan` | Notes                                   |
-| ---------- | -------------------------- | ----------------------------------------------------- | --------------------- | --------------------------------------- |
-| F-01       | llm-recommendation-service | Wire guarded LLM recommendation service               | yes                   | Run `/10x-plan llm-recommendation-service`; parallel with S-01 |
-| S-01       | add-and-view-games         | Add and view board games (north star)                 | yes                   | Run `/10x-plan add-and-view-games`      |
-| S-02       | edit-and-archive-games     | Edit and soft-delete board games                      | no                    | Needs S-01                              |
-| S-03       | filter-catalog             | Filter the board-game catalog                         | no                    | Needs S-01                              |
-| S-04       | played-loan-and-preference | Played/loan status and binary preference              | no                    | Needs S-01                              |
-| S-05       | ai-play-recommendation     | AI "what should we play?" recommendation with reasoning | no                  | Needs F-01 + S-01                       |
-| S-06       | preference-stats           | Preference statistics per member                      | no                    | Needs S-04; nice-to-have                |
+| Roadmap ID | Change ID                  | Suggested task title                                            | Ready for `/10x-plan` | Notes                                                          |
+| ---------- | -------------------------- | --------------------------------------------------------------- | --------------------- | -------------------------------------------------------------- |
+| F-01       | llm-recommendation-service | Wire guarded LLM recommendation service                         | yes                   | Run `/10x-plan llm-recommendation-service`; parallel with S-01 |
+| S-01       | add-and-view-games         | Add and view board games (north star)                           | yes                   | Run `/10x-plan add-and-view-games`                             |
+| S-02       | edit-and-archive-games     | Edit and soft-delete board games                                | no                    | Needs S-01                                                     |
+| S-03       | filter-catalog             | Filter the board-game catalog                                   | no                    | Needs S-01                                                     |
+| S-04       | played-loan-and-preference | Played/loan status and binary preference                        | no                    | Needs S-01                                                     |
+| S-05       | ai-play-recommendation     | AI "what should we play?" recommendation with reasoning         | no                    | Needs F-01 + S-01                                              |
+| S-06       | preference-stats           | Preference statistics per member                                | no                    | Needs S-04; nice-to-have                                       |
+| S-07       | visual-identity-themes     | Board-game identity + three-theme selector (default Felt Table) | yes                   | Run `/10x-plan visual-identity-themes`; all prerequisites done |
 
 ## Open Roadmap Questions
 
-(No cross-cutting open questions — PRD `## Open Questions` is empty. Per-slice unknowns live in their slices; none block planning today.)
+(PRD `## Open Questions` is empty. Per-slice unknowns live in their slices; none block planning today.)
+
+- **S-07 ships ahead of the PRD.** PRD v1 has no requirement covering visual identity or user-selectable themes — it was written for the MVP feature set, which closed with S-05. S-07 is recorded here as agreed scope; if more post-MVP presentation work follows, fold it into a PRD v2 rather than growing the roadmap past its source document. Owner: user. Blocks: no.
 
 ## Parked
 

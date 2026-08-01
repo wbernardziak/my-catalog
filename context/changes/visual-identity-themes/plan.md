@@ -423,8 +423,8 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Manual
 
-- [ ] 1.6 All seven pages render the shared header with working navigation
-- [ ] 1.7 Signed-out pages show sign-in/sign-up rather than member nav
+- [x] 1.6 All seven pages render the shared header with working navigation — manual check 2026-08-01 (click-through re-verified after `AppHeader` moved into `Layout.astro`)
+- [x] 1.7 Signed-out pages show sign-in/sign-up rather than member nav — manual check 2026-08-01 (exercised via the signed-out auth pages and sign-out → sign-in)
 - [ ] 1.8 Header holds at mobile width
 
 ### Phase 2: Token layer, Felt Table + Bright Shelf, mark, and landing
@@ -440,9 +440,9 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 #### Manual
 
 - [ ] 2.6 Landing page renders in Felt Table and describes MyCatalog
-- [ ] 2.7 Hardcoding the theme to `"shelf"` renders landing and header correctly in Bright Shelf
+- [x] 2.7 Hardcoding the theme to `"shelf"` renders landing and header correctly in Bright Shelf — OBSOLETE 2026-08-01, not performed: a phase-2 scaffold step from before the switcher existed, superseded by the real switcher verified in 4.5 and 4.8
 - [ ] 2.8 `button.tsx`-derived controls correct under Felt (with `dark`) and Shelf (without)
-- [ ] 2.9 Every `:root` token role has a counterpart in `.theme-shelf`
+- [x] 2.9 Every `:root` token role has a counterpart in `.theme-shelf` — 1b3980b, now statically enforced by `lint:contrast`, which fails on a theme block missing a role (deliberate-break check)
 
 ### Phase 3: Conversion sweep and the colour-literal guard
 
@@ -464,7 +464,7 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 - [ ] 3.11 Chunk D (pages and chrome) verified under both themes
 - [ ] 3.12 Felt Table renders correctly across all seven pages
 - [ ] 3.13 Bright Shelf renders correctly across all seven pages
-- [ ] 3.14 Text legible, focus rings visible, semantic states distinguishable in both themes
+- [x] 3.14 Text legible, focus rings visible, semantic states distinguishable in both themes — 1b3980b, measured against WCAG AA rather than eyeballed, and now held by `lint:contrast` (81 assertions of every ink role against every surface it can land on)
 - [ ] 3.15 Layout unchanged from phase 1 at desktop and mobile widths
 
 ### Phase 4: Cookie persistence and the theme switcher
@@ -478,10 +478,10 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Manual
 
-- [ ] 4.5 Switching changes the theme and returns to the same page
-- [ ] 4.6 Choice survives reload, navigation, and sign-out → sign-in
+- [x] 4.5 Switching changes the theme and returns to the same page — manual check 2026-08-01
+- [x] 4.6 Choice survives reload, navigation, and sign-out → sign-in — manual check 2026-08-01
 - [ ] 4.7 No flash of the wrong theme on hard refresh
-- [ ] 4.8 Switching works while signed out
+- [x] 4.8 Switching works while signed out — manual check 2026-08-01 (switched from a signed-out auth page)
 - [ ] 4.9 Corrupted cookie falls back to Felt Table
 - [ ] 4.10 Switcher usable at mobile width
 
@@ -497,6 +497,91 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 - [ ] 5.4 All three themes render correctly across all seven pages at desktop and mobile widths
 - [ ] 5.5 Punchboard corners and shadows consistent across every component
-- [ ] 5.6 Pips, duration, and played meeples legible in all three themes
+- [x] 5.6 Pips, duration, and played meeples legible in all three themes — 1b3980b; the played meeple was a live AA failure at 2.46:1 on a Felt Table card, fixed by splitting `--success-mark` out of `--success` and now guard-enforced
 - [ ] 5.7 Genre, played, and loan state distinguishable without colour alone
-- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog
+- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — BLOCKED: only ever seen against a stubbed provider response (see Open items §1)
+
+## Open items
+
+> Recorded 2026-08-01 after the manual-check pass. 9 of 26 Manual rows are signed off
+> above; the 17 still open are open because nobody has driven them, not because they
+> failed. Impl-review F5 stands: `implemented` means the automated rows are green, not
+> that the change has been looked at.
+
+### 1. Pick a recommendation model — blocks 5.8
+
+Not a visual-identity problem; S-05 scope that only blocks this plan because 5.8 lives here.
+The integration is not broken, it is **marginal**. The key works and the model returns valid,
+schema-conformant JSON; timing the real system prompt with a 7-game payload gave 5.7s / 6.8s /
+6.4s, all `finish_reason: stop`, all parsing. That is ~6.3s against `TIMEOUT_MS = 8000`
+(`src/lib/services/recommendations.ts:18`) — ~1.7s of headroom, which is why it flaps between
+`timeout` and `invalid_response` with free-tier queue latency.
+
+Root cause: the configured `nvidia/nemotron-3-super-120b-a12b:free` is a **reasoning** model on
+the free tier, spending time and tokens before answering (under a 20-token cap it emitted only
+reasoning and no answer).
+
+- **Recommended** — unset `OPENROUTER_MODEL`; the code already falls back to `openai/gpt-4o-mini`
+  (`DEFAULT_MODEL`, `recommendations.ts:11`), typically 1–2s. Costs money.
+- Benchmark a faster free instruct model. No cost, but free tiers stay queue-sensitive.
+- Raising `TIMEOUT_MS` — **avoid**. The NFR in `src/types.ts` is a 5s target / 8s hard cap, and
+  6.3s already misses the target. Hides the problem.
+
+Then re-run 5.8 against a real response.
+
+### 2. Aesthetic sign-off needed
+
+Contrast was fixed against measured WCAG AA targets, not by eye. All pass, but these visibly
+depart from the original palette intent and are judgement calls:
+
+| What                          | Was                                   | Now                                        | Why                                  |
+| ----------------------------- | ------------------------------------- | ------------------------------------------ | ------------------------------------ |
+| Punchboard stats "You" column | `--primary` `#d98324` (bright orange) | `--card-accent-ink` `#7c4b15` (dark brown) | Orange on chipboard was 1.91:1       |
+| Bright Shelf nav links        | `#c0442a`                             | `--accent-ink` `#b44027`                   | Was 4.34:1 as text on the header bar |
+| Bright Shelf muted ink        | `#6f7178`                             | `#65676d`                                  | Was 4.13:1 on `--surface-subtle`     |
+| Played meeple                 | `--success` `#4a8a63`                 | `--success-mark` `#96bba5`                 | Was **2.46:1** on a Felt Table card  |
+
+The meeple is the biggest shift — noticeably lighter and sager — and was a genuine live AA
+failure the first browser audit missed.
+
+### 3. Create and edit flows not re-exercised
+
+The interaction pass after the layout refactor covered header navigation, the Like toggle under
+an active filter (PRG round-trip preserves `?genre=`), delete-confirm and cancel, and theme
+switching signed out. **Game create and edit were not driven** since `AppHeader` moved into
+`Layout.astro`. Logic untouched and the suite is green, but nobody has watched those forms.
+~15 minutes by hand, or fold into E2E.
+
+### 4. The contrast guard is static only
+
+`scripts/check-contrast.mjs` reads token values out of `global.css` and asserts every ink role
+against every surface it can land on — 81 assertions, no browser, no new dependency, proven to
+fire against three deliberate breaks (regressing the original bug, deleting the `.bg-card`
+context rule, and a theme block missing a role).
+
+It validates the **palette**; it cannot catch a component using the wrong role in the wrong
+place. Only a browser validates the markup — note the static check found the 2.46:1 meeple
+precisely because the browser audit measured text nodes and the meeple is an SVG. Different
+blind spots. If Playwright arrives for the `/10x-e2e` phases, porting the ad-hoc runtime audit
+(24 theme × page combinations) into a spec would subsume 3.8–3.11 permanently.
+
+### 5. QA fixtures still in local Supabase
+
+Local only, never left the machine. Auth user `qa-themes@example.com`
+(`c17b808f-95ea-47fc-9809-68af58f984d6`), four games titled `QA %` covering 1-player, 4–12+
+players, 10 min, 240 min, loaned/available, played/unplayed and a deliberately long title, plus
+three `game_played` rows. Keep them while eyeballing the themes — the badge edge cases are why
+they exist. To remove:
+
+```sql
+delete from public.games where title like 'QA %';
+-- then the auth user c17b808f-95ea-47fc-9809-68af58f984d6
+```
+
+### 6. Operational note — Vite cache corruption
+
+Editing `package.json` mid-build can leave two copies of React in the SSR graph
+(`Invalid hook call`, `Cannot read properties of null (reading 'useState')`). **The tell is a
+truncated page**: the HTML stream aborts at the first React island, so header and static markup
+render and the page simply stops — it looks exactly like a data or auth bug. Cure:
+`rm -rf node_modules/.vite` and restart. One cold-start occurrence right after restart is normal.

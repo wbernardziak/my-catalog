@@ -34,7 +34,8 @@
   --card-foreground: #f2e9d8;
   --popover-foreground: #f2e9d8;
   --ink-muted: #b6c8bc;
-  --muted-foreground: #b6c8bc;
+  /* shadcn's name for the same role — aliased so a contrast tweak has one home. */
+  --muted-foreground: var(--ink-muted);
 
   /* Accent: brass */
   --primary: #c8a24a;
@@ -95,7 +96,8 @@
   --card-foreground: #17181c;
   --popover-foreground: #17181c;
   --ink-muted: #6f7178;
-  --muted-foreground: #6f7178;
+  /* shadcn's name for the same role — aliased so a contrast tweak has one home. */
+  --muted-foreground: var(--ink-muted);
 
   --primary: #c0442a;
   --primary-foreground: #ffffff;
@@ -153,7 +155,8 @@
   --card-foreground: #1b1a17;
   --popover-foreground: #1b1a17;
   --ink-muted: #9c968a;
-  --muted-foreground: #9c968a;
+  /* shadcn's name for the same role — aliased so a contrast tweak has one home. */
+  --muted-foreground: var(--ink-muted);
 
   --primary: #d98324;
   --primary-foreground: #17171a;
@@ -200,8 +203,7 @@
  * Punchboard prints rather than glows: soft blurs become a hard offset, and the
  * frosted-glass effect the starter used everywhere is dropped. Applied at theme
  * level so no component has to know which theme is active.
- */
-/*
+ *
  * `.animate-spin` is excluded deliberately: a spinner squared off reads as a
  * rendering bug rather than a design choice, and it is the one round shape that
  * has to stay round in every theme.

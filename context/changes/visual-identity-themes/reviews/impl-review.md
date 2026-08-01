@@ -5,7 +5,7 @@
 - **Plan**: `context/changes/visual-identity-themes/plan.md`
 - **Zakres**: Fazy 1–5 z 5 (pełny plan)
 - **Data**: 2026-08-01
-- **Werdykt**: WYMAGA UWAGI
+- **Werdykt**: WYMAGA UWAGI → ZAAKCEPTOWANY po sortowaniu (2026-08-01: F1-F4 naprawione, F5 pominięte świadomie)
 - **Ustalenia**: 0 krytycznych, 3 ostrzeżenia, 2 obserwacje
 
 ## Werdykty
@@ -44,7 +44,7 @@ Zakres git: 7 commitów, 44 pliki zmienione względem `main`. Weryfikacja wykona
   - Kompromis: Cofa zmianę zamówioną przez użytkownika.
   - Pewność: WYSOKA — czysty revert.
   - Martwy punkt: Brak znaczących.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE (Poprawka A) — kontrakt fazy 4 w `plan.md` uzupełniony aneksem z datą i odniesieniem do commitu `4802b28`
 
 ### F2 — Punchboard nadpisuje utility po nazwie klasy
 
@@ -63,7 +63,7 @@ Zakres git: 7 commitów, 44 pliki zmienione względem `main`. Weryfikacja wykona
   - Kompromis: Dotyka każdego komponentu z `shadow-*`/`rounded-*` — kolejny przelot po ~20 plikach.
   - Pewność: ŚREDNIA — czyste docelowo, zakres zbliżony do fazy 3.
   - Martwy punkt: Czy shadcn-owe `shadow-xs` da się wyrazić tokenem bez forka `button.tsx`.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE (Poprawka A) — commit `a975ecb`; selektory zawężone o `:not(.animate-spin)` i `:not([class*="shadow-none"])`, zweryfikowane w skompilowanym bundlu CSS
 
 ### F3 — Dwie nazwy na jedną rolę: `--ink-muted` i `--muted-foreground`
 
@@ -73,7 +73,7 @@ Zakres git: 7 commitów, 44 pliki zmienione względem `main`. Weryfikacja wykona
 - **Lokalizacja**: `src/styles/global.css:36-37`, `:97-98`, `:155-156`
 - **Szczegóły**: Obie role mają identyczne wartości we wszystkich trzech motywach, definiowane niezależnie. Użycie: `text-ink-muted` 39×, `text-muted-foreground` 0×. Przy następnej korekcie kontrastu ktoś zmieni jedną z nich i motyw rozjedzie się po cichu.
 - **Poprawka**: Zostaw `--ink-muted` jako źródło, zdefiniuj `--muted-foreground: var(--ink-muted)` w każdym bloku motywu.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE — alias w trzech blokach, potwierdzony w skompilowanym bundlu (3 wystąpienia)
 
 ### F4 — Dwa pliki zmienione poza listą planu
 
@@ -83,7 +83,7 @@ Zakres git: 7 commitów, 44 pliki zmienione względem `main`. Weryfikacja wykona
 - **Lokalizacja**: `src/components/Banner.astro`, `eslint.config.js` (0 wzmianek w `plan.md`)
 - **Szczegóły**: Oba uzasadnione i opisane w commicie 20f9a6d — guard wykrył sześć hexów w bloku `<style>` bannera (poza inwentaryzacją 233 literałów), ESLint potrzebował globals Node dla `scripts/**/*.mjs`. Zakres produktowy nierozszerzony; lista plików w planie jest jednak niepełna jako zapis.
 - **Poprawka**: Dopisz oba do listy plików fazy 3 w planie, z jednozdaniowym powodem.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE — aneks przy chunkach fazy 3 w plan.md
 
 ### F5 — `implemented` przy 27 nieodhaczonych wierszach Manual
 
@@ -93,4 +93,4 @@ Zakres git: 7 commitów, 44 pliki zmienione względem `main`. Weryfikacja wykona
 - **Lokalizacja**: `context/changes/visual-identity-themes/change.md:4`
 - **Szczegóły**: 25/25 wierszy Automated zweryfikowanych ponownie i zielonych; żaden wiersz Manual nie odhaczony, co jest zachowaniem prawidłowym (brak podpisywania na ślepo). `status: implemented` oznacza tu „automaty zielone", nie „obejrzane" — cała weryfikacja wizualna tej zmiany jest wciąż przed człowiekiem.
 - **Poprawka**: Bez zmiany w kodzie. Przejść 3 motywy × 7 ekranów przed PR-em i archiwizacją.
-- **Decyzja**: PENDING
+- **Decyzja**: POMINIĘTE — użytkownik przechodzi weryfikację wizualną samodzielnie

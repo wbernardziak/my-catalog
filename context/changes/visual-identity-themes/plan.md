@@ -196,6 +196,8 @@ Convert all remaining call sites to the proven vocabulary, in four directory-siz
 
 Chunks are ordered smallest-first so the mapping is exercised on `auth/` (simple forms) before `catalog/` (the 89-literal bulk). Each chunk is verified against both themes before the next begins.
 
+> **Amendment (2026-08-01, after implementation — see commit `20f9a6d`).** Two files outside the inventory were also converted, both surfaced by the guard rather than by the original count: `src/components/Banner.astro` carried six hex values in a `<style>` block (so the config banner ignored the theme entirely — the utility-only inventory never saw it), and `eslint.config.js` gained a `scripts/**/*.mjs` block granting node globals so the guard script itself lints clean. Neither extends product scope. Recorded here because F4 of the implementation review flagged the file list as incomplete.
+
 #### 2. Colour-literal guard
 
 **File**: `scripts/check-color-literals.mjs` (new), `package.json`, `.github/workflows/ci.yml`
@@ -285,7 +287,9 @@ Make the theme a member choice: read on the server, applied to the root element,
 
 **Purpose**: The user-facing control.
 
-**Contract**: A plain form posting to `/api/theme` with the target theme and the current path as `next` — one submit button per theme, no JavaScript, matching the JS-free PRG toggles in `GameCard`. The active theme is marked with `aria-current`. Mounted in `AppHeader` so it is present on all seven pages.
+**Contract**: A plain form posting to `/api/theme` with the target theme and the current path as `next`, mounted in `AppHeader` so it is present on all seven pages.
+
+> **Amendment (2026-08-01, after implementation — see commit `4802b28`).** The original contract specified "one submit button per theme, no JavaScript, matching the JS-free PRG toggles in `GameCard`", with the active theme marked by `aria-current`. Shipped instead: a `"Theme:"` label and a `<select>`, which leaves room for the full theme names and takes far less header width — the bar already carries four nav links, an email, and sign-out. The select submits on change via a small inline script, with a `<noscript>` Apply button so the control still works without JavaScript. The endpoint, cookie, and `safeNext` validation are unchanged. Recorded here because the plan is the record: F1 of the implementation review flagged that the code no longer matched this paragraph.
 
 ### Success Criteria:
 

@@ -18,7 +18,12 @@ let loadError: string | null = null;
 if (supabase && user) {
   try {
     stats = await listPreferenceStats(supabase, user.id);
-  } catch {
+  } catch (err) {
+    // Log before flattening to copy. The user-facing string is deliberately vague,
+    // but discarding the cause makes every failure here look like a Supabase
+    // outage — including build-time ones that have nothing to do with data.
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[stats] failed to load preference stats", err);
     loadError = "Could not load the statistics. Please try again.";
   }
 } else if (!supabase) {

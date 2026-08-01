@@ -31,7 +31,20 @@ let loadError: string | null = null;
 if (supabase && user) {
   try {
     [games, genres] = await Promise.all([listCatalogGames(supabase, user.id, filters), listGenres(supabase)]);
-  } catch {
+  } catch (err) {
+    // Log before flattening to copy. The user-facing string is deliberately vague,
+    // and discarding the cause left no way to tell a Supabase outage from a module
+    // that failed to resolve.
+    //
+    // Note what this catch does NOT cover: the `GameCard` islands render below,
+    // outside the try. An island that throws during SSR aborts the HTML stream
+    // instead, so the page truncates after the filters with no error panel at all.
+    // Truncated page => rendering/module-graph problem; this panel => a query threw.
+    // `no-console` stays a warning project-wide to catch stray debug logs; server-side
+    // error reporting is the deliberate exception, and on Workers this is what reaches
+    // the log tail.
+    // eslint-disable-next-line no-console
+    console.error("[catalog] failed to load games or genres", err);
     loadError = "Could not load the catalog. Please try again.";
   }
 } else if (!supabase) {

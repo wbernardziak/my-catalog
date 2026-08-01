@@ -1,6 +1,11 @@
 ---
 import BrandMark from "@/components/BrandMark.astro";
 
+// The landing copy is the same either way — it describes the product, not the
+// funnel. Only the call to action changes: a signed-in member has no use for
+// "Sign in"/"Create an account", so they get a way into their own shelf instead.
+const user = Astro.locals.user;
+
 const features = [
   {
     title: "Everything you own, in one shelf",
@@ -26,18 +31,31 @@ const features = [
       to play tonight.
     </p>
     <div class="flex flex-col gap-4 sm:flex-row">
-      <a
-        href="/auth/signin"
-        class="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium transition-opacity hover:opacity-90"
-      >
-        Sign in
-      </a>
-      <a
-        href="/auth/signup"
-        class="border-border text-foreground hover:bg-accent inline-flex items-center justify-center rounded-lg border px-6 py-3 text-base font-medium transition-colors"
-      >
-        Create an account
-      </a>
+      {
+        user ? (
+          <a
+            href="/catalog"
+            class="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium transition-opacity hover:opacity-90"
+          >
+            Go to your catalog
+          </a>
+        ) : (
+          <>
+            <a
+              href="/auth/signin"
+              class="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium transition-opacity hover:opacity-90"
+            >
+              Sign in
+            </a>
+            <a
+              href="/auth/signup"
+              class="border-border text-foreground hover:bg-accent inline-flex items-center justify-center rounded-lg border px-6 py-3 text-base font-medium transition-colors"
+            >
+              Create an account
+            </a>
+          </>
+        )
+      }
     </div>
   </div>
 

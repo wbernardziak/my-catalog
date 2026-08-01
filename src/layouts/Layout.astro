@@ -10,10 +10,9 @@ interface Props {
 
 const { title = "MyCatalog" } = Astro.props;
 
-// Phase 4 replaces this hardcoded theme with the cookie-resolved one from
-// `Astro.locals.theme`. Nothing else about the stamp changes, so what is
-// verified now is what ships.
-const htmlClass = rootClass("felt");
+// Server-rendered in the first byte of HTML, so no page ever flashes the wrong
+// theme. The middleware resolves `theme` from the cookie for every route.
+const htmlClass = rootClass(Astro.locals.theme);
 ---
 
 <!doctype html>

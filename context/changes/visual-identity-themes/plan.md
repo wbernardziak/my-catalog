@@ -444,13 +444,13 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [x] 3.1 Guard passes: `npm run lint:colors` reports zero literals
-- [x] 3.2 Guard fires on a Tailwind literal (deliberate-break check)
-- [x] 3.3 Guard fires on a non-Tailwind literal (deliberate-break check)
-- [x] 3.4 Guard step present in `.github/workflows/ci.yml`
-- [x] 3.5 Lint passes: `npm run lint`
-- [x] 3.6 Build passes: `npm run build`
-- [x] 3.7 Tests pass: `npm test`
+- [x] 3.1 Guard passes: `npm run lint:colors` reports zero literals — 20f9a6d
+- [x] 3.2 Guard fires on a Tailwind literal (deliberate-break check) — 20f9a6d
+- [x] 3.3 Guard fires on a non-Tailwind literal (deliberate-break check) — 20f9a6d
+- [x] 3.4 Guard step present in `.github/workflows/ci.yml` — 20f9a6d
+- [x] 3.5 Lint passes: `npm run lint` — 20f9a6d
+- [x] 3.6 Build passes: `npm run build` — 20f9a6d
+- [x] 3.7 Tests pass: `npm test` — 20f9a6d
 
 #### Manual
 
@@ -467,10 +467,10 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [ ] 4.1 Theme module unit tests pass, including `safeNext` rejection cases
-- [ ] 4.2 Theme endpoint tests pass (valid sets cookie and redirects; invalid does not set)
-- [ ] 4.3 Guard still passes: `npm run lint:colors`
-- [ ] 4.4 Lint, build, tests pass
+- [x] 4.1 Theme module unit tests pass, including `safeNext` rejection cases
+- [x] 4.2 Theme endpoint tests pass (valid sets cookie and redirects; invalid does not set)
+- [x] 4.3 Guard still passes: `npm run lint:colors`
+- [x] 4.4 Lint, build, tests pass
 
 #### Manual
 

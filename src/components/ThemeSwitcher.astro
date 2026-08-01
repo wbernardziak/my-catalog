@@ -1,0 +1,41 @@
+---
+import { THEMES, type Theme } from "@/lib/theme";
+
+/**
+ * JS-free theme switcher: a plain form per theme, posting to `/api/theme`, which
+ * sets the cookie and redirects back here. Same PRG shape as the catalog toggles.
+ */
+
+const LABELS: Record<Theme, string> = {
+  felt: "Felt",
+  shelf: "Shelf",
+  punchboard: "Punchboard",
+};
+
+const active = Astro.locals.theme;
+// Where to come back to, filters and all.
+const next = `${Astro.url.pathname}${Astro.url.search}`;
+---
+
+<div class="flex flex-wrap items-center gap-1" role="group" aria-label="Theme">
+  {
+    THEMES.map((theme) => (
+      <form method="POST" action="/api/theme">
+        <input type="hidden" name="theme" value={theme} />
+        <input type="hidden" name="next" value={next} />
+        <button
+          type="submit"
+          aria-current={theme === active ? "true" : undefined}
+          class:list={[
+            "rounded-md border px-2 py-1 text-xs transition-colors",
+            theme === active
+              ? "border-primary bg-primary text-primary-foreground font-medium"
+              : "border-border text-ink-muted hover:bg-accent hover:text-foreground",
+          ]}
+        >
+          {LABELS[theme]}
+        </button>
+      </form>
+    ))
+  }
+</div>

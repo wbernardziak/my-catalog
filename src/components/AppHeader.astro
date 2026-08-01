@@ -9,6 +9,7 @@
  * this component introduces no colour decisions of its own.
  */
 import BrandMark from "@/components/BrandMark.astro";
+import ThemeSwitcher from "@/components/ThemeSwitcher.astro";
 
 interface Props {
   /** Rendered as the page `<h1>` under the bar. Omitted on the landing page. */
@@ -58,6 +59,7 @@ const linkClass = "text-primary transition-colors hover:text-primary/80 hover:un
     {
       user ? (
         <div class="flex flex-wrap items-center gap-3">
+          <ThemeSwitcher />
           <span class="text-ink-muted">{user.email}</span>
           <form method="POST" action="/api/auth/signout">
             <button type="submit" class:list={[linkClass]}>
@@ -67,7 +69,7 @@ const linkClass = "text-primary transition-colors hover:text-primary/80 hover:un
         </div>
       ) : (
         <div class="flex flex-wrap items-center gap-3">
-          <span class="text-ink-muted">Not signed in</span>
+          <ThemeSwitcher />
           <a href="/auth/signin" class:list={[linkClass]}>
             Sign in
           </a>

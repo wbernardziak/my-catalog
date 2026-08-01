@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contrast sign-off — visual-identity-themes</title>
+    <style>
+      :root {
+        --page: #101114;
+        --page-ink: #e8e6e1;
+        --page-ink-dim: #9a9791;
+        --rule: #2c2e33;
+        --ok: #6fbf8e;
+        --bad: #e0806b;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --page: #f7f6f3;
+          --page-ink: #1a1b1e;
+          --page-ink-dim: #61636a;
+          --rule: #dedbd4;
+          --ok: #1f7a48;
+          --bad: #a5341a;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2.5rem 1.25rem 5rem;
+        background: var(--page);
+        color: var(--page-ink);
+        font:
+          15px/1.6 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      .wrap {
+        max-width: 60rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0 0 0.4rem;
+      }
+      .lede {
+        color: var(--page-ink-dim);
+        margin: 0 0 2.5rem;
+        max-width: 44rem;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 0 0 0.15rem;
+      }
+      .why {
+        color: var(--page-ink-dim);
+        font-size: 0.9rem;
+        margin: 0 0 1rem;
+      }
+      section {
+        border-top: 1px solid var(--rule);
+        padding-top: 1.75rem;
+        margin-top: 2.5rem;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      @media (max-width: 40rem) {
+        .pair {
+          grid-template-columns: 1fr;
+        }
+      }
+      .side > .cap {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--page-ink-dim);
+        margin-bottom: 0.4rem;
+      }
+      .ratio {
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
+        font-size: 0.85rem;
+      }
+      .ratio.pass {
+        color: var(--ok);
+      }
+      .ratio.fail {
+        color: var(--bad);
+      }
+      .stage {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--rule);
+      }
+      .hex {
+        font:
+          12px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        color: var(--page-ink-dim);
+        margin-top: 0.4rem;
+      }
+
+      /* ---- real surfaces, values copied from src/styles/global.css ---- */
+
+      /* Punchboard: chipboard card on near-black ground, square corners */
+      .pb-stage {
+        background: #17171a;
+        padding: 1.25rem;
+      }
+      .pb-card {
+        background: #ded0b4;
+        color: #1b1a17;
+        border-radius: 2px;
+        box-shadow: 3px 3px 0 #000;
+      }
+      .pb-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 1.25rem;
+        padding: 0.55rem 0.9rem;
+        align-items: center;
+      }
+      .pb-head {
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #59564f;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+      }
+      .pb-you {
+        font-weight: 700;
+      }
+
+      /* Bright Shelf: header bar is bg-surface-subtle */
+      .shelf-stage {
+        background: #f6f4ef;
+        padding: 1.25rem;
+      }
+      .shelf-bar {
+        background: #efece4;
+        border: 1px solid #ded9cd;
+        border-radius: 12px;
+        padding: 0.6rem 0.9rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.9rem;
+      }
+      .shelf-brand {
+        color: #17181c;
+        font-weight: 600;
+      }
+      .shelf-nav {
+        display: flex;
+        gap: 0.85rem;
+      }
+      .shelf-dim {
+        margin-left: auto;
+      }
+
+      /* Felt Table: card on felt ground */
+      .felt-stage {
+        background: #1d3b32;
+        padding: 1.25rem;
+      }
+      .felt-card {
+        background: #26483d;
+        border: 1px solid #3a5c4f;
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        color: #f2e9d8;
+      }
+      .felt-title {
+        font-weight: 600;
+        margin-bottom: 0.15rem;
+      }
+      .felt-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+      .meeple {
+        width: 15px;
+        height: 15px;
+        display: block;
+      }
+
+      .verdict {
+        margin-top: 1.1rem;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--rule);
+        color: var(--page-ink-dim);
+        font-size: 0.9rem;
+      }
+      footer {
+        border-top: 1px solid var(--rule);
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        color: var(--page-ink-dim);
+        font-size: 0.9rem;
+      }
+      code {
+        font:
+          12.5px ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        background: color-mix(in srgb, var(--page-ink) 8%, transparent);
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Contrast sign-off</h1>
+      <p class="lede">
+        Four token values changed to clear WCAG AA (4.5:1) for normal text. All four now pass, but they visibly depart
+        from the original palette intent, so they are judgement calls rather than corrections. Old and new are shown
+        below on the real surface each one actually lands on. Ratios are computed from the same hex values that ship in
+        <code>src/styles/global.css</code>.
+      </p>
+
+      <section>
+        <h2>1. Punchboard — the “You” column on the stats table</h2>
+        <p class="why">
+          <code>--primary</code> → <code>--card-accent-ink</code>. Bright orange on chipboard was the worst failure of
+          the four: at 1.91:1 it was decorative, not readable.
+        </p>
+        <div class="pair">
+          <div class="side">
+            <div class="cap">Was <span class="ratio fail">1.91:1 ✕</span></div>
+            <div class="stage pb-stage">
+              <div class="pb-card">
+                <div class="pb-row pb-head"><span>Metric</span><span>You</span><span>Ana</span><span>Bo</span></div>
+                <div class="pb-row">
+                  <span>Played</span><span class="pb-you" style="color: #d98324">3</span><span>1</span><span>3</span>
+                </div>
+                <div class="pb-row">
+                  <span>Liked</span><span class="pb-you" style="color: #d98324">1</span><span>1</span><span>1</span>
+                </div>
+              </div>
+            </div>
+            <div class="hex">#d98324 on #ded0b4</div>
+          </div>
+          <div class="side">
+            <div class="cap">Now <span class="ratio pass">4.80:1 ✓</span></div>
+            <div class="stage pb-stage">
+              <div class="pb-card">
+                <div class="pb-row pb-head"><span>Metric</span><span>You</span><span>Ana</span><span>Bo</span></div>
+                <div class="pb-row">
+                  <span>Played</span><span class="pb-you" style="color: #7c4b15">3</span><span>1</span><span>3</span>
+                </div>
+                <div class="pb-row">
+                  <span>Liked</span><span class="pb-you" style="color: #7c4b15">1</span><span>1</span><span>1</span>
+                </div>
+              </div>
+            </div>
+            <div class="hex">#7c4b15 on #ded0b4</div>
+          </div>
+        </div>
+        <p class="verdict">
+          The cost: “your” column no longer reads as the accent colour, it reads as dark brown ink. The orange survives
+          everywhere it sits on the dark ground, so the theme still feels orange — just not here.
+        </p>
+      </section>
+
+      <section>
+        <h2>2. Bright Shelf — navigation links</h2>
+        <p class="why">
+          <code>--primary</code> → <code>--accent-ink</code>. A small shift: the same brick red, darkened just enough
+          for text on the header bar. <code>--primary</code> is unchanged and still fills buttons.
+        </p>
+        <div class="pair">
+          <div class="side">
+            <div class="cap">Was <span class="ratio fail">4.34:1 ✕</span></div>
+            <div class="stage shelf-stage">
+              <div class="shelf-bar">
+                <span class="shelf-brand">MyCatalog</span>
+                <span class="shelf-nav" style="color: #c0442a"
+                  ><span>Dashboard</span><span>Catalog</span><span>Play</span><span>Stats</span></span
+                >
+              </div>
+            </div>
+            <div class="hex">#c0442a on #efece4</div>
+          </div>
+          <div class="side">
+            <div class="cap">Now <span class="ratio pass">4.80:1 ✓</span></div>
+            <div class="stage shelf-stage">
+              <div class="shelf-bar">
+                <span class="shelf-brand">MyCatalog</span>
+                <span class="shelf-nav" style="color: #b44027"
+                  ><span>Dashboard</span><span>Catalog</span><span>Play</span><span>Stats</span></span
+                >
+              </div>
+            </div>
+            <div class="hex">#b44027 on #efece4</div>
+          </div>
+        </div>
+        <p class="verdict">Barely perceptible side by side. This one should be an easy yes.</p>
+      </section>
+
+      <section>
+        <h2>3. Bright Shelf — muted ink</h2>
+        <p class="why">
+          <code>--ink-muted</code> darkened from <code>#6f7178</code> to <code>#65676d</code>. Used for the account
+          email, field labels, and secondary metadata.
+        </p>
+        <div class="pair">
+          <div class="side">
+            <div class="cap">Was <span class="ratio fail">4.13:1 ✕</span></div>
+            <div class="stage shelf-stage">
+              <div class="shelf-bar">
+                <span class="shelf-brand">MyCatalog</span>
+                <span class="shelf-dim" style="color: #6f7178">qa-themes@example.com</span>
+              </div>
+            </div>
+            <div class="hex">#6f7178 on #efece4</div>
+          </div>
+          <div class="side">
+            <div class="cap">Now <span class="ratio pass">4.79:1 ✓</span></div>
+            <div class="stage shelf-stage">
+              <div class="shelf-bar">
+                <span class="shelf-brand">MyCatalog</span>
+                <span class="shelf-dim" style="color: #65676d">qa-themes@example.com</span>
+              </div>
+            </div>
+            <div class="hex">#65676d on #efece4</div>
+          </div>
+        </div>
+        <p class="verdict">
+          Also near-invisible as a change. The old value still exists in the palette as <code>--chart-4</code>, where
+          nothing reads it as text.
+        </p>
+      </section>
+
+      <section>
+        <h2>4. Felt Table — the played meeple</h2>
+        <p class="why">
+          <code>--success</code> → a new <code>--success-mark</code> role. This is the big one, and it was a live AA
+          failure at 2.46:1 that the first browser audit missed because the meeple is an SVG, not a text node.
+        </p>
+        <div class="pair">
+          <div class="side">
+            <div class="cap">Was <span class="ratio fail">2.46:1 ✕</span></div>
+            <div class="stage felt-stage">
+              <div class="felt-card">
+                <div class="felt-title">QA Solo Filler</div>
+                <div style="color: #b6c8bc; font-size: 0.85rem">A. Tester</div>
+                <div class="felt-meta">
+                  <svg class="meeple" viewBox="0 0 16 16" aria-hidden="true" style="color: #4a8a63">
+                    <path
+                      d="M8 1.6a1.7 1.7 0 0 1 1.3 2.8c1.25.35 2.2 1.25 2.55 2.4.1.4-.2.75-.6.75h-1.35l.5 3.45c.05.35-.2.7-.55.7H5.65c-.35 0-.6-.35-.55-.7l.5-3.45H4.25c-.4 0-.7-.35-.6-.75.35-1.15 1.3-2.05 2.55-2.4A1.7 1.7 0 0 1 8 1.6Z"
+                      fill="currentColor"
+                      stroke="currentColor"
+                      stroke-width="1.1"
+                    ></path>
+                  </svg>
+                  <span style="color: #4a8a63">Played</span>
+                </div>
+              </div>
+            </div>
+            <div class="hex">#4a8a63 on #26483d</div>
+          </div>
+          <div class="side">
+            <div class="cap">Now <span class="ratio pass">4.79:1 ✓</span></div>
+            <div class="stage felt-stage">
+              <div class="felt-card">
+                <div class="felt-title">QA Solo Filler</div>
+                <div style="color: #b6c8bc; font-size: 0.85rem">A. Tester</div>
+                <div class="felt-meta">
+                  <svg class="meeple" viewBox="0 0 16 16" aria-hidden="true" style="color: #96bba5">
+                    <path
+                      d="M8 1.6a1.7 1.7 0 0 1 1.3 2.8c1.25.35 2.2 1.25 2.55 2.4.1.4-.2.75-.6.75h-1.35l.5 3.45c.05.35-.2.7-.55.7H5.65c-.35 0-.6-.35-.55-.7l.5-3.45H4.25c-.4 0-.7-.35-.6-.75.35-1.15 1.3-2.05 2.55-2.4A1.7 1.7 0 0 1 8 1.6Z"
+                      fill="currentColor"
+                      stroke="currentColor"
+                      stroke-width="1.1"
+                    ></path>
+                  </svg>
+                  <span style="color: #96bba5">Played</span>
+                </div>
+              </div>
+            </div>
+            <div class="hex">#96bba5 on #26483d</div>
+          </div>
+        </div>
+        <p class="verdict">
+          The cost: noticeably lighter and sager — closer to eucalyptus than to the forest green the palette intended.
+          The saturated <code>--success</code> is untouched and still fills success buttons and tints; only the mark
+          role moved. If you reject this one, the alternative is not the old value (it fails AA) but a different, darker
+          card surface behind the meeple.
+        </p>
+      </section>
+
+      <footer>
+        <p>
+          Generated for open item §2 of <code>context/changes/visual-identity-themes/plan.md</code>. Ratios recomputed
+          from <code>global.css</code> at review time and matching the plan’s recorded figures. The static guard
+          <code>npm run lint:contrast</code> asserts all of these and 77 more on every run.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

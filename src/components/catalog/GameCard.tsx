@@ -164,7 +164,9 @@ export default function GameCard({ game, filters = "" }: Props) {
               onClick={() => {
                 setConfirmingDelete(true);
               }}
-              className="border-destructive/60 text-destructive-ink hover:bg-destructive-tint flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+              // `danger-ink` at rest (bare on the card), `destructive-ink` on hover —
+              // hover paints the tint behind it, and the two inks target different grounds.
+              className="border-destructive/60 text-danger-ink hover:bg-destructive-tint hover:text-destructive-ink flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
             >
               <Trash2 className="size-3.5" />
               Delete

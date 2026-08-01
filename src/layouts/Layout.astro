@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import AppHeader from "@/components/AppHeader.astro";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
 import { rootClass } from "@/lib/theme";
@@ -41,7 +42,19 @@ const htmlClass = rootClass(Astro.locals.theme);
         </Banner>
       ))
     }
-    <slot />
+    {
+      /*
+      The shared header lives here rather than in each page. Hand-placing it left
+      every page free to nest it in its own `max-w-*` container, so the one bar the
+      app shares rendered at three different widths and wrapped mid-row on desktop —
+      and the auth pages, which never called it, had no navigation or theme switcher
+      at all despite being where signed-out visitors land.
+    */
+    }
+    <div class="bg-table flex min-h-screen flex-col px-4 py-4 md:px-8 md:py-8">
+      <AppHeader />
+      <main class="flex flex-1 flex-col"><slot /></main>
+    </div>
   </body>
 </html>
 

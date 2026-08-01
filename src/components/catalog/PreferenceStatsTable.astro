@@ -27,7 +27,7 @@ const bodyCell = "px-4 py-3 text-sm text-foreground";
         <th scope="col" class:list={headerCell}>Metric</th>
         {
           stats.map((member) => (
-            <th scope="col" class:list={[headerCell, member.isCurrent && "text-primary"]}>
+            <th scope="col" class:list={[headerCell, member.isCurrent && "text-accent-ink"]}>
               {member.label}
             </th>
           ))
@@ -42,7 +42,7 @@ const bodyCell = "px-4 py-3 text-sm text-foreground";
               {metric.label}
             </th>
             {stats.map((member) => (
-              <td class:list={[bodyCell, member.isCurrent && "text-primary font-semibold"]}>
+              <td class:list={[bodyCell, member.isCurrent && "text-accent-ink font-semibold"]}>
                 <span class="inline-flex items-center gap-2">
                   {member[metric.key]}
                   {/* Same badge language as the catalog: the played row carries the

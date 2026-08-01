@@ -11,7 +11,10 @@ import { duration, playerPips } from "@/lib/services/gameMeta";
  * directive. A parallel `.astro` version would be two sets of pips to keep in
  * sync, which is exactly the failure this avoids.
  *
- * Every colour comes from a token role, so all three themes are covered.
+ * Every colour comes from a token role, so all three themes are covered. Marks use
+ * `accent-ink` rather than `primary`: these are 6px dots and a 14px die drawn as
+ * ink on a surface, not accent fills, and they land on cards as often as on the
+ * page ground.
  */
 
 interface PlayerCountProps {
@@ -31,7 +34,7 @@ export function PlayerCount({ min, max, className }: PlayerCountProps) {
           {pips.map((state, index) => (
             <span
               key={index}
-              className={cn("size-[6px] rounded-full", state === "supported" ? "bg-primary" : "bg-ink-muted/30")}
+              className={cn("size-[6px] rounded-full", state === "supported" ? "bg-accent-ink" : "bg-ink-muted/30")}
             />
           ))}
         </span>
@@ -76,7 +79,7 @@ export function PlayTime({ minutes, className }: PlayTimeProps) {
   return (
     <span className={cn("inline-flex items-center gap-1.5", className)} title={label}>
       {pips !== null && (
-        <svg viewBox="0 0 16 16" className="text-primary size-3.5" aria-hidden="true">
+        <svg viewBox="0 0 16 16" className="text-accent-ink size-3.5" aria-hidden="true">
           <rect x="1" y="1" width="14" height="14" rx="3" fill="none" stroke="currentColor" strokeWidth="1.3" />
           {FACES[pips].map(([cx, cy], index) => (
             <circle key={index} cx={cx} cy={cy} r="1.3" fill="currentColor" />
@@ -104,7 +107,7 @@ export function PlayedMeeple({ played, labelled = true, className }: PlayedMeepl
     <span className={cn("inline-flex items-center gap-1.5", className)} title={title}>
       <svg
         viewBox="0 0 16 16"
-        className={cn("size-3.5", played ? "text-success" : "text-ink-muted/40")}
+        className={cn("size-3.5", played ? "text-success-mark" : "text-ink-muted/40")}
         aria-hidden="true"
       >
         <path

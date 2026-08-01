@@ -56,7 +56,7 @@ export function FormField({
         {endContent}
       </div>
       {error ? (
-        <p className="text-destructive-ink mt-1 flex items-center gap-1 text-xs">
+        <p className="text-danger-ink mt-1 flex items-center gap-1 text-xs">
           <CircleAlert className="size-3" />
           {error}
         </p>

@@ -36,10 +36,19 @@
   --ink-muted: #b6c8bc;
   /* shadcn's name for the same role — aliased so a contrast tweak has one home. */
   --muted-foreground: var(--ink-muted);
+  /* Card-surface ink. Identical to the ground ink here: Felt Table's card is the
+     same darkness as its ground, so the two ink sets do not diverge. Spelled out
+     as a literal rather than `var(--ink-muted)` — the card context below re-points
+     `--ink-muted` at this role, and a `var()` back would be a resolution cycle. */
+  --card-ink-muted: #b6c8bc;
 
   /* Accent: brass */
   --primary: #c8a24a;
   --primary-foreground: #1d2b25;
+  /* The accent as ink. Separate from `--primary`, which is a fill paired with
+     `--primary-foreground`; text and small marks need more contrast than a fill. */
+  --accent-ink: #d0af63;
+  --card-accent-ink: #d0af63;
   --accent: #2c5145;
   --accent-foreground: #f2e9d8;
 
@@ -56,11 +65,24 @@
   --destructive: #8c3b32;
   --destructive-foreground: #f8ece5;
   --destructive-tint: #3b2523;
+  /* Pairs with `--destructive-tint` and is only ever used on it. */
   --destructive-ink: #f0b3a8;
-  --success: #4a8a63;
+  /* Destructive drawn bare on a surface, with no tint behind it — an outline
+     Delete button, an inline field error. Surface-aware, unlike the pair above. */
+  --danger-ink: #f0b3a8;
+  --card-danger-ink: #f0b3a8;
+  /* Darkened from #4a8a63, which was stuck between the two jobs this role used to
+     do: no ink reached 4.5 on it (light 3.76, dark 3.58). It is now purely a fill. */
+  --success: #407756;
   --success-foreground: #eef7f1;
   --success-tint: #204237;
+  /* Pairs with `--success-tint` and is only ever used on it. */
   --success-ink: #a8dcbd;
+  /* Success as a mark drawn bare on a surface — the played meeple. Split out for
+     the same reason as `--accent-ink`: a fill and an ink have different floors,
+     and the old shared value was 2.46 on a card. */
+  --success-mark: #96bba5;
+  --card-success-mark: #96bba5;
   --warning: #c8a24a;
   --warning-foreground: #1d2b25;
   --warning-tint: #3a3524;
@@ -95,12 +117,18 @@
   --foreground: #17181c;
   --card-foreground: #17181c;
   --popover-foreground: #17181c;
-  --ink-muted: #6f7178;
+  /* Darkened from #6f7178, which read at 4.13 on `--surface-subtle` — the header
+     bar is the one place this role sits on the subtle surface rather than a card. */
+  --ink-muted: #65676d;
   /* shadcn's name for the same role — aliased so a contrast tweak has one home. */
   --muted-foreground: var(--ink-muted);
+  --card-ink-muted: #65676d;
 
   --primary: #c0442a;
   --primary-foreground: #ffffff;
+  /* Darkened from #c0442a, which read at 4.34 as nav-link text on the header bar. */
+  --accent-ink: #b44027;
+  --card-accent-ink: #b44027;
   --accent: #eae7de;
   --accent-foreground: #17181c;
 
@@ -115,10 +143,14 @@
   --destructive-foreground: #ffffff;
   --destructive-tint: #fbeae6;
   --destructive-ink: #8f2d17;
+  --danger-ink: #8f2d17;
+  --card-danger-ink: #8f2d17;
   --success: #204b45;
   --success-foreground: #f3f7f5;
   --success-tint: #e7f0ed;
   --success-ink: #1a3f3a;
+  --success-mark: #204b45;
+  --card-success-mark: #204b45;
   --warning: #8a5a12;
   --warning-foreground: #fdf6ea;
   --warning-tint: #fbf0da;
@@ -157,9 +189,16 @@
   --ink-muted: #9c968a;
   /* shadcn's name for the same role — aliased so a contrast tweak has one home. */
   --muted-foreground: var(--ink-muted);
+  /* The theme where the two ink sets genuinely diverge: chipboard cards sit on a
+     press-black ground, so muted ink has to flip from light to dark on a card. */
+  --card-ink-muted: #59564f;
 
   --primary: #d98324;
   --primary-foreground: #17171a;
+  /* Press orange reads at 5.65 on the black ground but only 1.91 on chipboard, so
+     the card variant is the ink-on-paper version of the same colour. */
+  --accent-ink: #d98324;
+  --card-accent-ink: #7c4b15;
   --accent: #26262b;
   --accent-foreground: #ece7dc;
 
@@ -174,10 +213,16 @@
   --destructive-foreground: #fdf4e6;
   --destructive-tint: #33211a;
   --destructive-ink: #eba888;
+  --danger-ink: #eba888;
+  /* The only theme where this diverges: salmon reads on press black, not on chipboard. */
+  --card-danger-ink: #903d22;
   --success: #2e6e6b;
   --success-foreground: #e9f2f0;
   --success-tint: #1b2e2d;
   --success-ink: #8ec9c4;
+  /* Diverges like the other ink roles: teal on press black, deeper on chipboard. */
+  --success-mark: #649391;
+  --card-success-mark: #285f5c;
   --warning: #d98324;
   --warning-foreground: #17171a;
   --warning-tint: #33281a;
@@ -197,6 +242,37 @@
   --sidebar-accent-foreground: #ece7dc;
   --sidebar-border: #3a3a40;
   --sidebar-ring: #d98324;
+}
+
+/*
+ * Surface ink contexts.
+ *
+ * A surface is a background plus the ink set that reads on it. Themes have two:
+ * the ground (`--background` / `--surface-subtle`) and the card. In Felt Table and
+ * Bright Shelf both surfaces are the same darkness, so one ink set covers them and
+ * this rule changes nothing. Punchboard prints chipboard cards on a press-black
+ * ground, so its card ink is the inverse of its ground ink.
+ *
+ * Re-pointing the roles here rather than at ~40 call sites is deliberate. Custom
+ * properties inherit, so a component nested in a card (`GameMeta`, `FormField`)
+ * picks the right ink up without knowing which surface it landed on — which is the
+ * knowledge a component should not have to carry. Only ink roles move; `--primary`
+ * stays put so a `bg-primary` fill on a card is still the theme's accent.
+ *
+ * Every value on the right is a literal in the theme blocks above. Aliasing them
+ * back (`--card-ink-muted: var(--ink-muted)`) would make these declarations cycle
+ * and resolve to nothing.
+ */
+.bg-card,
+.bg-popover {
+  --foreground: var(--card-foreground);
+  --ink-muted: var(--card-ink-muted);
+  --muted-foreground: var(--card-ink-muted);
+  --accent-ink: var(--card-accent-ink);
+  --danger-ink: var(--card-danger-ink);
+  --success-mark: var(--card-success-mark);
+  /* Focus has to stay visible on the card surface too. */
+  --ring: var(--card-accent-ink);
 }
 
 /*
@@ -240,16 +316,19 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-ink-muted: var(--ink-muted);
+  --color-accent-ink: var(--accent-ink);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-tint: var(--destructive-tint);
   --color-destructive-ink: var(--destructive-ink);
+  --color-danger-ink: var(--danger-ink);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-tint: var(--success-tint);
   --color-success-ink: var(--success-ink);
+  --color-success-mark: var(--success-mark);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-tint: var(--warning-tint);

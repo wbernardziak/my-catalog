@@ -4,19 +4,17 @@
  * the four hand-rolled page headers, which were near-identical apart from their
  * title and their ad-hoc navigation links.
  *
+ * Rendered once by `Layout.astro`, so every page gets it on the same full-bleed
+ * width. The page `<h1>` is deliberately NOT rendered here: it belongs inside the
+ * page's own content container, which is narrower than this bar and differs per
+ * page.
+ *
  * Reads `Astro.locals.user` itself rather than taking it as a prop, matching how
- * `Topbar` did it. Colour classes are carried over verbatim from those headers —
- * this component introduces no colour decisions of its own.
+ * `Topbar` did it.
  */
 import BrandMark from "@/components/BrandMark.astro";
 import ThemeSwitcher from "@/components/ThemeSwitcher.astro";
 
-interface Props {
-  /** Rendered as the page `<h1>` under the bar. Omitted on the landing page. */
-  title?: string;
-}
-
-const { title } = Astro.props;
 const { user } = Astro.locals;
 const path = Astro.url.pathname;
 
@@ -27,12 +25,14 @@ const navLinks = [
   { href: "/stats", label: "Stats" },
 ];
 
-const linkClass = "text-primary transition-colors hover:text-primary/80 hover:underline";
+// `accent-ink` rather than `primary`: the accent as a fill and the accent as text
+// have different contrast floors, and these links sit on the subtle surface.
+const linkClass = "text-accent-ink transition-colors hover:text-accent-ink/80 hover:underline";
 ---
 
 <header class="mb-8">
   <div
-    class="border-border bg-surface-subtle text-ink-muted mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border px-4 py-2 text-sm"
+    class="border-border bg-surface-subtle text-ink-muted flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border px-4 py-2 text-sm"
   >
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <a href={user ? "/dashboard" : "/"} class="text-foreground flex items-center gap-2 font-semibold">
@@ -80,12 +80,4 @@ const linkClass = "text-primary transition-colors hover:text-primary/80 hover:un
       )
     }
   </div>
-
-  {
-    title && (
-      <h1 class="from-primary to-secondary bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent">
-        {title}
-      </h1>
-    )
-  }
 </header>

@@ -174,7 +174,7 @@ export default function GameForm({
             ))}
           </datalist>
         </div>
-        {errors.genre ? <p className="text-destructive-ink mt-1 text-xs">{errors.genre}</p> : null}
+        {errors.genre ? <p className="text-danger-ink mt-1 text-xs">{errors.genre}</p> : null}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -1,5 +1,4 @@
 ---
-import AppHeader from "@/components/AppHeader.astro";
 import BrandMark from "@/components/BrandMark.astro";
 
 const features = [
@@ -18,42 +17,38 @@ const features = [
 ];
 ---
 
-<div class="bg-table min-h-screen w-full">
-  <div class="p-4 sm:p-8">
-    <AppHeader />
-
-    <div class="mx-auto flex max-w-4xl flex-col items-center px-4 py-20 text-center sm:py-28">
-      <BrandMark size={56} class="mb-6" />
-      <h1 class="text-foreground mb-6 text-5xl leading-tight font-bold text-balance sm:text-6xl">MyCatalog</h1>
-      <p class="text-ink-muted mb-10 max-w-xl text-lg sm:text-xl">
-        The shared board-game shelf for your household — what you own, what you have played, what is out on loan, and
-        what to play tonight.
-      </p>
-      <div class="flex flex-col gap-4 sm:flex-row">
-        <a
-          href="/auth/signin"
-          class="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium transition-opacity hover:opacity-90"
-        >
-          Sign in
-        </a>
-        <a
-          href="/auth/signup"
-          class="border-border text-foreground hover:bg-accent inline-flex items-center justify-center rounded-lg border px-6 py-3 text-base font-medium transition-colors"
-        >
-          Create an account
-        </a>
-      </div>
+<div class="w-full">
+  <div class="mx-auto flex max-w-4xl flex-col items-center px-4 py-20 text-center sm:py-28">
+    <BrandMark size={56} class="mb-6" />
+    <h1 class="text-foreground mb-6 text-5xl leading-tight font-bold text-balance sm:text-6xl">MyCatalog</h1>
+    <p class="text-ink-muted mb-10 max-w-xl text-lg sm:text-xl">
+      The shared board-game shelf for your household — what you own, what you have played, what is out on loan, and what
+      to play tonight.
+    </p>
+    <div class="flex flex-col gap-4 sm:flex-row">
+      <a
+        href="/auth/signin"
+        class="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium transition-opacity hover:opacity-90"
+      >
+        Sign in
+      </a>
+      <a
+        href="/auth/signup"
+        class="border-border text-foreground hover:bg-accent inline-flex items-center justify-center rounded-lg border px-6 py-3 text-base font-medium transition-colors"
+      >
+        Create an account
+      </a>
     </div>
+  </div>
 
-    <div class="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-4 pb-24 sm:grid-cols-3">
-      {
-        features.map((feature) => (
-          <div class="border-border bg-card text-card-foreground rounded-xl border p-6">
-            <h2 class="mb-2 text-lg font-semibold">{feature.title}</h2>
-            <p class="text-ink-muted text-sm leading-relaxed">{feature.body}</p>
-          </div>
-        ))
-      }
-    </div>
+  <div class="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-4 pb-24 sm:grid-cols-3">
+    {
+      features.map((feature) => (
+        <div class="border-border bg-card text-card-foreground rounded-xl border p-6">
+          <h2 class="mb-2 text-lg font-semibold">{feature.title}</h2>
+          <p class="text-ink-muted text-sm leading-relaxed">{feature.body}</p>
+        </div>
+      ))
+    }
   </div>
 </div>

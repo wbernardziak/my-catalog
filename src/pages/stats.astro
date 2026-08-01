@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import AppHeader from "@/components/AppHeader.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import PreferenceStatsTable from "@/components/catalog/PreferenceStatsTable.astro";
 import { createClient } from "@/lib/supabase";
 import { listPreferenceStats, hasAnyData } from "@/lib/services/preferenceStats";
@@ -33,31 +33,29 @@ const showData = hasAnyData(stats);
 ---
 
 <Layout title="Stats">
-  <div class="bg-table min-h-screen p-4 md:p-8">
-    <div class="mx-auto max-w-3xl">
-      <AppHeader title="Preference statistics" />
+  <div class="mx-auto w-full max-w-3xl">
+    <PageTitle title="Preference statistics" />
 
-      {
-        !configured ? (
-          <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
-            Supabase is not configured — statistics are unavailable. Set <code>SUPABASE_URL</code> and{" "}
-            <code>SUPABASE_KEY</code> to enable it.
-          </div>
-        ) : loadError ? (
-          <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
-            {loadError}
-          </div>
-        ) : showData ? (
-          <PreferenceStatsTable stats={stats} />
-        ) : (
-          <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
-            No preferences recorded yet — mark games played and rate them to see stats here.{" "}
-            <a href="/catalog" class="text-primary hover:underline">
-              Go to the catalog
-            </a>
-          </div>
-        )
-      }
-    </div>
+    {
+      !configured ? (
+        <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+          Supabase is not configured — statistics are unavailable. Set <code>SUPABASE_URL</code> and{" "}
+          <code>SUPABASE_KEY</code> to enable it.
+        </div>
+      ) : loadError ? (
+        <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+          {loadError}
+        </div>
+      ) : showData ? (
+        <PreferenceStatsTable stats={stats} />
+      ) : (
+        <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
+          No preferences recorded yet — mark games played and rate them to see stats here.{" "}
+          <a href="/catalog" class="text-accent-ink hover:underline">
+            Go to the catalog
+          </a>
+        </div>
+      )
+    }
   </div>
 </Layout>

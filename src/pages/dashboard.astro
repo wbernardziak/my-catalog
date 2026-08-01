@@ -1,34 +1,32 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import AppHeader from "@/components/AppHeader.astro";
+import PageTitle from "@/components/PageTitle.astro";
 
 const { user } = Astro.locals;
 ---
 
 <Layout title="Dashboard">
-  <div class="bg-table min-h-screen p-4 md:p-8">
-    <div class="mx-auto max-w-3xl">
-      <AppHeader title="Dashboard" />
+  <div class="mx-auto w-full max-w-3xl">
+    <PageTitle title="Dashboard" />
 
-      <div class="border-border bg-card text-foreground rounded-2xl border p-8 text-center backdrop-blur-xl">
-        <p class="text-ink-muted">
-          Welcome, <span class="text-foreground font-semibold">{user?.email}</span>
-        </p>
-        <p class="text-ink-muted mt-2 text-sm">This page is only for authenticated users.</p>
-        <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            href="/catalog"
-            class="bg-primary text-primary-foreground inline-block rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
-          >
-            View catalog
-          </a>
-          <a
-            href="/play"
-            class="bg-primary text-primary-foreground inline-block rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
-          >
-            What should we play?
-          </a>
-        </div>
+    <div class="border-border bg-card text-foreground rounded-2xl border p-8 text-center backdrop-blur-xl">
+      <p class="text-ink-muted">
+        Welcome, <span class="text-foreground font-semibold">{user?.email}</span>
+      </p>
+      <p class="text-ink-muted mt-2 text-sm">This page is only for authenticated users.</p>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <a
+          href="/catalog"
+          class="bg-primary text-primary-foreground inline-block rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+        >
+          View catalog
+        </a>
+        <a
+          href="/play"
+          class="bg-primary text-primary-foreground inline-block rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
+        >
+          What should we play?
+        </a>
       </div>
     </div>
   </div>

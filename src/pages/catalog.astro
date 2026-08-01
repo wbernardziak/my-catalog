@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import AppHeader from "@/components/AppHeader.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import GameForm from "@/components/catalog/GameForm";
 import GameCard from "@/components/catalog/GameCard";
 import CatalogFilters from "@/components/catalog/CatalogFilters.astro";
@@ -45,58 +45,56 @@ if (supabase && user) {
 ---
 
 <Layout title="Catalog">
-  <div class="bg-table min-h-screen p-4 md:p-8">
-    <div class="mx-auto max-w-5xl">
-      <AppHeader title="Catalog" />
+  <div class="mx-auto w-full max-w-5xl">
+    <PageTitle title="Catalog" />
 
-      {
-        !configured ? (
-          <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
-            Supabase is not configured — the catalog is unavailable. Set <code>SUPABASE_URL</code> and{" "}
-            <code>SUPABASE_KEY</code> to enable it.
-          </div>
-        ) : (
-          <div class="grid gap-8 md:grid-cols-[1fr_360px]">
-            <section aria-label="Games">
-              <CatalogFilters genres={genres} current={filters} />
-              {loadError ? (
-                <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
-                  {loadError}
+    {
+      !configured ? (
+        <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+          Supabase is not configured — the catalog is unavailable. Set <code>SUPABASE_URL</code> and{" "}
+          <code>SUPABASE_KEY</code> to enable it.
+        </div>
+      ) : (
+        <div class="grid gap-8 md:grid-cols-[1fr_360px]">
+          <section aria-label="Games">
+            <CatalogFilters genres={genres} current={filters} />
+            {loadError ? (
+              <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+                {loadError}
+              </div>
+            ) : games.length === 0 ? (
+              hasActiveFilters ? (
+                <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
+                  No games match your filters.{" "}
+                  <a href="/catalog" class="text-accent-ink hover:underline">
+                    Clear filters
+                  </a>
                 </div>
-              ) : games.length === 0 ? (
-                hasActiveFilters ? (
-                  <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
-                    No games match your filters.{" "}
-                    <a href="/catalog" class="text-primary hover:underline">
-                      Clear filters
-                    </a>
-                  </div>
-                ) : (
-                  <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
-                    No games yet. Add your first board game using the form.
-                  </div>
-                )
               ) : (
-                <ul class="space-y-3">
-                  {games.map((game) => (
-                    <li>
-                      <GameCard game={game} filters={activeQuery} client:load />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
+                  No games yet. Add your first board game using the form.
+                </div>
+              )
+            ) : (
+              <ul class="space-y-3">
+                {games.map((game) => (
+                  <li>
+                    <GameCard game={game} filters={activeQuery} client:load />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-            <aside
-              aria-label="Add a game"
-              class="border-border bg-card text-foreground h-fit rounded-2xl border p-6 backdrop-blur-xl"
-            >
-              <h2 class="mb-4 text-lg font-semibold">Add a game</h2>
-              <GameForm mode="create" idPrefix="create" action="/api/games" serverError={error} client:load />
-            </aside>
-          </div>
-        )
-      }
-    </div>
+          <aside
+            aria-label="Add a game"
+            class="border-border bg-card text-foreground h-fit rounded-2xl border p-6 backdrop-blur-xl"
+          >
+            <h2 class="mb-4 text-lg font-semibold">Add a game</h2>
+            <GameForm mode="create" idPrefix="create" action="/api/games" serverError={error} client:load />
+          </aside>
+        </div>
+      )
+    }
   </div>
 </Layout>

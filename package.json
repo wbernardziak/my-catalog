@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:colors": "node scripts/check-color-literals.mjs",
+    "lint:contrast": "node scripts/check-contrast.mjs",
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

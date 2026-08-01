@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import AppHeader from "@/components/AppHeader.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import RecommendationFlow from "@/components/play/RecommendationFlow";
 
 // No server data fetch: the island drives everything via the JSON route. The
@@ -9,11 +9,9 @@ import RecommendationFlow from "@/components/play/RecommendationFlow";
 ---
 
 <Layout title="What should we play?">
-  <div class="bg-table min-h-screen p-4 md:p-8">
-    <div class="mx-auto max-w-3xl">
-      <AppHeader title="What should we play?" />
+  <div class="mx-auto w-full max-w-3xl">
+    <PageTitle title="What should we play?" />
 
-      <RecommendationFlow client:load />
-    </div>
+    <RecommendationFlow client:load />
   </div>
 </Layout>

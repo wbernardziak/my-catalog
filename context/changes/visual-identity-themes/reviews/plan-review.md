@@ -5,7 +5,7 @@
 - **Plan**: `context/changes/visual-identity-themes/plan.md`
 - **Tryb**: Głęboki
 - **Data**: 2026-08-01
-- **Werdykt**: DO POPRAWY
+- **Werdykt**: DO POPRAWY → SOLIDNY po poprawkach (2026-08-01, wszystkie 6 ustaleń naprawione)
 - **Ustalenia**: 2 krytyczne, 3 ostrzeżenia, 1 obserwacja
 
 ## Werdykty
@@ -41,7 +41,7 @@
   - Kompromis: Utrwala walkę specyficzności, którą każdy nowy token musi wygrywać.
   - Pewność: ŚREDNIA — kolejność kaskady dla `@theme inline` w Tailwind 4 nie została przetestowana.
   - Martwy punkt: Zachowanie `@theme inline` przy konkurencyjnych blokach.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE (Poprawka A) — blok `.dark` usuwany w fazie 2; `rootClass` wprowadzony statycznie w fazie 2, w fazie 4 podmieniany na wartość z cookie
 
 ### F2 — Komponenty badge nierozstrzygnięte, a dwaj konsumenci to wyspy React
 
@@ -51,7 +51,7 @@
 - **Lokalizacja**: Faza 4, zmiana #2
 - **Szczegóły**: Kontrakt mówi „`GameMeta.astro` (new) **or a small component set**”, po czym dodaje, że wyspy potrzebują „React-side equivalent”. To nierozstrzygnięta decyzja projektowa: `GameCard.tsx` i `RecommendationFlow.tsx` są wyspami React, w których komponentu `.astro` użyć się nie da — zostawione tak, kończy się dwiema równoległymi implementacjami pipsów i kostki.
 - **Poprawka**: Zadeklaruj jedną implementację w `.tsx`; renderuje się statycznie w `.astro` (PreferenceStatsTable) bez dyrektywy klienta i importuje wprost w obu wyspach.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE — jedna implementacja `GameMeta.tsx`; wersja `.astro` jawnie odrzucona
 
 ### F3 — Landing przepisywany dwa razy
 
@@ -70,7 +70,7 @@
   - Kompromis: Łamie regułę „faza 1 bez decyzji kolorystycznych”; landing przez całą fazę 1 renderuje się bez stylu.
   - Pewność: ŚREDNIA — zależy od tolerancji na tymczasowo brzydki ekran.
   - Martwy punkt: Brak znaczących.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE (Poprawka A) — przepisanie landingu przeniesione do fazy 2, pisane od razu w tokenach
 
 ### F4 — „may adopt button.tsx” to niedomknięty zakres
 
@@ -80,7 +80,7 @@
 - **Lokalizacja**: Faza 2, zmiana #2 (kontrakt) vs sekcja „What we are NOT doing”
 - **Szczegóły**: Kontrakt pozwala kontrolkom „adopt `button.tsx`” tam, gdzie pasują, a zakres mówi „no bulk migration”. Granica jest nieokreślona — klasyczne „refaktoryzuj w razie potrzeby”, które puchnie w sweepie przez 21 plików.
 - **Poprawka**: Usuń pozwolenie z fazy 2; konwersja pozostaje czysto mechaniczna (literał → token).
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE — pozwolenie usunięte z fazy 3; sekcja zakresu mówi wprost, że żadna kontrolka nie adoptuje `button.tsx`
 
 ### F5 — Guard nie łapie literałów spoza utility Tailwind
 
@@ -90,7 +90,7 @@
 - **Lokalizacja**: Faza 2, zmiana #4
 - **Szczegóły**: Guard skanuje wyłącznie utility Tailwind, a aplikacja już wstrzykuje kolory inaczej — `Welcome.astro:22` niesie `rgba(...)` w atrybucie `style`. Faza 1 kasuje ten przypadek, ale nic nie powstrzyma następnego, a stan końcowy obiecuje „No `src/` file names a colour directly”.
 - **Poprawka**: Rozszerz skaner o literały hex/`rgb()` oraz właściwości koloru w atrybutach `style`, z tymi samymi wyjątkami (`global.css`, `BrandMark.astro`).
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE — guard rozszerzony o literały hex/rgb/hsl/oklch i właściwości koloru w `style`, z dwoma testami deliberate-break
 
 ### F6 — Faza 2 jest znacząco większa niż pozostałe
 
@@ -100,4 +100,4 @@
 - **Lokalizacja**: Faza 2 + brief („~4 sesje, po jednej na fazę”)
 - **Szczegóły**: Faza 2 to 233 konwersje w 21 plikach + słownik tokenów + dwa motywy + znak + skrypt guard + krok CI, z 12 kryteriami sukcesu, traktowana w szacunku na równi z fazą 4 (3 zmiany). Przy `capacity` jako głównym blockerze projektu warto ją rozbić.
 - **Poprawka**: Podziel fazę 2 wzdłuż katalogów — tokeny+motywy, potem `auth/` (23), `catalog/` (89), `play/` (32), strony (47) — z ręcznym sprawdzeniem po każdej porcji; guard po ostatniej.
-- **Decyzja**: PENDING
+- **Decyzja**: NAPRAWIONE — faza 2 rozbita na fazę 2 (tokeny/motywy/znak/landing) i fazę 3 (sweep w 4 porcjach + guard); plan ma teraz 5 faz, szacunek 5-6 sesji

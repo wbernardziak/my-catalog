@@ -37,18 +37,20 @@ A household member opens MyCatalog and sees a board-game identity — Felt Table
 - **No per-member theme persistence in the database.** No migration, no RLS, no `supabase db push` in this change.
 - **No new product features.** Nothing about catalog, recommendation, or stats behaviour changes.
 - **No PRD amendment.** S-07 ships ahead of PRD v1 by explicit agreement; see the roadmap's Open Roadmap Questions.
-- **No shadcn component library expansion.** `button.tsx` starts being used where it fits; no bulk migration of hand-rolled controls to shadcn.
+- **No shadcn component library expansion.** Hand-rolled controls are converted in place, literal → token. No control adopts `button.tsx` during this change, whether or not it happens to match a variant — that is a separate decision, deliberately kept out of a 233-site sweep.
 - **No user-authored themes or a colour picker.** Three fixed themes.
 
 ## Implementation Approach
 
-Four phases, ordered so the single expensive mistake — a token vocabulary that cannot express a light theme — is discovered while it is still cheap. Phase 1 is structural only (no colour), which keeps the largest diff reviewable. Phase 2 defines Felt Table **and** Bright Shelf together and converts every call site against both, so the vocabulary is stress-tested across a dark and a light ground before 233 conversions are locked in. Phase 3 adds persistence and the switcher on top of a token layer that is already proven. Phase 4 adds the third theme — which by then is a data change — plus the badge system that carries the identity beyond colour.
+Five phases, ordered so the single expensive mistake — a token vocabulary that cannot express a light theme — is discovered while it is still cheap. Phase 1 is structural only (no colour), which keeps the largest diff reviewable. Phase 2 builds the token layer with Felt Table **and** Bright Shelf defined together and proves both by stamping the theme class statically, so the vocabulary is stress-tested across a dark and a light ground before any call site is converted. Phase 3 performs the conversion sweep in four directory-sized chunks, each independently verifiable, and closes with the colour-literal guard. Phase 4 adds persistence and the switcher on top of a token layer that is already proven. Phase 5 adds the third theme — which by then is a data change — plus the badge system that carries the identity beyond colour.
 
-The colour-literal guard lands at the **end of phase 2**, not at the end of the plan: it protects the conversion during phases 3 and 4, when new UI is being written.
+The colour-literal guard lands at the **end of phase 3**, not at the end of the plan: it protects the conversion during phases 4 and 5, when new UI is being written.
 
 ## Critical Implementation Details
 
-**Sequencing of the root-element class.** The theme class and `.dark` are two separate concerns on `<html>`: Felt Table and Punchboard are dark grounds and must co-apply `dark` so `button.tsx`'s `dark:` variants resolve correctly; Bright Shelf must _not_. A single helper must own this mapping — if the two are set independently anywhere, a light theme with a stale `dark` class renders unreadable text on light surfaces.
+**The existing `.dark` block must go before any theme co-applies `dark`.** `global.css:41-73` currently redefines every shadcn token to grayscale. Because `.dark` beats `:root` on specificity, stamping `<html class="theme-felt dark">` while that block still exists would wipe the Felt palette out entirely. Phase 2 therefore deletes the `.dark` token block and moves its role into the theme blocks; `.dark` survives only as the trigger for the `dark:` variant in `button.tsx` — verified to be its only consumer — and carries no token values of its own.
+
+**Sequencing of the root-element class.** The theme class and `.dark` are two separate concerns on `<html>`: Felt Table and Punchboard are dark grounds and must co-apply `dark` so `button.tsx`'s `dark:` variants resolve correctly; Bright Shelf must _not_. A single helper must own this mapping — if the two are set independently anywhere, a light theme with a stale `dark` class renders unreadable text on light surfaces. Phase 2 introduces that mapping as a static value in `Layout.astro`; phase 4 replaces the static value with the cookie-resolved one and changes nothing else about it, so what phase 2 verified is what ships.
 
 **Open-redirect surface.** The theme endpoint takes a `next` path so the switch returns to the page the member was on. It must accept only same-origin absolute paths (leading `/`, no `//` or scheme), or it becomes an open redirect on a route that is intentionally unauthenticated.
 
@@ -78,21 +80,13 @@ Create the shared header the app has never had, and delete the starter's identit
 
 **Contract**: Each page's `<header>` (`catalog.astro:49-57`, `play.astro:13-18`, `stats.astro:37-42`) and `dashboard.astro:10`'s bare `<h1>` are replaced by `<AppHeader title="…" />`. Any per-page action that lived in the header (e.g. the catalog's right-hand controls) stays on the page, below the header. `Welcome.astro:28` swaps `Topbar` for `AppHeader`.
 
-#### 3. Landing page rewrite
-
-**File**: `src/components/Welcome.astro`
-
-**Purpose**: The first screen currently advertises someone else's product ("10x Astro Starter — A production-ready starter with authentication, modern tooling, and a cosmic developer experience").
-
-**Contract**: Hero copy describes MyCatalog — a shared household board-game catalog with AI play suggestions — with sign-in / sign-up as the primary actions. The star field and orb decorations (`Welcome.astro:6-25`) are removed; they are the starter's motif and phase 2 replaces the ground entirely.
-
-#### 4. Starter asset removal
+#### 3. Starter asset removal
 
 **File**: `src/layouts/Layout.astro`, `src/components/ui/LibBadge.astro`, `public/template.png`
 
 **Purpose**: Remove the remaining starter fingerprints.
 
-**Contract**: `Layout.astro:10`'s default title becomes `"MyCatalog"`. `LibBadge.astro` and `public/template.png` are deleted along with their references. `public/favicon.png` stays until phase 2 replaces it with the real mark.
+**Contract**: `Layout.astro:10`'s default title becomes `"MyCatalog"`. `LibBadge.astro` (verified unused — no importers) and `public/template.png` are deleted. `public/favicon.png` stays until phase 2 replaces it with the real mark. The starter hero copy in `Welcome.astro` is left alone: phase 2 rewrites that file once, in tokens.
 
 ### Success Criteria:
 
@@ -101,25 +95,24 @@ Create the shared header the app has never had, and delete the starter's identit
 - Lint passes: `npm run lint`
 - Build passes: `npm run build`
 - Tests pass: `npm test`
-- No starter strings remain: `grep -r "10x Astro Starter" src/ public/` returns nothing
+- Default title no longer names the starter: `grep -n "10x Astro Starter" src/layouts/Layout.astro` returns nothing
 - `LibBadge` and `template.png` are gone with no dangling references: `grep -rn "LibBadge\|template.png" src/ public/` returns nothing
 
 #### Manual verification:
 
 - All seven pages render the same header, with working Catalog / Play / Stats navigation
 - Signed-out pages (landing, signin, signup, confirm-email) show sign-in/sign-up rather than member nav
-- The landing page describes MyCatalog, with no starter copy
 - Header layout holds at mobile width without wrapping into the page content
 
 **Implementation note**: Stop here for human confirmation that the manual checks passed before starting phase 2.
 
 ---
 
-## Phase 2: Token layer, Felt Table + Bright Shelf, and full conversion
+## Phase 2: Token layer, Felt Table + Bright Shelf, mark, and landing
 
 ### Overview
 
-The load-bearing phase. Define the token vocabulary against two themes at once, convert all 233 call sites to it, add the brand mark, and lock the result behind a CI guard.
+Build the vocabulary and prove it against both a dark and a light ground before a single call site is converted. Nothing in `src/` changes colour yet except the landing page, which is written straight into tokens.
 
 ### Changes Required:
 
@@ -131,15 +124,17 @@ The load-bearing phase. Define the token vocabulary against two themes at once, 
 
 **Contract**: The existing shadcn roles (`--background`, `--foreground`, `--card`, `--primary`, `--accent`, `--border`, `--input`, `--ring`, `--destructive`) are filled with real values, extended with the roles the inventory exposed that shadcn lacks: a raised surface (today `bg-white/10`), a hairline (`border-white/10`), a muted ink (`text-blue-100/70`), and three semantic state roles for liked / disliked / loaned (today emerald / red / amber). `:root` holds Felt Table; `.theme-shelf` redefines every role for Bright Shelf. Every role defined in `:root` must be redefined in each theme block — a missing role silently inherits the previous theme's colour. `@theme inline` (`global.css:75-111`) gains the new roles so they are reachable as utilities. The `bg-cosmic` utility is renamed to the theme's ground and reduced to a token reference.
 
+**The existing `.dark` block (`global.css:41-73`) is deleted in this step.** It redefines every shadcn token to grayscale and would beat `:root` on specificity the moment a dark theme co-applies `dark`, wiping the palette out. After deletion, `.dark` carries no token values and exists only as the trigger for `button.tsx`'s `dark:` variants — verified to be its only consumer in `src/`.
+
 Palettes are fixed in the roadmap slice: Felt `#1d3b32` / `#f2e9d8` / `#c8a24a` / `#6b4a2f` / `#8c3b32`; Shelf `#f6f4ef` / `#17181c` / `#c0442a` / `#204b45` / `#e8b23c`.
 
-#### 2. Call-site conversion
+#### 2. Static root-class stamp
 
-**File**: 21 files — by literal count: `catalog/GameCard.tsx` (49), `play/RecommendationFlow.tsx` (32), `Welcome.astro` (28), `pages/catalog.astro` (20), `catalog/GameForm.tsx` (18), `pages/dashboard.astro` (17), `AppHeader.astro` (15, from `Topbar.astro`), `pages/stats.astro` (13), `catalog/CatalogFilters.astro` (13), `auth/FormField.tsx` (10), `catalog/PreferenceStatsTable.astro` (9), `pages/auth/signup.astro` (7), `pages/auth/signin.astro` (7), `pages/auth/confirm-email.astro` (7), `auth/SubmitButton.tsx` (4), `pages/play.astro` (3), `auth/ServerError.tsx` (3), `auth/PasswordToggle.tsx` (2), `ui/button.tsx` (1), `auth/SignUpForm.tsx` (1)
+**File**: `src/layouts/Layout.astro`, `src/lib/theme.ts` (new)
 
-**Purpose**: Remove every colour literal from `src/` so a theme change is a CSS change.
+**Purpose**: Make phase 2's verification show the same rendering that ships, rather than a transient state without `.dark`.
 
-**Contract**: Each literal maps to the token role it was standing in for — surface, raised surface, hairline, ink, muted ink, accent, on-accent, or one of the semantic state roles. Existing `cn()` usage (`GameCard.tsx:3`) is preserved; class strings are not concatenated manually, per the repo convention. Where a hand-rolled control is exactly a shadcn button variant, it may adopt `button.tsx` — but no bulk migration.
+**Contract**: `src/lib/theme.ts` gains the theme id union and `rootClass(theme)`, which returns the `<html>` class string — the theme class, plus `dark` for the dark grounds (Felt, later Punchboard), never for Shelf. `Layout.astro` calls it with a hardcoded `"felt"`. Phase 4 replaces that hardcoded argument with the cookie-resolved value and changes nothing else, so the mapping verified here is the mapping that ships.
 
 #### 3. Brand mark
 
@@ -149,20 +144,81 @@ Palettes are fixed in the roadmap slice: Felt `#1d3b32` / `#f2e9d8` / `#c8a24a` 
 
 **Contract**: A brass meeple on a felt tile as inline SVG, exported once as a component (used by `AppHeader`) and once as `public/favicon.svg`. `Layout.astro:18` points at the SVG, keeping the PNG as fallback. The mark uses its own fixed colours rather than tokens — it is a logo, not themed chrome.
 
-#### 4. Colour-literal guard
+#### 4. Landing page rewrite
+
+**File**: `src/components/Welcome.astro`
+
+**Purpose**: The first screen currently advertises someone else's product ("10x Astro Starter — A production-ready starter with authentication, modern tooling, and a cosmic developer experience"). Rewritten here rather than in phase 1 so it is written once, directly in tokens.
+
+**Contract**: Hero copy describes MyCatalog — a shared household board-game catalog with AI play suggestions — with sign-in / sign-up as the primary actions. The star field and orb decorations (`Welcome.astro:6-25`) are removed. Written in token classes only, so this file is already done when the phase 3 sweep reaches it and drops off the conversion list.
+
+### Success Criteria:
+
+#### Automated verification:
+
+- Lint passes: `npm run lint`
+- Build passes: `npm run build`
+- Tests pass: `npm test`
+- No starter strings remain anywhere: `grep -rn "10x Astro Starter" src/ public/` returns nothing
+- The `.dark` token block is gone: `grep -n "^\.dark" src/styles/global.css` returns nothing
+
+#### Manual verification:
+
+- Landing page renders in Felt Table and describes MyCatalog, with no starter copy
+- Switching `Layout.astro`'s hardcoded theme to `"shelf"` by hand renders the landing and header correctly in Bright Shelf — no invisible text, nothing inheriting Felt's colours
+- `button.tsx`-derived controls look correct under Felt (with `dark`) and under Shelf (without it)
+- Every token role defined in `:root` has a counterpart in `.theme-shelf` (read the two blocks side by side)
+
+**Implementation note**: Stop here for human confirmation. This is the phase to stop at if the vocabulary feels wrong — it is the last moment before 233 conversions depend on it.
+
+---
+
+## Phase 3: Conversion sweep and the colour-literal guard
+
+### Overview
+
+Convert all remaining call sites to the proven vocabulary, in four directory-sized chunks so each is independently verifiable, then lock the result behind a CI guard.
+
+### Changes Required:
+
+#### 1. Call-site conversion
+
+**File**: 20 files in four chunks, converted and verified one chunk at a time (`Welcome.astro` is already done in phase 2):
+
+- **Chunk A — `auth/` (23 literals)**: `auth/FormField.tsx` (10), `pages/auth/signup.astro` (7), `pages/auth/signin.astro` (7), `pages/auth/confirm-email.astro` (7), `auth/SubmitButton.tsx` (4), `auth/ServerError.tsx` (3), `auth/PasswordToggle.tsx` (2), `auth/SignUpForm.tsx` (1)
+- **Chunk B — `catalog/` (89 literals)**: `catalog/GameCard.tsx` (49), `catalog/GameForm.tsx` (18), `catalog/CatalogFilters.astro` (13), `catalog/PreferenceStatsTable.astro` (9)
+- **Chunk C — `play/` (32 literals)**: `play/RecommendationFlow.tsx` (32)
+- **Chunk D — pages and chrome (48 literals)**: `pages/catalog.astro` (20), `pages/dashboard.astro` (17), `AppHeader.astro` (15, from `Topbar.astro`), `pages/stats.astro` (13), `pages/play.astro` (3), `ui/button.tsx` (1)
+
+**Purpose**: Remove every colour literal from `src/` so a theme change is a CSS change.
+
+**Contract**: Each literal maps to the token role it was standing in for — surface, raised surface, hairline, ink, muted ink, accent, on-accent, or one of the semantic state roles. Existing `cn()` usage (`GameCard.tsx:3`) is preserved; class strings are not concatenated manually, per the repo convention. Conversion is mechanical: no control adopts `button.tsx`, no markup is restructured, no component is split. If a call site needs a role that does not exist, the role is added to **all** theme blocks rather than special-cased at the call site.
+
+Chunks are ordered smallest-first so the mapping is exercised on `auth/` (simple forms) before `catalog/` (the 89-literal bulk). Each chunk is verified against both themes before the next begins.
+
+#### 2. Colour-literal guard
 
 **File**: `scripts/check-color-literals.mjs` (new), `package.json`, `.github/workflows/ci.yml`
 
 **Purpose**: Make the token layer stick. Without it, the next feature re-adds `bg-purple-600` and the third theme quietly breaks.
 
-**Contract**: A node script scanning `src/**/*.{astro,tsx,ts}` for Tailwind colour utilities (`bg-|text-|border-|from-|via-|to-|ring-|placeholder-|divide-|outline-` followed by a Tailwind palette name or `white`/`black`), exiting non-zero with `file:line` for each hit. `src/styles/global.css` and `BrandMark.astro` are exempt — they are where colour is allowed to exist. Exposed as `npm run lint:colors` and added as a CI step. An ESLint rule was considered and rejected: class strings appear inside `.astro` attributes, JSX, and `cn()` calls, which makes an AST rule brittle across all three.
+**Contract**: A node script scanning `src/**/*.{astro,tsx,ts}` for three families of colour literal, exiting non-zero with `file:line` for each hit:
+
+1. Tailwind colour utilities — `bg-|text-|border-|from-|via-|to-|ring-|placeholder-|divide-|outline-` followed by a Tailwind palette name or `white`/`black`
+2. Raw hex literals (`#rgb`, `#rrggbb`, `#rrggbbaa`) and `rgb()` / `rgba()` / `hsl()` / `oklch()` function calls
+3. Colour-bearing CSS properties inside `style=` attributes and inline `<style>` blocks (`color`, `background`, `background-color`, `border-color`, `fill`, `stroke`, `box-shadow`)
+
+Family 2 and 3 exist because the app already injects colour outside Tailwind — `Welcome.astro:22` carries `rgba(...)` in a `style` attribute today, and a utility-only scanner would let the next one through while the end state promises no `src/` file names a colour.
+
+`src/styles/global.css` and `src/components/BrandMark.astro` are exempt — they are where colour is allowed to exist. Exposed as `npm run lint:colors` and added as a CI step. An ESLint rule was considered and rejected: class strings appear inside `.astro` attributes, JSX, and `cn()` calls, which makes an AST rule brittle across all three.
 
 ### Success Criteria:
 
 #### Automated verification:
 
 - Guard passes: `npm run lint:colors` reports zero literals
-- Guard actually fires: re-adding `bg-purple-600` to any component makes `npm run lint:colors` exit non-zero (deliberate-break check, then revert)
+- Guard fires on a Tailwind literal: re-adding `bg-purple-600` makes it exit non-zero (deliberate-break check, then revert)
+- Guard fires on a non-Tailwind literal: re-adding `style="color:#fff"` makes it exit non-zero (deliberate-break check, then revert)
 - Guard runs in CI: `.github/workflows/ci.yml` includes the step
 - Lint passes: `npm run lint`
 - Build passes: `npm run build`
@@ -170,18 +226,20 @@ Palettes are fixed in the roadmap slice: Felt `#1d3b32` / `#f2e9d8` / `#c8a24a` 
 
 #### Manual verification:
 
+- Chunk A (`auth/`) verified under both themes before chunk B begins
+- Chunk B (`catalog/`) verified under both themes before chunk C begins
+- Chunk C (`play/`) verified under both themes before chunk D begins
+- Chunk D (pages and chrome) verified under both themes
 - Felt Table renders correctly across all seven pages
-- Bright Shelf renders correctly across all seven pages when `.theme-shelf` is stamped on `<html>` by hand — no invisible text, no colour inherited from Felt
-- Body text and muted text are legible against their surfaces in both themes
-- Focus rings are visible in both themes
-- Semantic states (error red, liked emerald, loaned amber) remain distinguishable in both
-- Layout is unchanged from phase 1 at desktop and mobile widths — this phase changes colour only
+- Bright Shelf renders correctly across all seven pages via the hardcoded theme in `Layout.astro`
+- Body text and muted text legible, focus rings visible, semantic states (error, liked, loaned) distinguishable — in both themes
+- Layout unchanged from phase 1 at desktop and mobile widths — this phase changes colour only
 
-**Implementation note**: Stop here for human confirmation before starting phase 3. This is the phase to stop at if the vocabulary feels wrong — it is the last cheap moment.
+**Implementation note**: Stop here for human confirmation before starting phase 4. Each chunk is committable on its own; the guard only goes green once chunk D lands.
 
 ---
 
-## Phase 3: Cookie persistence and the theme switcher
+## Phase 4: Cookie persistence and the theme switcher
 
 ### Overview
 
@@ -189,13 +247,13 @@ Make the theme a member choice: read on the server, applied to the root element,
 
 ### Changes Required:
 
-#### 1. Theme module
+#### 1. Theme module extension
 
-**File**: `src/lib/theme.ts` (new), `src/lib/theme.test.ts` (new)
+**File**: `src/lib/theme.ts` (created in phase 2), `src/lib/theme.test.ts` (new)
 
-**Purpose**: One place that owns the theme list, cookie parsing, and the root-class mapping — including which themes co-apply `dark`.
+**Purpose**: Extend the module that already owns the theme list and root-class mapping with cookie parsing and redirect validation.
 
-**Contract**: Exports the theme id union (`felt` | `shelf` | `punchboard`), the cookie name, a default (`felt`), a type guard for unknown cookie values, a `rootClass(theme)` returning the `<html>` class string (theme class plus `dark` for the two dark grounds), and a `safeNext(path)` returning a same-origin path or the fallback. `safeNext` rejects anything not starting with a single `/`.
+**Contract**: Already present from phase 2: the theme id union (`felt` | `shelf` | `punchboard`) and `rootClass(theme)`. Added here: the cookie name, the default (`felt`), a type guard for unknown cookie values, and a `safeNext(path)` returning a same-origin path or the fallback — rejecting anything not starting with a single `/`. `rootClass` is not modified; phase 2 already proved its mapping.
 
 #### 2. Middleware wiring
 
@@ -209,9 +267,9 @@ Make the theme a member choice: read on the server, applied to the root element,
 
 **File**: `src/layouts/Layout.astro`
 
-**Purpose**: Apply the theme in the first byte of HTML so nothing flashes.
+**Purpose**: Apply the member's theme in the first byte of HTML so nothing flashes.
 
-**Contract**: `<html>` gets `class={rootClass(Astro.locals.theme)}`. No inline script and no client-side theme application.
+**Contract**: The hardcoded `rootClass("felt")` from phase 2 becomes `rootClass(Astro.locals.theme)`. That single argument is the only edit — the mapping itself is untouched. No inline script and no client-side theme application.
 
 #### 4. Theme endpoint
 
@@ -247,11 +305,11 @@ Make the theme a member choice: read on the server, applied to the root element,
 - Manually corrupting the cookie value falls back to Felt Table rather than erroring
 - Switcher is reachable and usable at mobile width
 
-**Implementation note**: Stop here for human confirmation before starting phase 4.
+**Implementation note**: Stop here for human confirmation before starting phase 5.
 
 ---
 
-## Phase 4: Punchboard and the badge system
+## Phase 5: Punchboard and the badge system
 
 ### Overview
 
@@ -269,11 +327,13 @@ Add the third theme — now a data change — and the shape-based badge system t
 
 #### 2. Badge and metadata components
 
-**File**: `src/components/ui/GameMeta.astro` (new) or a small component set, consumed by `src/components/catalog/GameCard.tsx`, `src/components/play/RecommendationFlow.tsx`, `src/components/catalog/PreferenceStatsTable.astro`
+**File**: `src/components/ui/GameMeta.tsx` (new), consumed by `src/components/catalog/GameCard.tsx`, `src/components/play/RecommendationFlow.tsx`, `src/components/catalog/PreferenceStatsTable.astro`
 
 **Purpose**: Encode game state in shape as well as colour, so the catalog scans like a game shelf.
 
-**Contract**: Player count renders as pips (filled to the supported range), duration as a die face or die glyph with the minute count, played state as per-member meeples, and loan state as a distinct token-coloured badge. All colours come from tokens. React islands need a React-side equivalent where an `.astro` component cannot be used — `GameCard.tsx` and `RecommendationFlow.tsx` are islands.
+**Contract**: **One implementation, in `.tsx`.** Two of the three consumers (`GameCard.tsx`, `RecommendationFlow.tsx`) are React islands, where an `.astro` component cannot be used; a React component works in all three, rendering statically inside `PreferenceStatsTable.astro` with no client directive and importing directly into both islands. An `.astro` version is explicitly not written — two parallel implementations of the same pips and dice is the failure mode being avoided.
+
+Exports: player count as pips (filled to the supported range), duration as a die glyph with the minute count, played state as per-member meeples, loan state as a distinct badge. All colours come from tokens.
 
 #### 3. Pip/duration helpers
 
@@ -345,7 +405,7 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 ## Progress
 
-> Konwencja: `- [ ]` oczekujące, `- [x]` wykonane. Dołącz ` — <commit sha>` po zakończeniu kroku. Nie zmieniaj nazw tytułów kroków. Zobacz `references/progress-format.md`.
+> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Shared chrome and starter removal
 
@@ -354,66 +414,85 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 - [ ] 1.1 Lint passes: `npm run lint`
 - [ ] 1.2 Build passes: `npm run build`
 - [ ] 1.3 Tests pass: `npm test`
-- [ ] 1.4 No starter strings remain in `src/` or `public/`
+- [ ] 1.4 Default title no longer names the starter in `Layout.astro`
 - [ ] 1.5 `LibBadge` and `template.png` removed with no dangling references
 
 #### Manual
 
 - [ ] 1.6 All seven pages render the shared header with working navigation
 - [ ] 1.7 Signed-out pages show sign-in/sign-up rather than member nav
-- [ ] 1.8 Landing page describes MyCatalog with no starter copy
-- [ ] 1.9 Header holds at mobile width
+- [ ] 1.8 Header holds at mobile width
 
-### Phase 2: Token layer, Felt Table + Bright Shelf, and full conversion
-
-#### Automated
-
-- [ ] 2.1 `npm run lint:colors` reports zero literals
-- [ ] 2.2 Deliberate-break check: re-adding a colour literal makes the guard exit non-zero
-- [ ] 2.3 Guard step present in `.github/workflows/ci.yml`
-- [ ] 2.4 Lint passes: `npm run lint`
-- [ ] 2.5 Build passes: `npm run build`
-- [ ] 2.6 Tests pass: `npm test`
-
-#### Manual
-
-- [ ] 2.7 Felt Table renders correctly across all seven pages
-- [ ] 2.8 Bright Shelf renders correctly across all seven pages with `.theme-shelf` stamped by hand
-- [ ] 2.9 Body and muted text legible against their surfaces in both themes
-- [ ] 2.10 Focus rings visible in both themes
-- [ ] 2.11 Semantic states (error, liked, loaned) distinguishable in both themes
-- [ ] 2.12 Layout unchanged from phase 1 at desktop and mobile widths
-
-### Phase 3: Cookie persistence and the theme switcher
+### Phase 2: Token layer, Felt Table + Bright Shelf, mark, and landing
 
 #### Automated
 
-- [ ] 3.1 Theme module unit tests pass, including `safeNext` rejection cases
-- [ ] 3.2 Theme endpoint tests pass (valid sets cookie and redirects; invalid does not set)
-- [ ] 3.3 Guard still passes: `npm run lint:colors`
-- [ ] 3.4 Lint, build, tests pass
+- [ ] 2.1 Lint passes: `npm run lint`
+- [ ] 2.2 Build passes: `npm run build`
+- [ ] 2.3 Tests pass: `npm test`
+- [ ] 2.4 No starter strings remain in `src/` or `public/`
+- [ ] 2.5 The `.dark` token block is gone from `global.css`
 
 #### Manual
 
-- [ ] 3.5 Switching changes the theme and returns to the same page
-- [ ] 3.6 Choice survives reload, navigation, and sign-out → sign-in
-- [ ] 3.7 No flash of the wrong theme on hard refresh
-- [ ] 3.8 Switching works while signed out
-- [ ] 3.9 Corrupted cookie falls back to Felt Table
-- [ ] 3.10 Switcher usable at mobile width
+- [ ] 2.6 Landing page renders in Felt Table and describes MyCatalog
+- [ ] 2.7 Hardcoding the theme to `"shelf"` renders landing and header correctly in Bright Shelf
+- [ ] 2.8 `button.tsx`-derived controls correct under Felt (with `dark`) and Shelf (without)
+- [ ] 2.9 Every `:root` token role has a counterpart in `.theme-shelf`
 
-### Phase 4: Punchboard and the badge system
+### Phase 3: Conversion sweep and the colour-literal guard
 
 #### Automated
 
-- [ ] 4.1 `gameMeta` unit tests pass, including missing/zero/out-of-range values
-- [ ] 4.2 Guard passes: `npm run lint:colors`
-- [ ] 4.3 Lint, build, tests pass
+- [ ] 3.1 Guard passes: `npm run lint:colors` reports zero literals
+- [ ] 3.2 Guard fires on a Tailwind literal (deliberate-break check)
+- [ ] 3.3 Guard fires on a non-Tailwind literal (deliberate-break check)
+- [ ] 3.4 Guard step present in `.github/workflows/ci.yml`
+- [ ] 3.5 Lint passes: `npm run lint`
+- [ ] 3.6 Build passes: `npm run build`
+- [ ] 3.7 Tests pass: `npm test`
 
 #### Manual
 
-- [ ] 4.4 All three themes render correctly across all seven pages at desktop and mobile widths
-- [ ] 4.5 Punchboard corners and shadows consistent across every component
-- [ ] 4.6 Pips, duration, and played meeples legible in all three themes
-- [ ] 4.7 Genre, played, and loan state distinguishable without colour alone
-- [ ] 4.8 Recommendation flow and stats page carry the same badge language as the catalog
+- [ ] 3.8 Chunk A (`auth/`) verified under both themes
+- [ ] 3.9 Chunk B (`catalog/`) verified under both themes
+- [ ] 3.10 Chunk C (`play/`) verified under both themes
+- [ ] 3.11 Chunk D (pages and chrome) verified under both themes
+- [ ] 3.12 Felt Table renders correctly across all seven pages
+- [ ] 3.13 Bright Shelf renders correctly across all seven pages
+- [ ] 3.14 Text legible, focus rings visible, semantic states distinguishable in both themes
+- [ ] 3.15 Layout unchanged from phase 1 at desktop and mobile widths
+
+### Phase 4: Cookie persistence and the theme switcher
+
+#### Automated
+
+- [ ] 4.1 Theme module unit tests pass, including `safeNext` rejection cases
+- [ ] 4.2 Theme endpoint tests pass (valid sets cookie and redirects; invalid does not set)
+- [ ] 4.3 Guard still passes: `npm run lint:colors`
+- [ ] 4.4 Lint, build, tests pass
+
+#### Manual
+
+- [ ] 4.5 Switching changes the theme and returns to the same page
+- [ ] 4.6 Choice survives reload, navigation, and sign-out → sign-in
+- [ ] 4.7 No flash of the wrong theme on hard refresh
+- [ ] 4.8 Switching works while signed out
+- [ ] 4.9 Corrupted cookie falls back to Felt Table
+- [ ] 4.10 Switcher usable at mobile width
+
+### Phase 5: Punchboard and the badge system
+
+#### Automated
+
+- [ ] 5.1 `gameMeta` unit tests pass, including missing/zero/out-of-range values
+- [ ] 5.2 Guard passes: `npm run lint:colors`
+- [ ] 5.3 Lint, build, tests pass
+
+#### Manual
+
+- [ ] 5.4 All three themes render correctly across all seven pages at desktop and mobile widths
+- [ ] 5.5 Punchboard corners and shadows consistent across every component
+- [ ] 5.6 Pips, duration, and played meeples legible in all three themes
+- [ ] 5.7 Genre, played, and loan state distinguishable without colour alone
+- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog

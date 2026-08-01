@@ -17,21 +17,23 @@ A member opens the app to Felt Table, switches theme from a control in the share
 
 ## Key decisions made
 
-| Decision           | Choice                                               | Why (1 sentence)                                                                                          | Source  |
-| ------------------ | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------- |
-| Themes and default | Three themes, Felt Table default                     | Agreed from the identity pitch; Felt is closest to the current dark UI so it carries the smallest diff    | Roadmap |
-| Theme mechanism    | Theme class on `<html>` + co-applied `.dark`         | The dark variant is already class-based, so shadcn's `dark:` variants keep working untouched              | Plan    |
-| Persistence        | Cookie read in middleware                            | No migration, correct on first paint, and works signed-out                                                | Plan    |
-| Switcher placement | Extract a shared `AppHeader` first, mount it there   | There is no shared chrome today; extracting it fixes four divergent headers and gives the switcher a home | Plan    |
-| Token vocabulary   | Extend the existing shadcn token set                 | Reuses the block already in `global.css` and keeps `button.tsx` and future shadcn components working      | Plan    |
-| Phasing            | Define Felt **and** Shelf together, before switching | Forces the vocabulary to survive a light theme while it is still cheap to change                          | Plan    |
-| Badge system       | In scope, final phase                                | A recoloured card is still a generic card; shape is what makes it read board-game                         | Plan    |
-| Drift prevention   | Colour-literal CI guard + manual pass                | Without a ratchet the next feature re-adds `bg-purple-600` and theme three quietly breaks                 | Plan    |
-| Landing page       | Rewrite as a real landing page                       | The first screen currently advertises someone else's product                                              | Plan    |
+| Decision               | Choice                                               | Why (1 sentence)                                                                                              | Source  |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------- |
+| Themes and default     | Three themes, Felt Table default                     | Agreed from the identity pitch; Felt is closest to the current dark UI so it carries the smallest diff        | Roadmap |
+| Theme mechanism        | Theme class on `<html>` + co-applied `.dark`         | The dark variant is already class-based, so shadcn's `dark:` variants keep working untouched                  | Plan    |
+| Persistence            | Cookie read in middleware                            | No migration, correct on first paint, and works signed-out                                                    | Plan    |
+| Switcher placement     | Extract a shared `AppHeader` first, mount it there   | There is no shared chrome today; extracting it fixes four divergent headers and gives the switcher a home     | Plan    |
+| Token vocabulary       | Extend the existing shadcn token set                 | Reuses the block already in `global.css` and keeps `button.tsx` and future shadcn components working          | Plan    |
+| Phasing                | Define Felt **and** Shelf together, before switching | Forces the vocabulary to survive a light theme while it is still cheap to change                              | Plan    |
+| Existing `.dark` block | Deleted in phase 2                                   | It redefines every shadcn token to grayscale and would beat `:root` the moment a dark theme co-applies `dark` | Review  |
+| Badge components       | One `.tsx` implementation                            | Two of the three consumers are React islands, where an `.astro` component cannot be used                      | Review  |
+| Badge system           | In scope, final phase                                | A recoloured card is still a generic card; shape is what makes it read board-game                             | Plan    |
+| Drift prevention       | Colour-literal CI guard + manual pass                | Without a ratchet the next feature re-adds `bg-purple-600` and theme three quietly breaks                     | Plan    |
+| Landing page           | Rewrite as a real landing page                       | The first screen currently advertises someone else's product                                                  | Plan    |
 
 ## Scope
 
-**In scope:** shared `AppHeader` extraction; landing-page rewrite; starter asset removal; token layer extension; conversion of all 233 literals; three theme blocks; SVG mark + favicon; cookie persistence and `POST /api/theme`; switcher UI; colour-literal guard in CI; shape-based badge system (pips, duration, played meeples).
+**In scope:** shared `AppHeader` extraction; landing-page rewrite; starter asset removal; token layer extension and deletion of the existing `.dark` block; conversion of all 233 literals; three theme blocks; SVG mark + favicon; cookie persistence and `POST /api/theme`; switcher UI; colour-literal guard in CI (Tailwind utilities, hex/rgb literals, and inline `style` colour properties); shape-based badge system (pips, duration, played meeples).
 
 **Out of scope:** Playwright / visual-regression tests; per-member DB persistence (no migration, no RLS); any product behaviour change; PRD amendment; bulk migration to shadcn components; user-authored themes.
 
@@ -41,19 +43,20 @@ Middleware resolves the theme from a cookie into `context.locals.theme` on every
 
 ## Phases at a glance
 
-| Phase                                 | What it delivers                                                       | Key risk                                                                          |
-| ------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| 1. Shared chrome + starter removal    | `AppHeader` on all seven pages, rewritten landing, starter assets gone | Header extraction changes five pages at once with no colour change to hide behind |
-| 2. Tokens + Felt & Shelf + conversion | Token vocabulary, two themes, all 233 sites converted, mark, CI guard  | The vocabulary failing to express a light theme — the one expensive mistake       |
-| 3. Persistence + switcher             | Cookie, middleware wiring, `/api/theme`, switcher in the header        | Theme/`dark` class getting out of sync; open redirect on an unauthenticated route |
-| 4. Punchboard + badges                | Third theme, pips/duration/meeples across catalog, play, and stats     | Punchboard's radius and shadow overrides missed by individual components          |
+| Phase                              | What it delivers                                                             | Key risk                                                                          |
+| ---------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 1. Shared chrome + starter removal | `AppHeader` on all seven pages, `LibBadge`/`template.png`/starter title gone | Header extraction changes five pages at once with no colour change to hide behind |
+| 2. Tokens + Felt & Shelf           | Token vocabulary, two themes, `.dark` block deleted, mark, rewritten landing | The vocabulary failing to express a light theme — the one expensive mistake       |
+| 3. Conversion sweep + guard        | All remaining sites converted in four chunks, colour-literal guard in CI     | A chunk needing a role the vocabulary lacks, discovered mid-sweep                 |
+| 4. Persistence + switcher          | Cookie, middleware wiring, `/api/theme`, switcher in the header              | Open redirect on an unauthenticated route                                         |
+| 5. Punchboard + badges             | Third theme, pips/duration/meeples across catalog, play, and stats           | Punchboard's radius and shadow overrides missed by individual components          |
 
 **Prerequisites:** none — S-01…S-06 are all done and archived; no external access or secrets needed.
-**Estimated effort:** ~4 sessions, one per phase; phase 2 is the largest by a wide margin.
+**Estimated effort:** ~5–6 sessions. Phases 1, 2, 4, and 5 are roughly one session each; phase 3 is 2–3 on its own (four chunks, each verified against both themes before the next begins).
 
 ## Open risks and assumptions
 
-- Phase 2 is a 21-file sweep with no automated visual coverage — the manual pass is the only thing standing between it and a regression.
+- Phase 3 is a 20-file sweep with no automated visual coverage — the per-chunk manual pass is the only thing standing between it and a regression.
 - The token roles are inferred from current usage; a component may turn out to need a role nobody anticipated, which means adding it to all three theme blocks rather than special-casing.
 - Punchboard's condensed display face falls back to a system stack; if it looks weak, self-hosting a webfont is a follow-up, not part of this change.
 - The theme cookie deliberately survives sign-out, so a shared device keeps the last member's theme.

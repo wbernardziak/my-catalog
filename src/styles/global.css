@@ -3,73 +3,127 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Theme tokens.
+ *
+ * `:root` holds Felt Table, the default theme. Each additional theme redefines
+ * EVERY role in its own block — a role left out silently inherits the previous
+ * theme's colour, which is the failure mode this file is arranged to prevent.
+ *
+ * There is deliberately no `.dark` token block. `.dark` is co-applied by
+ * `rootClass()` for dark-ground themes purely so the `dark:` variant in
+ * `ui/button.tsx` resolves; it carries no values of its own. A `.dark` block
+ * would beat `:root` on specificity and wipe the active theme out.
+ *
+ * Palettes are fixed in the roadmap slice (context/foundation/roadmap.md, S-07).
+ */
+
+/* ── Felt Table (default): dark green felt, brass, warm card-stock ink ── */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Grounds and surfaces */
+  --background: #1d3b32;
+  --surface-subtle: #234139;
+  --card: #26483d;
+  --popover: #26483d;
+  --muted: #2c5145;
+
+  /* Ink */
+  --foreground: #f2e9d8;
+  --card-foreground: #f2e9d8;
+  --popover-foreground: #f2e9d8;
+  --ink-muted: #b6c8bc;
+  --muted-foreground: #b6c8bc;
+
+  /* Accent: brass */
+  --primary: #c8a24a;
+  --primary-foreground: #1d2b25;
+  --accent: #2c5145;
+  --accent-foreground: #f2e9d8;
+
+  /* Secondary: walnut */
+  --secondary: #6b4a2f;
+  --secondary-foreground: #f2e9d8;
+
+  /* Lines and focus */
+  --border: #3a5c4f;
+  --input: #3a5c4f;
+  --ring: #c8a24a;
+
+  /* Semantic state — a separate axis from the accent */
+  --destructive: #8c3b32;
+  --destructive-foreground: #f8ece5;
+  --success: #4a8a63;
+  --success-foreground: #eef7f1;
+  --warning: #c8a24a;
+  --warning-foreground: #1d2b25;
+
+  --chart-1: #c8a24a;
+  --chart-2: #4a8a63;
+  --chart-3: #6b4a2f;
+  --chart-4: #8c3b32;
+  --chart-5: #b6c8bc;
+
+  --sidebar: #16302a;
+  --sidebar-foreground: #f2e9d8;
+  --sidebar-primary: #c8a24a;
+  --sidebar-primary-foreground: #1d2b25;
+  --sidebar-accent: #2c5145;
+  --sidebar-accent-foreground: #f2e9d8;
+  --sidebar-border: #3a5c4f;
+  --sidebar-ring: #c8a24a;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* ── Bright Shelf: paper ground, meeple red, pine and amber for state ── */
+.theme-shelf {
+  --radius: 0.75rem;
+
+  --background: #f6f4ef;
+  --surface-subtle: #efece4;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --muted: #eae7de;
+
+  --foreground: #17181c;
+  --card-foreground: #17181c;
+  --popover-foreground: #17181c;
+  --ink-muted: #6f7178;
+  --muted-foreground: #6f7178;
+
+  --primary: #c0442a;
+  --primary-foreground: #ffffff;
+  --accent: #eae7de;
+  --accent-foreground: #17181c;
+
+  --secondary: #204b45;
+  --secondary-foreground: #f3f7f5;
+
+  --border: #ded9cd;
+  --input: #ded9cd;
+  --ring: #c0442a;
+
+  --destructive: #a5301a;
+  --destructive-foreground: #ffffff;
+  --success: #204b45;
+  --success-foreground: #f3f7f5;
+  --warning: #8a5a12;
+  --warning-foreground: #fdf6ea;
+
+  --chart-1: #c0442a;
+  --chart-2: #204b45;
+  --chart-3: #e8b23c;
+  --chart-4: #6f7178;
+  --chart-5: #17181c;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17181c;
+  --sidebar-primary: #c0442a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eae7de;
+  --sidebar-accent-foreground: #17181c;
+  --sidebar-border: #ded9cd;
+  --sidebar-ring: #c0442a;
 }
 
 @theme inline {
@@ -79,6 +133,7 @@
   --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface-subtle: var(--surface-subtle);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -89,9 +144,15 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-ink-muted: var(--ink-muted);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -110,8 +171,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@utility bg-cosmic {
-  background-image: linear-gradient(to bottom, #0a0e1a, #0f1529, #0a0e1a);
+/* The page ground. Replaces the starter's `bg-cosmic` space gradient. */
+@utility bg-table {
+  background-color: var(--background);
 }
 
 @layer base {

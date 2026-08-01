@@ -411,11 +411,11 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [x] 1.1 Lint passes: `npm run lint`
-- [x] 1.2 Build passes: `npm run build`
-- [x] 1.3 Tests pass: `npm test`
-- [x] 1.4 Default title no longer names the starter in `Layout.astro`
-- [x] 1.5 `LibBadge` and `template.png` removed with no dangling references
+- [x] 1.1 Lint passes: `npm run lint` — 8176fdc
+- [x] 1.2 Build passes: `npm run build` — 8176fdc
+- [x] 1.3 Tests pass: `npm test` — 8176fdc
+- [x] 1.4 Default title no longer names the starter in `Layout.astro` — 8176fdc
+- [x] 1.5 `LibBadge` and `template.png` removed with no dangling references — 8176fdc
 
 #### Manual
 
@@ -427,11 +427,11 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [ ] 2.1 Lint passes: `npm run lint`
-- [ ] 2.2 Build passes: `npm run build`
-- [ ] 2.3 Tests pass: `npm test`
-- [ ] 2.4 No starter strings remain in `src/` or `public/`
-- [ ] 2.5 The `.dark` token block is gone from `global.css`
+- [x] 2.1 Lint passes: `npm run lint`
+- [x] 2.2 Build passes: `npm run build`
+- [x] 2.3 Tests pass: `npm test`
+- [x] 2.4 No starter strings remain in `src/` or `public/`
+- [x] 2.5 The `.dark` token block is gone from `global.css`
 
 #### Manual
 

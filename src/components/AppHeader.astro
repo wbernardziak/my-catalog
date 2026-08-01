@@ -8,6 +8,8 @@
  * `Topbar` did it. Colour classes are carried over verbatim from those headers —
  * this component introduces no colour decisions of its own.
  */
+import BrandMark from "@/components/BrandMark.astro";
+
 interface Props {
   /** Rendered as the page `<h1>` under the bar. Omitted on the landing page. */
   title?: string;
@@ -32,7 +34,10 @@ const linkClass = "text-purple-300 transition-colors hover:text-purple-100 hover
     class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80"
   >
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <a href={user ? "/dashboard" : "/"} class="font-semibold text-white">MyCatalog</a>
+      <a href={user ? "/dashboard" : "/"} class="flex items-center gap-2 font-semibold text-white">
+        <BrandMark size={24} />
+        MyCatalog
+      </a>
       {
         user && (
           <nav aria-label="Main" class="flex flex-wrap items-center gap-3">

@@ -2,13 +2,16 @@
 import { THEMES, type Theme } from "@/lib/theme";
 
 /**
- * JS-free theme switcher: a plain form per theme, posting to `/api/theme`, which
- * sets the cookie and redirects back here. Same PRG shape as the catalog toggles.
+ * Theme picker: a labelled `<select>` posting to `/api/theme`, which sets the
+ * cookie and redirects back here — the same PRG shape as the catalog toggles.
+ *
+ * Submits on change via a tiny inline script; the `<noscript>` Apply button keeps
+ * it working without JavaScript, so the control never becomes a dead end.
  */
 
 const LABELS: Record<Theme, string> = {
-  felt: "Felt",
-  shelf: "Shelf",
+  felt: "Felt Table",
+  shelf: "Bright Shelf",
   punchboard: "Punchboard",
 };
 
@@ -17,25 +20,39 @@ const active = Astro.locals.theme;
 const next = `${Astro.url.pathname}${Astro.url.search}`;
 ---
 
-<div class="flex flex-wrap items-center gap-1" role="group" aria-label="Theme">
-  {
-    THEMES.map((theme) => (
-      <form method="POST" action="/api/theme">
-        <input type="hidden" name="theme" value={theme} />
-        <input type="hidden" name="next" value={next} />
-        <button
-          type="submit"
-          aria-current={theme === active ? "true" : undefined}
-          class:list={[
-            "rounded-md border px-2 py-1 text-xs transition-colors",
-            theme === active
-              ? "border-primary bg-primary text-primary-foreground font-medium"
-              : "border-border text-ink-muted hover:bg-accent hover:text-foreground",
-          ]}
-        >
+<form method="POST" action="/api/theme" class="flex items-center gap-2" data-theme-switcher>
+  <input type="hidden" name="next" value={next} />
+
+  <label for="theme-select" class="text-ink-muted text-sm whitespace-nowrap">Theme:</label>
+
+  <select
+    id="theme-select"
+    name="theme"
+    class="border-border bg-surface-subtle text-foreground focus:border-ring focus:ring-ring/40 rounded-md border px-2 py-1 text-sm focus:ring-2 focus:outline-none"
+  >
+    {
+      THEMES.map((theme) => (
+        <option value={theme} selected={theme === active}>
           {LABELS[theme]}
-        </button>
-      </form>
-    ))
-  }
-</div>
+        </option>
+      ))
+    }
+  </select>
+
+  <noscript>
+    <button
+      type="submit"
+      class="border-border text-ink-muted hover:bg-accent hover:text-foreground rounded-md border px-2 py-1 text-xs transition-colors"
+    >
+      Apply
+    </button>
+  </noscript>
+</form>
+
+<script is:inline>
+  document.querySelectorAll("[data-theme-switcher] select").forEach((select) => {
+    select.addEventListener("change", () => {
+      select.closest("form").submit();
+    });
+  });
+</script>

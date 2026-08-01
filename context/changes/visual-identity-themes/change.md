@@ -1,7 +1,7 @@
 ---
 change_id: visual-identity-themes
 title: Visual identity themes
-status: implementing
+status: implemented
 created: 2026-08-01
 updated: 2026-08-01
 archived_at: null

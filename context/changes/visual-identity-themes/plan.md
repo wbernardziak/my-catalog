@@ -485,9 +485,9 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [x] 5.1 `gameMeta` unit tests pass, including missing/zero/out-of-range values
-- [x] 5.2 Guard passes: `npm run lint:colors`
-- [x] 5.3 Lint, build, tests pass
+- [x] 5.1 `gameMeta` unit tests pass, including missing/zero/out-of-range values — b84234d
+- [x] 5.2 Guard passes: `npm run lint:colors` — b84234d
+- [x] 5.3 Lint, build, tests pass — b84234d
 
 #### Manual
 

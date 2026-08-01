@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AppHeader from "@/components/AppHeader.astro";
 import GameForm from "@/components/catalog/GameForm";
 import GameCard from "@/components/catalog/GameCard";
 import CatalogFilters from "@/components/catalog/CatalogFilters.astro";
@@ -46,15 +47,7 @@ if (supabase && user) {
 <Layout title="Catalog">
   <div class="bg-cosmic min-h-screen p-4 md:p-8">
     <div class="mx-auto max-w-5xl">
-      <header class="mb-8 flex items-center justify-between">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-          Catalog
-        </h1>
-        <div class="flex items-center gap-4">
-          <a href="/play" class="text-sm text-purple-300 hover:underline">What should we play?</a>
-          <a href="/dashboard" class="text-sm text-purple-300 hover:underline">← Dashboard</a>
-        </div>
-      </header>
+      <AppHeader title="Catalog" />
 
       {
         !configured ? (

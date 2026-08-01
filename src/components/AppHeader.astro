@@ -1,0 +1,84 @@
+---
+/**
+ * The one header every page shares. Absorbs the old `Topbar` (session area) and
+ * the four hand-rolled page headers, which were near-identical apart from their
+ * title and their ad-hoc navigation links.
+ *
+ * Reads `Astro.locals.user` itself rather than taking it as a prop, matching how
+ * `Topbar` did it. Colour classes are carried over verbatim from those headers —
+ * this component introduces no colour decisions of its own.
+ */
+interface Props {
+  /** Rendered as the page `<h1>` under the bar. Omitted on the landing page. */
+  title?: string;
+}
+
+const { title } = Astro.props;
+const { user } = Astro.locals;
+const path = Astro.url.pathname;
+
+const navLinks = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/catalog", label: "Catalog" },
+  { href: "/play", label: "Play" },
+  { href: "/stats", label: "Stats" },
+];
+
+const linkClass = "text-purple-300 transition-colors hover:text-purple-100 hover:underline";
+---
+
+<header class="mb-8">
+  <div
+    class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80"
+  >
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <a href={user ? "/dashboard" : "/"} class="font-semibold text-white">MyCatalog</a>
+      {
+        user && (
+          <nav aria-label="Main" class="flex flex-wrap items-center gap-3">
+            {navLinks.map((link) => (
+              <a
+                href={link.href}
+                class:list={[linkClass]}
+                aria-current={path === link.href || path.startsWith(`${link.href}/`) ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </div>
+
+    {
+      user ? (
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-blue-100/70">{user.email}</span>
+          <form method="POST" action="/api/auth/signout">
+            <button type="submit" class:list={[linkClass]}>
+              Sign out
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-blue-100/70">Not signed in</span>
+          <a href="/auth/signin" class:list={[linkClass]}>
+            Sign in
+          </a>
+          <a href="/auth/signup" class:list={[linkClass]}>
+            Sign up
+          </a>
+        </div>
+      )
+    }
+  </div>
+
+  {
+    title && (
+      <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+        {title}
+      </h1>
+    )
+  }
+</header>

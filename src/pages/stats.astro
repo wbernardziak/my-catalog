@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AppHeader from "@/components/AppHeader.astro";
 import PreferenceStatsTable from "@/components/catalog/PreferenceStatsTable.astro";
 import { createClient } from "@/lib/supabase";
 import { listPreferenceStats, hasAnyData } from "@/lib/services/preferenceStats";
@@ -34,12 +35,7 @@ const showData = hasAnyData(stats);
 <Layout title="Stats">
   <div class="bg-cosmic min-h-screen p-4 md:p-8">
     <div class="mx-auto max-w-3xl">
-      <header class="mb-8 flex items-center justify-between">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-          Preference statistics
-        </h1>
-        <a href="/dashboard" class="text-sm text-purple-300 hover:underline">← Dashboard</a>
-      </header>
+      <AppHeader title="Preference statistics" />
 
       {
         !configured ? (

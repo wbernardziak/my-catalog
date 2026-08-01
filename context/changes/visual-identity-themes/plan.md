@@ -411,11 +411,11 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [ ] 1.1 Lint passes: `npm run lint`
-- [ ] 1.2 Build passes: `npm run build`
-- [ ] 1.3 Tests pass: `npm test`
-- [ ] 1.4 Default title no longer names the starter in `Layout.astro`
-- [ ] 1.5 `LibBadge` and `template.png` removed with no dangling references
+- [x] 1.1 Lint passes: `npm run lint`
+- [x] 1.2 Build passes: `npm run build`
+- [x] 1.3 Tests pass: `npm test`
+- [x] 1.4 Default title no longer names the starter in `Layout.astro`
+- [x] 1.5 `LibBadge` and `template.png` removed with no dangling references
 
 #### Manual
 

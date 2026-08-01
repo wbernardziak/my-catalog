@@ -39,18 +39,20 @@ const showData = hasAnyData(stats);
 
       {
         !configured ? (
-          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">
+          <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
             Supabase is not configured — statistics are unavailable. Set <code>SUPABASE_URL</code> and{" "}
             <code>SUPABASE_KEY</code> to enable it.
           </div>
         ) : loadError ? (
-          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
+          <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+            {loadError}
+          </div>
         ) : showData ? (
           <PreferenceStatsTable stats={stats} />
         ) : (
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+          <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
             No preferences recorded yet — mark games played and rate them to see stats here.{" "}
-            <a href="/catalog" class="text-purple-300 hover:underline">
+            <a href="/catalog" class="text-primary hover:underline">
               Go to the catalog
             </a>
           </div>

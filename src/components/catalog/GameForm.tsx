@@ -60,7 +60,7 @@ const GENRE_SUGGESTIONS = ["Strategy", "Family", "Party", "Cooperative", "Deck-b
 type Errors = Partial<Record<"title" | "genre" | "minPlayers" | "maxPlayers" | "avgPlayMinutes", string>>;
 
 const inputBase =
-  "w-full rounded-lg bg-white/10 border px-3 py-2 pl-10 text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-colors";
+  "w-full rounded-lg bg-card border px-3 py-2 pl-10 text-foreground placeholder-ink-muted focus:outline-none focus:ring-2 transition-colors";
 
 export default function GameForm({
   mode,
@@ -146,11 +146,11 @@ export default function GameForm({
       />
 
       <div>
-        <label htmlFor={`${idPrefix}-genre`} className="mb-1 block text-sm text-blue-100/80">
+        <label htmlFor={`${idPrefix}-genre`} className="text-ink-muted mb-1 block text-sm">
           Genre
         </label>
         <div className="relative">
-          <span className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40">
+          <span className="text-ink-muted absolute top-1/2 left-3 size-4 -translate-y-1/2">
             <Tag className="size-4" />
           </span>
           <input
@@ -165,7 +165,7 @@ export default function GameForm({
             placeholder="e.g. Strategy"
             className={cn(
               inputBase,
-              errors.genre ? "border-red-400/60 focus:ring-red-400" : "border-white/20 focus:ring-purple-400",
+              errors.genre ? "border-destructive/60 focus:ring-destructive" : "border-border focus:ring-ring",
             )}
           />
           <datalist id={genreListId}>
@@ -174,7 +174,7 @@ export default function GameForm({
             ))}
           </datalist>
         </div>
-        {errors.genre ? <p className="mt-1 text-xs text-red-300">{errors.genre}</p> : null}
+        {errors.genre ? <p className="text-destructive-ink mt-1 text-xs">{errors.genre}</p> : null}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -224,7 +224,7 @@ export default function GameForm({
       />
 
       <div>
-        <label htmlFor={`${idPrefix}-loanStatus`} className="mb-1 block text-sm text-blue-100/80">
+        <label htmlFor={`${idPrefix}-loanStatus`} className="text-ink-muted mb-1 block text-sm">
           Loan status
         </label>
         <select
@@ -234,7 +234,7 @@ export default function GameForm({
           onChange={(e) => {
             setLoanStatus(e.target.value);
           }}
-          className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          className="border-border bg-card text-foreground focus:ring-ring w-full rounded-lg border px-3 py-2 focus:ring-2 focus:outline-none"
         >
           <option value="available">Available</option>
           <option value="loaned">Loaned</option>
@@ -256,7 +256,7 @@ export default function GameForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-white/20 px-4 py-2 font-medium text-white transition-colors hover:bg-white/10"
+            className="border-border text-foreground hover:bg-accent rounded-lg border px-4 py-2 font-medium transition-colors"
           >
             Cancel
           </button>

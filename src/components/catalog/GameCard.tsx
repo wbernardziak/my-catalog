@@ -26,7 +26,7 @@ export default function GameCard({ game, filters = "" }: Props) {
 
   if (editing) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
+      <div className="border-border bg-card text-foreground rounded-2xl border p-4 backdrop-blur-xl">
         <GameForm
           mode="edit"
           idPrefix={`edit-${game.id}`}
@@ -43,20 +43,20 @@ export default function GameCard({ game, filters = "" }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
+    <div className="border-border bg-card text-foreground rounded-2xl border p-4 backdrop-blur-xl">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold">{game.title}</h2>
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-xs font-medium",
-            game.loan_status === "loaned" ? "bg-amber-500/20 text-amber-200" : "bg-emerald-500/20 text-emerald-200",
+            game.loan_status === "loaned" ? "bg-warning-tint text-warning-ink" : "bg-success-tint text-success-ink",
           )}
         >
           {game.loan_status === "loaned" ? "Loaned" : "Available"}
         </span>
       </div>
-      {game.authors.length > 0 && <p className="mt-1 text-sm text-blue-100/70">{game.authors.join(", ")}</p>}
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-blue-100/80">
+      {game.authors.length > 0 && <p className="text-ink-muted mt-1 text-sm">{game.authors.join(", ")}</p>}
+      <div className="text-ink-muted mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         <span>{game.genre}</span>
         <span>
           {game.min_players}–{game.max_players} players
@@ -75,8 +75,8 @@ export default function GameCard({ game, filters = "" }: Props) {
             className={cn(
               toggleBase,
               game.played
-                ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"
-                : "border-white/20 text-white hover:bg-white/10",
+                ? "border-success/40 bg-success-tint text-success-ink hover:bg-success/25"
+                : "border-border text-foreground hover:bg-accent",
             )}
           >
             {game.played ? <CheckCircle2 className="size-3.5" /> : <Circle className="size-3.5" />}
@@ -95,8 +95,8 @@ export default function GameCard({ game, filters = "" }: Props) {
                 className={cn(
                   toggleBase,
                   game.preference === "liked"
-                    ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"
-                    : "border-white/20 text-white hover:bg-white/10",
+                    ? "border-success/40 bg-success-tint text-success-ink hover:bg-success/25"
+                    : "border-border text-foreground hover:bg-accent",
                 )}
               >
                 <ThumbsUp className="size-3.5" />
@@ -112,8 +112,8 @@ export default function GameCard({ game, filters = "" }: Props) {
                 className={cn(
                   toggleBase,
                   game.preference === "disliked"
-                    ? "border-amber-400/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-                    : "border-white/20 text-white hover:bg-white/10",
+                    ? "border-warning/40 bg-warning-tint text-warning-ink hover:bg-warning/25"
+                    : "border-border text-foreground hover:bg-accent",
                 )}
               >
                 <ThumbsDown className="size-3.5" />
@@ -126,7 +126,7 @@ export default function GameCard({ game, filters = "" }: Props) {
         <form method="POST" action={`/api/games/${game.id}/loan`}>
           <input type="hidden" name="filters" value={filters} />
           <input type="hidden" name="loanStatus" value={game.loan_status === "loaned" ? "available" : "loaned"} />
-          <button type="submit" className={cn(toggleBase, "border-white/20 text-white hover:bg-white/10")}>
+          <button type="submit" className={cn(toggleBase, "border-border text-foreground hover:bg-accent")}>
             {game.loan_status === "loaned" ? "Return" : "Loan out"}
           </button>
         </form>
@@ -135,11 +135,11 @@ export default function GameCard({ game, filters = "" }: Props) {
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {confirmingDelete ? (
           <>
-            <span className="text-sm text-blue-100/80">Delete this game?</span>
+            <span className="text-ink-muted text-sm">Delete this game?</span>
             <form method="POST" action={`/api/games/${game.id}/delete`}>
               <button
                 type="submit"
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
+                className="bg-destructive text-destructive-foreground rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:opacity-90"
               >
                 Confirm delete
               </button>
@@ -149,7 +149,7 @@ export default function GameCard({ game, filters = "" }: Props) {
               onClick={() => {
                 setConfirmingDelete(false);
               }}
-              className="rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+              className="border-border text-foreground hover:bg-accent rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -161,7 +161,7 @@ export default function GameCard({ game, filters = "" }: Props) {
               onClick={() => {
                 setEditing(true);
               }}
-              className="flex items-center gap-1.5 rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+              className="border-border text-foreground hover:bg-accent flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
             >
               <Pencil className="size-3.5" />
               Edit
@@ -171,7 +171,7 @@ export default function GameCard({ game, filters = "" }: Props) {
               onClick={() => {
                 setConfirmingDelete(true);
               }}
-              className="flex items-center gap-1.5 rounded-lg border border-red-400/40 px-3 py-1.5 text-sm font-medium text-red-200 transition-colors hover:bg-red-500/10"
+              className="border-destructive/60 text-destructive-ink hover:bg-destructive-tint flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
             >
               <Trash2 className="size-3.5" />
               Delete

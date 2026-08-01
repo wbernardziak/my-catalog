@@ -51,7 +51,7 @@ if (supabase && user) {
 
       {
         !configured ? (
-          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">
+          <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
             Supabase is not configured — the catalog is unavailable. Set <code>SUPABASE_URL</code> and{" "}
             <code>SUPABASE_KEY</code> to enable it.
           </div>
@@ -60,17 +60,19 @@ if (supabase && user) {
             <section aria-label="Games">
               <CatalogFilters genres={genres} current={filters} />
               {loadError ? (
-                <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
+                <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+                  {loadError}
+                </div>
               ) : games.length === 0 ? (
                 hasActiveFilters ? (
-                  <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+                  <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
                     No games match your filters.{" "}
-                    <a href="/catalog" class="text-purple-300 hover:underline">
+                    <a href="/catalog" class="text-primary hover:underline">
                       Clear filters
                     </a>
                   </div>
                 ) : (
-                  <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+                  <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
                     No games yet. Add your first board game using the form.
                   </div>
                 )
@@ -87,7 +89,7 @@ if (supabase && user) {
 
             <aside
               aria-label="Add a game"
-              class="h-fit rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl"
+              class="border-border bg-card text-foreground h-fit rounded-2xl border p-6 backdrop-blur-xl"
             >
               <h2 class="mb-4 text-lg font-semibold">Add a game</h2>
               <GameForm mode="create" idPrefix="create" action="/api/games" serverError={error} client:load />

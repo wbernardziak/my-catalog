@@ -14,15 +14,15 @@ const { genres, current } = Astro.props;
 const genreOptions = current.genre && !genres.includes(current.genre) ? [...genres, current.genre] : genres;
 
 const inputClass =
-  "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-blue-100/40 focus:border-purple-400/50 focus:outline-none";
-const labelClass = "mb-1 block text-xs font-medium text-blue-100/70";
+  "w-full rounded-lg border border-border bg-surface-subtle px-3 py-2 text-sm text-foreground placeholder:text-ink-muted focus:border-ring focus:outline-none";
+const labelClass = "mb-1 block text-xs font-medium text-ink-muted";
 ---
 
 <form
   method="GET"
   action="/catalog"
   aria-label="Filter games"
-  class="mb-6 rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl"
+  class="border-border bg-card text-foreground mb-6 rounded-2xl border p-4 backdrop-blur-xl"
 >
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
     <div>
@@ -98,10 +98,10 @@ const labelClass = "mb-1 block text-xs font-medium text-blue-100/70";
   <div class="mt-4 flex flex-wrap items-center gap-3">
     <button
       type="submit"
-      class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-500"
+      class="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:opacity-90"
     >
       Apply filters
     </button>
-    <a href="/catalog" class="text-sm text-purple-300 hover:underline">Clear</a>
+    <a href="/catalog" class="text-primary text-sm hover:underline">Clear</a>
   </div>
 </form>

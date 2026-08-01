@@ -26,15 +26,15 @@ const navLinks = [
   { href: "/stats", label: "Stats" },
 ];
 
-const linkClass = "text-purple-300 transition-colors hover:text-purple-100 hover:underline";
+const linkClass = "text-primary transition-colors hover:text-primary/80 hover:underline";
 ---
 
 <header class="mb-8">
   <div
-    class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80"
+    class="border-border bg-surface-subtle text-ink-muted mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border px-4 py-2 text-sm"
   >
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <a href={user ? "/dashboard" : "/"} class="flex items-center gap-2 font-semibold text-white">
+      <a href={user ? "/dashboard" : "/"} class="text-foreground flex items-center gap-2 font-semibold">
         <BrandMark size={24} />
         MyCatalog
       </a>
@@ -58,7 +58,7 @@ const linkClass = "text-purple-300 transition-colors hover:text-purple-100 hover
     {
       user ? (
         <div class="flex flex-wrap items-center gap-3">
-          <span class="text-blue-100/70">{user.email}</span>
+          <span class="text-ink-muted">{user.email}</span>
           <form method="POST" action="/api/auth/signout">
             <button type="submit" class:list={[linkClass]}>
               Sign out
@@ -67,7 +67,7 @@ const linkClass = "text-purple-300 transition-colors hover:text-purple-100 hover
         </div>
       ) : (
         <div class="flex flex-wrap items-center gap-3">
-          <span class="text-blue-100/70">Not signed in</span>
+          <span class="text-ink-muted">Not signed in</span>
           <a href="/auth/signin" class:list={[linkClass]}>
             Sign in
           </a>
@@ -81,7 +81,7 @@ const linkClass = "text-purple-300 transition-colors hover:text-purple-100 hover
 
   {
     title && (
-      <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+      <h1 class="from-primary to-secondary bg-gradient-to-r bg-clip-text text-3xl font-bold text-transparent">
         {title}
       </h1>
     )

@@ -15,18 +15,18 @@ const metrics: { key: "playedCount" | "likedCount" | "dislikedCount"; label: str
   { key: "dislikedCount", label: "Disliked" },
 ];
 
-const headerCell = "px-4 py-3 text-left text-xs font-medium tracking-wide text-blue-100/70 uppercase";
-const bodyCell = "px-4 py-3 text-sm text-white";
+const headerCell = "px-4 py-3 text-left text-xs font-medium tracking-wide text-ink-muted uppercase";
+const bodyCell = "px-4 py-3 text-sm text-foreground";
 ---
 
-<div class="overflow-x-auto rounded-2xl border border-white/10 bg-white/10 backdrop-blur-xl">
+<div class="border-border bg-card overflow-x-auto rounded-2xl border backdrop-blur-xl">
   <table class="w-full border-collapse">
     <thead>
-      <tr class="border-b border-white/10">
+      <tr class="border-border border-b">
         <th scope="col" class:list={headerCell}>Metric</th>
         {
           stats.map((member) => (
-            <th scope="col" class:list={[headerCell, member.isCurrent && "text-purple-200"]}>
+            <th scope="col" class:list={[headerCell, member.isCurrent && "text-primary"]}>
               {member.label}
             </th>
           ))
@@ -36,12 +36,12 @@ const bodyCell = "px-4 py-3 text-sm text-white";
     <tbody>
       {
         metrics.map((metric) => (
-          <tr class="border-b border-white/5 last:border-b-0">
-            <th scope="row" class:list={[bodyCell, "font-medium text-blue-100/80"]}>
+          <tr class="border-border border-b last:border-b-0">
+            <th scope="row" class:list={[bodyCell, "text-ink-muted font-medium"]}>
               {metric.label}
             </th>
             {stats.map((member) => (
-              <td class:list={[bodyCell, member.isCurrent && "font-semibold text-purple-100"]}>{member[metric.key]}</td>
+              <td class:list={[bodyCell, member.isCurrent && "text-primary font-semibold"]}>{member[metric.key]}</td>
             ))}
           </tr>
         ))

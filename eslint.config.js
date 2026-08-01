@@ -68,10 +68,27 @@ const astroConfig = tseslint.config({
   },
 });
 
+/**
+ * Build-time node scripts (the colour-literal guard). They run under node, not
+ * in the browser or the type-checked src project, so they get node globals and
+ * are allowed to log — reporting findings on stdout is their whole job.
+ */
+const scriptsConfig = tseslint.config({
+  files: ["scripts/**/*.mjs"],
+  extends: [tseslint.configs.disableTypeChecked],
+  languageOptions: {
+    globals: { console: "readonly", process: "readonly", URL: "readonly" },
+  },
+  rules: {
+    "no-console": "off",
+  },
+});
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   baseConfig,
   reactConfig,
+  scriptsConfig,
   eslintPluginAstro.configs["flat/recommended"],
   ...eslintPluginAstro.configs["flat/jsx-a11y-recommended"],
   astroConfig,

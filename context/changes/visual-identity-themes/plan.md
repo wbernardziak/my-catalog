@@ -427,11 +427,11 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [x] 2.1 Lint passes: `npm run lint`
-- [x] 2.2 Build passes: `npm run build`
-- [x] 2.3 Tests pass: `npm test`
-- [x] 2.4 No starter strings remain in `src/` or `public/`
-- [x] 2.5 The `.dark` token block is gone from `global.css`
+- [x] 2.1 Lint passes: `npm run lint` — 64f0e6d
+- [x] 2.2 Build passes: `npm run build` — 64f0e6d
+- [x] 2.3 Tests pass: `npm test` — 64f0e6d
+- [x] 2.4 No starter strings remain in `src/` or `public/` — 64f0e6d
+- [x] 2.5 The `.dark` token block is gone from `global.css` — 64f0e6d
 
 #### Manual
 
@@ -444,13 +444,13 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [ ] 3.1 Guard passes: `npm run lint:colors` reports zero literals
-- [ ] 3.2 Guard fires on a Tailwind literal (deliberate-break check)
-- [ ] 3.3 Guard fires on a non-Tailwind literal (deliberate-break check)
-- [ ] 3.4 Guard step present in `.github/workflows/ci.yml`
-- [ ] 3.5 Lint passes: `npm run lint`
-- [ ] 3.6 Build passes: `npm run build`
-- [ ] 3.7 Tests pass: `npm test`
+- [x] 3.1 Guard passes: `npm run lint:colors` reports zero literals
+- [x] 3.2 Guard fires on a Tailwind literal (deliberate-break check)
+- [x] 3.3 Guard fires on a non-Tailwind literal (deliberate-break check)
+- [x] 3.4 Guard step present in `.github/workflows/ci.yml`
+- [x] 3.5 Lint passes: `npm run lint`
+- [x] 3.6 Build passes: `npm run build`
+- [x] 3.7 Tests pass: `npm test`
 
 #### Manual
 

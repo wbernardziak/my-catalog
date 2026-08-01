@@ -54,10 +54,16 @@
   /* Semantic state — a separate axis from the accent */
   --destructive: #8c3b32;
   --destructive-foreground: #f8ece5;
+  --destructive-tint: #3b2523;
+  --destructive-ink: #f0b3a8;
   --success: #4a8a63;
   --success-foreground: #eef7f1;
+  --success-tint: #204237;
+  --success-ink: #a8dcbd;
   --warning: #c8a24a;
   --warning-foreground: #1d2b25;
+  --warning-tint: #3a3524;
+  --warning-ink: #e8c887;
 
   --chart-1: #c8a24a;
   --chart-2: #4a8a63;
@@ -105,10 +111,16 @@
 
   --destructive: #a5301a;
   --destructive-foreground: #ffffff;
+  --destructive-tint: #fbeae6;
+  --destructive-ink: #8f2d17;
   --success: #204b45;
   --success-foreground: #f3f7f5;
+  --success-tint: #e7f0ed;
+  --success-ink: #1a3f3a;
   --warning: #8a5a12;
   --warning-foreground: #fdf6ea;
+  --warning-tint: #fbf0da;
+  --warning-ink: #7a4f10;
 
   --chart-1: #c0442a;
   --chart-2: #204b45;
@@ -149,10 +161,16 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-tint: var(--destructive-tint);
+  --color-destructive-ink: var(--destructive-ink);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-tint: var(--success-tint);
+  --color-success-ink: var(--success-ink);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-ink: var(--warning-ink);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

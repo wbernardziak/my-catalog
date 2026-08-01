@@ -13,7 +13,7 @@ import {
 const GENRE_SUGGESTIONS = ["Strategy", "Family", "Party", "Cooperative", "Deck-builder", "Abstract"];
 
 const inputBase =
-  "w-full rounded-lg bg-white/10 border px-3 py-2 pl-10 text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-colors";
+  "w-full rounded-lg bg-card border px-3 py-2 pl-10 text-foreground placeholder-ink-muted focus:outline-none focus:ring-2 transition-colors";
 
 /** What the JSON route can return. The modeled union comes back only at HTTP 200;
  * 4xx/5xx carry `{ error }`. The island treats anything without an `ok` field as a
@@ -108,7 +108,7 @@ export default function RecommendationFlow() {
       <form
         onSubmit={submit}
         noValidate
-        className="h-fit space-y-4 rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl"
+        className="border-border bg-card text-foreground h-fit space-y-4 rounded-2xl border p-6 backdrop-blur-xl"
       >
         <FormField
           id="play-playerCount"
@@ -139,11 +139,11 @@ export default function RecommendationFlow() {
         />
 
         <div>
-          <label htmlFor="play-genre" className="mb-1 block text-sm text-blue-100/80">
+          <label htmlFor="play-genre" className="text-ink-muted mb-1 block text-sm">
             Genre (optional)
           </label>
           <div className="relative">
-            <span className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40">
+            <span className="text-ink-muted absolute top-1/2 left-3 size-4 -translate-y-1/2">
               <Tag className="size-4" />
             </span>
             <input
@@ -154,7 +154,7 @@ export default function RecommendationFlow() {
                 setGenre(e.target.value);
               }}
               placeholder="e.g. Strategy"
-              className={cn(inputBase, "border-white/20 focus:ring-purple-400")}
+              className={cn(inputBase, "border-border focus:ring-ring")}
             />
             <datalist id="play-genre-suggestions">
               {GENRE_SUGGESTIONS.map((g) => (
@@ -167,11 +167,11 @@ export default function RecommendationFlow() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
+          className="bg-primary text-primary-foreground w-full rounded-lg px-4 py-2 font-medium transition-colors hover:opacity-90"
         >
           {loading ? (
             <span className="flex items-center gap-2">
-              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
               Finding games...
             </span>
           ) : (
@@ -193,7 +193,7 @@ export default function RecommendationFlow() {
 function Results({ view }: { view: ViewState }) {
   if (view.kind === "idle") {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+      <div className="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
         Enter your play criteria and we&apos;ll suggest games from your catalog.
       </div>
     );
@@ -201,7 +201,7 @@ function Results({ view }: { view: ViewState }) {
 
   if (view.kind === "loading") {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+      <div className="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
         Finding the best games for you...
       </div>
     );
@@ -209,9 +209,11 @@ function Results({ view }: { view: ViewState }) {
 
   if (view.kind === "panel") {
     return view.panel === "error" ? (
-      <div className="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{view.message}</div>
+      <div className="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+        {view.message}
+      </div>
     ) : (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
+      <div className="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
         {view.message}
       </div>
     );
@@ -220,18 +222,15 @@ function Results({ view }: { view: ViewState }) {
   return (
     <ul className="space-y-3">
       {view.items.map((item) => (
-        <li
-          key={item.gameId}
-          className="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl"
-        >
+        <li key={item.gameId} className="border-border bg-card text-foreground rounded-2xl border p-4 backdrop-blur-xl">
           <div className="flex items-start gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-purple-600 text-sm font-semibold">
+            <span className="bg-primary flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
               {item.rank}
             </span>
             <div className="min-w-0">
               <h3 className="font-semibold">{item.title}</h3>
-              <p className="mt-1 text-sm text-blue-100/80">{item.reason}</p>
-              <p className="mt-2 text-xs text-blue-100/50">
+              <p className="text-ink-muted mt-1 text-sm">{item.reason}</p>
+              <p className="text-ink-muted mt-2 text-xs">
                 {item.genre} · {item.minPlayers}–{item.maxPlayers} players · {item.averagePlayMinutes} min
               </p>
             </div>

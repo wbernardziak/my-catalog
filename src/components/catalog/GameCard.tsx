@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Circle, Pencil, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LoanBadge, PlayedMeeple, PlayerCount, PlayTime } from "@/components/ui/GameMeta";
 import type { CatalogGame } from "@/types";
 import GameForm, { fromRow } from "./GameForm";
 
@@ -46,22 +47,14 @@ export default function GameCard({ game, filters = "" }: Props) {
     <div className="border-border bg-card text-foreground rounded-2xl border p-4 backdrop-blur-xl">
       <div className="flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold">{game.title}</h2>
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-xs font-medium",
-            game.loan_status === "loaned" ? "bg-warning-tint text-warning-ink" : "bg-success-tint text-success-ink",
-          )}
-        >
-          {game.loan_status === "loaned" ? "Loaned" : "Available"}
-        </span>
+        <LoanBadge loaned={game.loan_status === "loaned"} />
       </div>
       {game.authors.length > 0 && <p className="text-ink-muted mt-1 text-sm">{game.authors.join(", ")}</p>}
-      <div className="text-ink-muted mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        <span>{game.genre}</span>
-        <span>
-          {game.min_players}–{game.max_players} players
-        </span>
-        <span>~{game.avg_play_minutes} min</span>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span className="text-ink-muted text-sm">{game.genre}</span>
+        <PlayerCount min={game.min_players} max={game.max_players} />
+        <PlayTime minutes={game.avg_play_minutes} />
+        <PlayedMeeple played={game.played} />
       </div>
 
       {/* Per-member played/preference + shared loan toggles. Each is a tiny PRG

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Users, Clock, Tag, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { PlayerCount, PlayTime } from "@/components/ui/GameMeta";
 import { FormField } from "@/components/auth/FormField";
 import {
   describeFailure,
@@ -230,9 +231,11 @@ function Results({ view }: { view: ViewState }) {
             <div className="min-w-0">
               <h3 className="font-semibold">{item.title}</h3>
               <p className="text-ink-muted mt-1 text-sm">{item.reason}</p>
-              <p className="text-ink-muted mt-2 text-xs">
-                {item.genre} · {item.minPlayers}–{item.maxPlayers} players · {item.averagePlayMinutes} min
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="text-ink-muted text-sm">{item.genre}</span>
+                <PlayerCount min={item.minPlayers} max={item.maxPlayers} />
+                <PlayTime minutes={item.averagePlayMinutes} />
+              </div>
             </div>
           </div>
         </li>

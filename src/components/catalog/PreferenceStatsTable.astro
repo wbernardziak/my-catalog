@@ -1,5 +1,6 @@
 ---
 import type { MemberStat } from "@/types";
+import { PlayedMeeple } from "@/components/ui/GameMeta";
 
 interface Props {
   stats: MemberStat[];
@@ -41,7 +42,14 @@ const bodyCell = "px-4 py-3 text-sm text-foreground";
               {metric.label}
             </th>
             {stats.map((member) => (
-              <td class:list={[bodyCell, member.isCurrent && "text-primary font-semibold"]}>{member[metric.key]}</td>
+              <td class:list={[bodyCell, member.isCurrent && "text-primary font-semibold"]}>
+                <span class="inline-flex items-center gap-2">
+                  {member[metric.key]}
+                  {/* Same badge language as the catalog: the played row carries the
+                      meeple, so a member's played count reads as played state. */}
+                  {metric.key === "playedCount" && <PlayedMeeple played={member[metric.key] > 0} labelled={false} />}
+                </span>
+              </td>
             ))}
           </tr>
         ))

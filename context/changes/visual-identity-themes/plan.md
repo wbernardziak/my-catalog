@@ -467,10 +467,10 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [x] 4.1 Theme module unit tests pass, including `safeNext` rejection cases
-- [x] 4.2 Theme endpoint tests pass (valid sets cookie and redirects; invalid does not set)
-- [x] 4.3 Guard still passes: `npm run lint:colors`
-- [x] 4.4 Lint, build, tests pass
+- [x] 4.1 Theme module unit tests pass, including `safeNext` rejection cases — 19b5be4
+- [x] 4.2 Theme endpoint tests pass (valid sets cookie and redirects; invalid does not set) — 19b5be4
+- [x] 4.3 Guard still passes: `npm run lint:colors` — 19b5be4
+- [x] 4.4 Lint, build, tests pass — 19b5be4
 
 #### Manual
 
@@ -485,9 +485,9 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 
 #### Automated
 
-- [ ] 5.1 `gameMeta` unit tests pass, including missing/zero/out-of-range values
-- [ ] 5.2 Guard passes: `npm run lint:colors`
-- [ ] 5.3 Lint, build, tests pass
+- [x] 5.1 `gameMeta` unit tests pass, including missing/zero/out-of-range values
+- [x] 5.2 Guard passes: `npm run lint:colors`
+- [x] 5.3 Lint, build, tests pass
 
 #### Manual
 

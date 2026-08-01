@@ -499,7 +499,7 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 - [ ] 5.5 Punchboard corners and shadows consistent across every component
 - [x] 5.6 Pips, duration, and played meeples legible in all three themes — 1b3980b; the played meeple was a live AA failure at 2.46:1 on a Felt Table card, fixed by splitting `--success-mark` out of `--success` and now guard-enforced
 - [ ] 5.7 Genre, played, and loan state distinguishable without colour alone
-- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — BLOCKED: only ever seen against a stubbed provider response (see Open items §1)
+- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — unblocked 2026-08-01 (provider now responds in 0.3–0.5s, see Open items §1); still needs driving against a real response rather than the stub
 
 ## Open items
 
@@ -508,26 +508,34 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 > failed. Impl-review F5 stands: `implemented` means the automated rows are green, not
 > that the change has been looked at.
 
-### 1. Pick a recommendation model — blocks 5.8
+### 1. Recommendation latency — RESOLVED 2026-08-01, stays free
 
-Not a visual-identity problem; S-05 scope that only blocks this plan because 5.8 lives here.
-The integration is not broken, it is **marginal**. The key works and the model returns valid,
-schema-conformant JSON; timing the real system prompt with a 7-game payload gave 5.7s / 6.8s /
-6.4s, all `finish_reason: stop`, all parsing. That is ~6.3s against `TIMEOUT_MS = 8000`
-(`src/lib/services/recommendations.ts:18`) — ~1.7s of headroom, which is why it flaps between
-`timeout` and `invalid_response` with free-tier queue latency.
+The flapping between `timeout` and `invalid_response` was never about _which_ model. The
+configured `nvidia/nemotron-3-super-120b-a12b:free` was spending seconds and hundreds of tokens
+reasoning before answering, leaving ~1.7s of headroom against `TIMEOUT_MS = 8000`.
 
-Root cause: the configured `nvidia/nemotron-3-super-120b-a12b:free` is a **reasoning** model on
-the free tier, spending time and tokens before answering (under a 20-token cap it emitted only
-reasoning and no answer).
+Querying OpenRouter live: of 337 models, 14 are free, and only **5 free models support the
+`response_format: json_object` the service requires** — all 5 reasoning-capable. So switching to
+a "fast free instruct model" was not actually an available option; the pool does not contain one.
 
-- **Recommended** — unset `OPENROUTER_MODEL`; the code already falls back to `openai/gpt-4o-mini`
-  (`DEFAULT_MODEL`, `recommendations.ts:11`), typically 1–2s. Costs money.
-- Benchmark a faster free instruct model. No cost, but free tiers stay queue-sensitive.
-- Raising `TIMEOUT_MS` — **avoid**. The NFR in `src/types.ts` is a 5s target / 8s hard cap, and
-  6.3s already misses the target. Hides the problem.
+Reasoning-_capable_ is not reasoning-_by-default_, though, and it can be turned off. Measured
+over unique payloads per run (identical payloads get cached — the first benchmark pass returned
+implausible 0.3s times from a 120b model and had to be redone):
 
-Then re-run 5.8 against a real response.
+| model                             | reasoning | result                                 |
+| --------------------------------- | --------- | -------------------------------------- |
+| `nemotron-3-super-120b-a12b:free` | on        | 5 timeouts in 8, 1688 reasoning tokens |
+| `nemotron-3-super-120b-a12b:free` | **off**   | **12/12 clean, 0.3–0.5s** ✅           |
+| `gemma-4-26b-a4b-it:free`         | off       | 3 timeouts in 8 — still flappy         |
+| `gpt-oss-20b:free`                | off       | HTTP 400, rejects the flag             |
+| `gemma-4-31b-it:free`             | either    | HTTP 429, rate-limited                 |
+
+Fix: `reasoning: { enabled: false }` on the request body. Same free model, no cost, and 0.3–0.5s
+comfortably beats the 5s NFR target rather than merely missing the 8s cap. Covered by a
+regression test that fails if the flag is removed, since it is load-bearing rather than an
+optimisation.
+
+5.8 is no longer blocked on a decision — it just needs driving against a real response.
 
 ### 2. Aesthetic sign-off needed
 

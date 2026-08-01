@@ -93,6 +93,13 @@ export async function recommend(
       body: JSON.stringify({
         model: OPENROUTER_MODEL ?? DEFAULT_MODEL,
         response_format: { type: "json_object" },
+        // Load-bearing for the latency NFR, not an optimisation. Every free-tier
+        // model on OpenRouter that supports `response_format` is reasoning-capable,
+        // and with reasoning left on they spend seconds and hundreds of tokens
+        // thinking before answering — measured 8 runs of the configured model at
+        // 5 timeouts and 1688 reasoning tokens, versus 12/12 clean at 0.3–0.5s with
+        // this flag. Ranking a handful of games needs no chain of thought.
+        reasoning: { enabled: false },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: JSON.stringify(userPayload) },

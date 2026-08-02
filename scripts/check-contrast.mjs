@@ -78,6 +78,31 @@ const PAIRS = [
   ["--warning-tint", "--warning-ink"],
 ];
 
+/**
+ * Text painted as a gradient through `bg-clip-text`. Its computed `color` is
+ * `transparent`, so neither this guard's ink-on-surface matrix nor a runtime
+ * audit of computed colours can see it — the matrix has no role to look up, and
+ * the browser reports a ratio against `transparent`, which is meaningless. Each
+ * stop is therefore asserted against the surface the element sits on, and the
+ * heading passes only if BOTH ends do.
+ *
+ * `min: 3.0` because these are large text under WCAG (30px at weight 700, well
+ * past the 24px / 18.66px-bold threshold).
+ *
+ * Every entry has to be written by hand from the markup — a stylesheet cannot
+ * tell you which gradient lands on which surface. Keep it in step with the
+ * `bg-clip-text` occurrences in `src/`; there is one today.
+ */
+const GRADIENT_TEXT = [
+  {
+    what: "page heading",
+    where: "src/components/PageTitle.astro:14",
+    stops: ["--heading-from", "--heading-to"],
+    surface: "--background",
+    min: 3.0,
+  },
+];
+
 /** The body of the rule for `selector`, matched by brace depth. */
 function blockFor(css, selector) {
   const start = css.indexOf(`${selector} {`);
@@ -190,6 +215,30 @@ for (const theme of THEMES) {
       failures.push(
         `${theme.name} · pair: ${ink} ${inkValue} on ${fill} ${fillValue} = ${ratio.toFixed(2)}:1, needs 4.5`,
       );
+    }
+  }
+
+  for (const { what, where, stops, surface, min } of GRADIENT_TEXT) {
+    const bg = token.get(surface);
+    if (!bg) {
+      failures.push(`${theme.name}: missing ${surface} (needed for the ${what} gradient)`);
+      continue;
+    }
+
+    for (const stop of stops) {
+      const value = token.get(stop);
+      if (!value) {
+        failures.push(`${theme.name}: missing ${stop} (needed for the ${what} gradient)`);
+        continue;
+      }
+      checks++;
+      const ratio = contrast(value, bg);
+      if (ratio < min) {
+        failures.push(
+          `${theme.name} · gradient: ${what} stop ${stop} ${value} on ${surface} ${bg} ` +
+            `= ${ratio.toFixed(2)}:1, needs ${min} (${where})`,
+        );
+      }
     }
   }
 }

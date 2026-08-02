@@ -86,6 +86,19 @@ describe("recommend", () => {
     expect(result.recommendations[1].reason).toBeTruthy();
   });
 
+  it("disables reasoning on the request, which the latency NFR depends on", async () => {
+    const fetchMock = stubFetch(() => Promise.resolve(recsResponse([{ gameId: "a", reason: "fits", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    await recommend(criteria, candidates);
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as { reasoning?: { enabled?: boolean } };
+    // Every free-tier model that supports `response_format` is reasoning-capable;
+    // leaving this on costs seconds and blows the 8s cap. See recommendations.ts.
+    expect(body.reasoning).toEqual({ enabled: false });
+  });
+
   it("drops out-of-catalog gameIds but keeps valid ones", async () => {
     stubFetch(() =>
       Promise.resolve(

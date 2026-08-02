@@ -6,37 +6,24 @@ interface Props {
 }
 
 const { variant = "info" } = Astro.props;
+
+const variantClass: Record<Variant, string> = {
+  info: "border-primary bg-surface-subtle text-foreground",
+  warning: "border-warning bg-warning-tint text-warning-ink",
+  error: "border-destructive bg-destructive-tint text-destructive-ink",
+};
 ---
 
-<div class:list={["banner", `banner--${variant}`]} role={variant === "error" ? "alert" : "status"}>
+{
+  /* Tokenised in the phase 3 sweep: the old `<style>` block hardcoded six hex
+values, so the banner ignored the theme entirely. */
+}
+<div
+  class:list={[
+    "border-b px-4 py-3 text-center text-sm [&_a]:font-semibold [&_a]:text-inherit [&_a]:underline",
+    variantClass[variant],
+  ]}
+  role={variant === "error" ? "alert" : "status"}
+>
   <slot />
 </div>
-
-<style>
-  .banner {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    text-align: center;
-    border-bottom: 1px solid;
-  }
-  .banner :global(a) {
-    color: inherit;
-    text-decoration: underline;
-    font-weight: 600;
-  }
-  .banner--info {
-    background: #dbeafe;
-    color: #1e3a8a;
-    border-color: #3b82f6;
-  }
-  .banner--warning {
-    background: #fef3c7;
-    color: #78350f;
-    border-color: #f59e0b;
-  }
-  .banner--error {
-    background: #fee2e2;
-    color: #7f1d1d;
-    border-color: #dc2626;
-  }
-</style>

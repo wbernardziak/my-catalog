@@ -2,7 +2,11 @@ import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { listCatalogGames } from "@/lib/services/catalogGames";
 import { recommend } from "@/lib/services/recommendations";
-import { enrichRecommendations, parseCriteria } from "@/lib/services/recommendationView";
+import {
+  enrichRecommendations,
+  parseCriteria,
+  type RecommendationDisplayGame,
+} from "@/lib/services/recommendationView";
 import { mapRowToCandidateGame } from "@/types";
 
 export const prerender = false;
@@ -48,11 +52,15 @@ export const POST: APIRoute = async (context) => {
     return json({ error: criteria.error }, 400);
   }
 
-  let candidates;
+  // One list serves both callers: `recommend()` reads the `CandidateGame` fields
+  // it picks for the prompt (loan state is not one of them and never reaches the
+  // model), while the view join reads `loanStatus` for the result card's badge.
+  let candidates: RecommendationDisplayGame[];
   try {
-    candidates = (await listCatalogGames(supabase, user.id, {})).map((g) =>
-      mapRowToCandidateGame(g, { played: g.played, preference: g.preference ?? undefined }),
-    );
+    candidates = (await listCatalogGames(supabase, user.id, {})).map((g) => ({
+      ...mapRowToCandidateGame(g, { played: g.played, preference: g.preference ?? undefined }),
+      loanStatus: g.loan_status,
+    }));
   } catch {
     return json({ error: "Could not load your catalog. Please try again." }, 500);
   }

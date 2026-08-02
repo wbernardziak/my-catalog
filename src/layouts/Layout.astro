@@ -1,21 +1,28 @@
 ---
 import "../styles/global.css";
+import AppHeader from "@/components/AppHeader.astro";
 import Banner from "@/components/Banner.astro";
 import { missingConfigs } from "@/lib/config-status";
+import { rootClass } from "@/lib/theme";
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "MyCatalog" } = Astro.props;
+
+// Server-rendered in the first byte of HTML, so no page ever flashes the wrong
+// theme. The middleware resolves `theme` from the cookie for every route.
+const htmlClass = rootClass(Astro.locals.theme);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class:list={[htmlClass]}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/favicon.png" />
     <title>{title}</title>
   </head>
   <body>
@@ -35,7 +42,19 @@ const { title = "10x Astro Starter" } = Astro.props;
         </Banner>
       ))
     }
-    <slot />
+    {
+      /*
+      The shared header lives here rather than in each page. Hand-placing it left
+      every page free to nest it in its own `max-w-*` container, so the one bar the
+      app shares rendered at three different widths and wrapped mid-row on desktop —
+      and the auth pages, which never called it, had no navigation or theme switcher
+      at all despite being where signed-out visitors land.
+    */
+    }
+    <div class="bg-table flex min-h-screen flex-col px-4 py-4 md:px-8 md:py-8">
+      <AppHeader />
+      <main class="flex flex-1 flex-col"><slot /></main>
+    </div>
   </body>
 </html>
 

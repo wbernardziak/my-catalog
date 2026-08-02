@@ -3,7 +3,7 @@ project: MyCatalog
 version: 1
 status: draft
 created: 2026-07-09
-updated: 2026-08-01
+updated: 2026-08-02
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -36,7 +36,7 @@ MyCatalog helps a two-person household manage a shared board-game collection: wh
 | S-04 | played-loan-and-preference | mark a game played, set loan status, and record a like/dislike  | S-01          | FR-003, FR-005                  | done    |
 | S-05 | ai-play-recommendation     | enter play context and get AI-ranked suggestions with reasoning | F-01, S-01    | US-01, FR-007, FR-008           | done    |
 | S-06 | preference-stats           | view preference statistics per household member                 | S-04          | FR-006                          | done    |
-| S-07 | visual-identity-themes     | see a board-game visual identity and pick one of three themes   | S-01…S-06     | — (post-PRD-v1; NFR responsive) | planned |
+| S-07 | visual-identity-themes     | see a board-game visual identity and pick one of three themes   | S-01…S-06     | — (post-PRD-v1; NFR responsive) | done    |
 
 ## Streams
 
@@ -169,7 +169,7 @@ Foundations below assume these are present and do NOT recreate them.
   - Where the theme choice persists — a cookie read server-side (no migration, no flash, per-browser) vs. a Supabase profile column (syncs across devices, needs a migration + RLS). Owner: user. Blocks: no (plan on the cookie under the `low-complexity` goal; confirm during `/10x-plan`).
   - Whether Punchboard's condensed display face is self-hosted as an inlined webfont or falls back to a system condensed stack. Owner: user. Blocks: no (system stack is the safe default; the theme degrades rather than breaks).
 - **Risk:** The widest-touching change so far — the blue→purple gradient and `text-purple-300` are hardcoded across ~10 files and every screen uses `bg-cosmic`. Mitigated by doing it in that order: first move colour into the token block that already exists in `src/styles/global.css` (whose `--primary`/`--accent`/`--card` set is pure grayscale and unused today), then themes two and three are data rather than code. Shipping three themes instead of one is only affordable _because_ of that extraction; if the extraction is skipped, this slice triples in cost.
-- **Status:** planned
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -202,6 +202,8 @@ Foundations below assume these are present and do NOT recreate them.
 ## Done
 
 (Empty at first generation. `/10x-archive` adds an entry here — and flips that slice's `Status` to `done` — when a change whose `Change ID` matches a roadmap slice is archived.)
+
+- **S-07: a household member sees MyCatalog in a board-game visual identity instead of the starter's space theme — Felt Table as the default — and can switch between three built-in themes (Felt Table, Bright Shelf, Punchboard) from inside the app, with the choice persisting across visits and rendering server-side so no screen flashes the wrong theme.** — Zarchiwizowano 2026-08-02 → `context/archive/2026-08-01-visual-identity-themes/`. Lekcja: —.
 
 - **F-01: (foundation) a server-side LLM recommendation service is wired — provider client + secret/key management via the existing Cloudflare env, plus the prompt/response contract that constrains suggestions to eligible catalog games and enforces the NFR guardrails (minimum household data in the prompt, clear failure state on invalid/unavailable response, results within 5s).** — Zarchiwizowano 2026-07-09 → `context/archive/2026-07-09-llm-recommendation-service/`. Lekcja: —.
 - **S-01: a logged-in household member can add a board game with its details (title, authors, genre, player count, average play time, loan status) and immediately see it in the shared catalog list.** — Zarchiwizowano 2026-07-10 → `context/archive/2026-07-09-add-and-view-games/`. Lekcja: —.

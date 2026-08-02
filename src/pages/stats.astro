@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import PreferenceStatsTable from "@/components/catalog/PreferenceStatsTable.astro";
 import { createClient } from "@/lib/supabase";
 import { listPreferenceStats, hasAnyData } from "@/lib/services/preferenceStats";
@@ -17,7 +18,12 @@ let loadError: string | null = null;
 if (supabase && user) {
   try {
     stats = await listPreferenceStats(supabase, user.id);
-  } catch {
+  } catch (err) {
+    // Log before flattening to copy. The user-facing string is deliberately vague,
+    // but discarding the cause makes every failure here look like a Supabase
+    // outage — including build-time ones that have nothing to do with data.
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[stats] failed to load preference stats", err);
     loadError = "Could not load the statistics. Please try again.";
   }
 } else if (!supabase) {
@@ -32,34 +38,29 @@ const showData = hasAnyData(stats);
 ---
 
 <Layout title="Stats">
-  <div class="bg-cosmic min-h-screen p-4 md:p-8">
-    <div class="mx-auto max-w-3xl">
-      <header class="mb-8 flex items-center justify-between">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-          Preference statistics
-        </h1>
-        <a href="/dashboard" class="text-sm text-purple-300 hover:underline">← Dashboard</a>
-      </header>
+  <div class="mx-auto w-full max-w-3xl">
+    <PageTitle title="Preference statistics" />
 
-      {
-        !configured ? (
-          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">
-            Supabase is not configured — statistics are unavailable. Set <code>SUPABASE_URL</code> and{" "}
-            <code>SUPABASE_KEY</code> to enable it.
-          </div>
-        ) : loadError ? (
-          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
-        ) : showData ? (
-          <PreferenceStatsTable stats={stats} />
-        ) : (
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
-            No preferences recorded yet — mark games played and rate them to see stats here.{" "}
-            <a href="/catalog" class="text-purple-300 hover:underline">
-              Go to the catalog
-            </a>
-          </div>
-        )
-      }
-    </div>
+    {
+      !configured ? (
+        <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+          Supabase is not configured — statistics are unavailable. Set <code>SUPABASE_URL</code> and{" "}
+          <code>SUPABASE_KEY</code> to enable it.
+        </div>
+      ) : loadError ? (
+        <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+          {loadError}
+        </div>
+      ) : showData ? (
+        <PreferenceStatsTable stats={stats} />
+      ) : (
+        <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
+          No preferences recorded yet — mark games played and rate them to see stats here.{" "}
+          <a href="/catalog" class="text-accent-ink hover:underline">
+            Go to the catalog
+          </a>
+        </div>
+      )
+    }
   </div>
 </Layout>

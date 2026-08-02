@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import PageTitle from "@/components/PageTitle.astro";
 import GameForm from "@/components/catalog/GameForm";
 import GameCard from "@/components/catalog/GameCard";
 import CatalogFilters from "@/components/catalog/CatalogFilters.astro";
@@ -30,7 +31,20 @@ let loadError: string | null = null;
 if (supabase && user) {
   try {
     [games, genres] = await Promise.all([listCatalogGames(supabase, user.id, filters), listGenres(supabase)]);
-  } catch {
+  } catch (err) {
+    // Log before flattening to copy. The user-facing string is deliberately vague,
+    // and discarding the cause left no way to tell a Supabase outage from a module
+    // that failed to resolve.
+    //
+    // Note what this catch does NOT cover: the `GameCard` islands render below,
+    // outside the try. An island that throws during SSR aborts the HTML stream
+    // instead, so the page truncates after the filters with no error panel at all.
+    // Truncated page => rendering/module-graph problem; this panel => a query threw.
+    // `no-console` stays a warning project-wide to catch stray debug logs; server-side
+    // error reporting is the deliberate exception, and on Workers this is what reaches
+    // the log tail.
+    // eslint-disable-next-line no-console
+    console.error("[catalog] failed to load games or genres", err);
     loadError = "Could not load the catalog. Please try again.";
   }
 } else if (!supabase) {
@@ -44,64 +58,56 @@ if (supabase && user) {
 ---
 
 <Layout title="Catalog">
-  <div class="bg-cosmic min-h-screen p-4 md:p-8">
-    <div class="mx-auto max-w-5xl">
-      <header class="mb-8 flex items-center justify-between">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-          Catalog
-        </h1>
-        <div class="flex items-center gap-4">
-          <a href="/play" class="text-sm text-purple-300 hover:underline">What should we play?</a>
-          <a href="/dashboard" class="text-sm text-purple-300 hover:underline">← Dashboard</a>
+  <div class="mx-auto w-full max-w-5xl">
+    <PageTitle title="Catalog" />
+
+    {
+      !configured ? (
+        <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+          Supabase is not configured — the catalog is unavailable. Set <code>SUPABASE_URL</code> and{" "}
+          <code>SUPABASE_KEY</code> to enable it.
         </div>
-      </header>
-
-      {
-        !configured ? (
-          <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">
-            Supabase is not configured — the catalog is unavailable. Set <code>SUPABASE_URL</code> and{" "}
-            <code>SUPABASE_KEY</code> to enable it.
-          </div>
-        ) : (
-          <div class="grid gap-8 md:grid-cols-[1fr_360px]">
-            <section aria-label="Games">
-              <CatalogFilters genres={genres} current={filters} />
-              {loadError ? (
-                <div class="rounded-2xl border border-red-500/30 bg-red-900/20 p-6 text-red-200">{loadError}</div>
-              ) : games.length === 0 ? (
-                hasActiveFilters ? (
-                  <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
-                    No games match your filters.{" "}
-                    <a href="/catalog" class="text-purple-300 hover:underline">
-                      Clear filters
-                    </a>
-                  </div>
-                ) : (
-                  <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/70">
-                    No games yet. Add your first board game using the form.
-                  </div>
-                )
+      ) : (
+        <div class="grid gap-8 md:grid-cols-[1fr_360px]">
+          <section aria-label="Games">
+            <CatalogFilters genres={genres} current={filters} />
+            {loadError ? (
+              <div class="border-destructive/40 bg-destructive-tint text-destructive-ink rounded-2xl border p-6">
+                {loadError}
+              </div>
+            ) : games.length === 0 ? (
+              hasActiveFilters ? (
+                <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
+                  No games match your filters.{" "}
+                  <a href="/catalog" class="text-accent-ink hover:underline">
+                    Clear filters
+                  </a>
+                </div>
               ) : (
-                <ul class="space-y-3">
-                  {games.map((game) => (
-                    <li>
-                      <GameCard game={game} filters={activeQuery} client:load />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                <div class="border-border bg-surface-subtle text-ink-muted rounded-2xl border p-8 text-center">
+                  No games yet. Add your first board game using the form.
+                </div>
+              )
+            ) : (
+              <ul class="space-y-3">
+                {games.map((game) => (
+                  <li>
+                    <GameCard game={game} filters={activeQuery} client:load />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-            <aside
-              aria-label="Add a game"
-              class="h-fit rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl"
-            >
-              <h2 class="mb-4 text-lg font-semibold">Add a game</h2>
-              <GameForm mode="create" idPrefix="create" action="/api/games" serverError={error} client:load />
-            </aside>
-          </div>
-        )
-      }
-    </div>
+          <aside
+            aria-label="Add a game"
+            class="border-border bg-card text-foreground h-fit rounded-2xl border p-6 backdrop-blur-xl"
+          >
+            <h2 class="mb-4 text-lg font-semibold">Add a game</h2>
+            <GameForm mode="create" idPrefix="create" action="/api/games" serverError={error} client:load />
+          </aside>
+        </div>
+      )
+    }
   </div>
 </Layout>

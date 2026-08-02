@@ -1,0 +1,83 @@
+---
+/**
+ * The one header every page shares. Absorbs the old `Topbar` (session area) and
+ * the four hand-rolled page headers, which were near-identical apart from their
+ * title and their ad-hoc navigation links.
+ *
+ * Rendered once by `Layout.astro`, so every page gets it on the same full-bleed
+ * width. The page `<h1>` is deliberately NOT rendered here: it belongs inside the
+ * page's own content container, which is narrower than this bar and differs per
+ * page.
+ *
+ * Reads `Astro.locals.user` itself rather than taking it as a prop, matching how
+ * `Topbar` did it.
+ */
+import BrandMark from "@/components/BrandMark.astro";
+import ThemeSwitcher from "@/components/ThemeSwitcher.astro";
+
+const { user } = Astro.locals;
+const path = Astro.url.pathname;
+
+const navLinks = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/catalog", label: "Catalog" },
+  { href: "/play", label: "Play" },
+  { href: "/stats", label: "Stats" },
+];
+
+// `accent-ink` rather than `primary`: the accent as a fill and the accent as text
+// have different contrast floors, and these links sit on the subtle surface.
+const linkClass = "text-accent-ink transition-colors hover:text-accent-ink/80 hover:underline";
+---
+
+<header class="mb-8">
+  <div
+    class="border-border bg-surface-subtle text-ink-muted flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border px-4 py-2 text-sm"
+  >
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <a href={user ? "/dashboard" : "/"} class="text-foreground flex items-center gap-2 font-semibold">
+        <BrandMark size={24} />
+        MyCatalog
+      </a>
+      {
+        user && (
+          <nav aria-label="Main" class="flex flex-wrap items-center gap-3">
+            {navLinks.map((link) => (
+              <a
+                href={link.href}
+                class:list={[linkClass]}
+                aria-current={path === link.href || path.startsWith(`${link.href}/`) ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </div>
+
+    {
+      user ? (
+        <div class="flex flex-wrap items-center gap-3">
+          <ThemeSwitcher />
+          <span class="text-ink-muted">{user.email}</span>
+          <form method="POST" action="/api/auth/signout">
+            <button type="submit" class:list={[linkClass]}>
+              Sign out
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div class="flex flex-wrap items-center gap-3">
+          <ThemeSwitcher />
+          <a href="/auth/signin" class:list={[linkClass]}>
+            Sign in
+          </a>
+          <a href="/auth/signup" class:list={[linkClass]}>
+            Sign up
+          </a>
+        </div>
+      )
+    }
+  </div>
+</header>

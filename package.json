@@ -4,11 +4,14 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:clean": "rm -rf node_modules/.vite && astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:colors": "node scripts/check-color-literals.mjs",
+    "lint:contrast": "node scripts/check-contrast.mjs",
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

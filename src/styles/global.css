@@ -56,6 +56,14 @@
   --secondary: #6b4a2f;
   --secondary-foreground: #f2e9d8;
 
+  /* The page heading's gradient. Its own roles rather than `--primary` →
+     `--secondary`: those two are fills, judged against their own foregrounds, and
+     walnut as a fill is fine while walnut as text on felt is 1.53:1. A gradient
+     heading is ink, so both ends are held to the 3:1 large-text threshold by
+     `lint:contrast`. Brass into a lightened walnut keeps the warm-to-warm shift. */
+  --heading-from: #c8a24a;
+  --heading-to: #b98a5e;
+
   /* Lines and focus */
   --border: #3a5c4f;
   --input: #3a5c4f;
@@ -135,6 +143,11 @@
   --secondary: #204b45;
   --secondary-foreground: #f3f7f5;
 
+  /* Meeple red into pine. Both already clear the threshold as ink on paper
+     (4.66 and 8.87), so this theme's heading is unchanged in appearance. */
+  --heading-from: #c0442a;
+  --heading-to: #204b45;
+
   --border: #ded9cd;
   --input: #ded9cd;
   --ring: #c0442a;
@@ -204,6 +217,12 @@
 
   --secondary: #2e6e6b;
   --secondary-foreground: #e9f2f0;
+
+  /* Token orange into a lifted board teal. The fill teal sits at 3.03 as ink on
+     press black — passing, but close enough that any future darkening breaks a
+     heading silently, which is exactly what went unnoticed here. */
+  --heading-from: #d98324;
+  --heading-to: #3a8a86;
 
   --border: #3a3a40;
   --input: #3a3a40;
@@ -313,6 +332,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-heading-from: var(--heading-from);
+  --color-heading-to: var(--heading-to);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-ink-muted: var(--ink-muted);

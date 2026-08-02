@@ -365,6 +365,27 @@ Exports: player count as pips (filled to the supported range), duration as a die
 
 **Implementation note**: Stop here for human confirmation. This is the last phase; after sign-off the change is ready for `/10x-impl-review`.
 
+**Annex 2026-08-02 — closing 5.8 needed code, not just a browser pass.** Driving the last
+manual row exposed that "the same badge language as the catalog" was only two-thirds true:
+`RecommendationFlow.tsx` shared `PlayerCount` and `PlayTime` with `GameCard.tsx` but rendered
+neither `LoanBadge` nor `PlayedMeeple`, and `RecommendationViewItem` carried no field for
+either. Since the route feeds the ranker every live game (no loan/played filter), a loaned or
+already-played game could be recommended with nothing on the card saying so.
+
+Files changed beyond this phase's list, all inside the badge system it owns:
+
+- `src/lib/services/recommendationView.ts` — new `RecommendationDisplayGame` (`CandidateGame &
+  { loanStatus }`), two new fields on `RecommendationViewItem`, join carries them through.
+- `src/pages/api/recommendations.ts` — builds the one list both callers read.
+- `src/components/play/RecommendationFlow.tsx` — renders the two missing badges in the
+  catalog's order.
+- `src/lib/services/recommendationView.test.ts` — two added cases (state carried through;
+  absent `played` reads as not played).
+
+`CandidateGame` was deliberately left alone: it is the ranker contract, loan state is not a
+ranking input, and `recommend()` picks its prompt fields explicitly — so the model's input is
+byte-identical to before and ranking behaviour is unchanged.
+
 ---
 
 ## Testing Strategy
@@ -507,7 +528,7 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 - [x] 5.5 Punchboard corners and shadows consistent across every component — manual check 2026-08-01 (cards, inputs, selects, buttons, and badges are all square with the hard offset shadow; the only rounded thing left is the mark tile, which is the brand asset and is deliberately identical in all three themes)
 - [x] 5.6 Pips, duration, and played meeples legible in all three themes — 1b3980b; the played meeple was a live AA failure at 2.46:1 on a Felt Table card, fixed by splitting `--success-mark` out of `--success` and now guard-enforced
 - [x] 5.7 Genre, played, and loan state distinguishable without colour alone — manual check 2026-08-01; every state carries a text label plus a distinct glyph, so none of them rests on hue: genre is a word, played is "Played"/"Not played yet" with a filled vs outline meeple, loan is "On the shelf"/"Loaned" with a shelf vs outbound-arrow icon, player count is a pip row, and the duration glyph changes with the bucket
-- [ ] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — **stats half done** 2026-08-01 (the played meeple on `/stats` is the same mark, in the same role, as the catalog card). The recommendation half is re-blocked, on a new and external cause: the OpenRouter free tier is out of daily requests, see Open items §1. **Still open 2026-08-02**: deliberately skipped in the third pass at the user's request to avoid spending the day's quota. Everything else it depends on is verified, so this is one flow away from closing
+- [x] 5.8 Recommendation flow and stats page carry the same badge language as the catalog — 2026-08-02, and it took code to make true (see the phase-5 annex). Stats was already the same played meeple in the same role. The recommendation card was missing `LoanBadge` and `PlayedMeeple` entirely; both now render, in the catalog's order. Driven live against the real provider once the quota reset (§1): 4 players, no time or genre. Rank 1 `QA Party Marathon` shows **Loaned** + filled **Played** meeple, rank 2 `Catan` shows **On the shelf** + **Played**, rank 3 `QA Long Title…` shows **Loaned** + **Not played yet** — so both states of both badges were seen, not inferred. Verified in all three themes (Bright Shelf, Felt Table, Punchboard; Punchboard squares the loan pill with every other corner). Narrow-width check was a 343px card simulation rather than a 375px viewport — the window manager refused the resize — with the long fixture title injected: title wraps to four lines, the loan badge stays pinned and unsquashed (`shrink-0`), the meta row wraps to two, `scrollWidth === clientWidth` on every card
 
 ## Open items
 
@@ -523,7 +544,12 @@ No data migration. Existing sessions have no theme cookie and therefore get Felt
 > come out of it: §8 (step 8 asks for a state the schema forbids) and §9 (a thin AA margin
 > the static guard structurally cannot see). §6's fetch error did **not** reproduce.
 
-### 1. Recommendation latency — fixed; now blocked on the free-tier daily quota
+### 1. Recommendation latency — CLOSED 2026-08-02, quota reset and flow driven
+
+**2026-08-02.** The daily free-tier allowance reset as predicted. `GET /api/v1/key` reports
+`usage_daily: 0`, and the flow was driven end to end through the app three times (one per
+theme), each returning ranked results well inside the cap. 5.8 is signed off; nothing about
+this item blocks anything now. The history below stays for the latency reasoning.
 
 **2026-08-01 update.** The latency fix holds. Measured through the app's own endpoint,
 three consecutive calls returned in **367ms, 444ms, 713ms** — no timeouts, comfortably
@@ -797,3 +823,22 @@ margin is thin enough that any future darkening of `--secondary`, or lightening 
 Punchboard surface, silently pushes a heading under AA — and per §4 neither the static guard
 nor the runtime audit would report it. If the palette moves again, re-measure this pair by
 hand, or teach `check-contrast.mjs` about the gradient-heading pairing specifically.
+
+### 10. `invalid_response` used to leave no trace — logging added 2026-08-02
+
+The first live call after the quota reset failed with "We couldn't read the recommendation
+response." and wrote **nothing** to the dev-server log, so there was no way to tell which of
+three different provider faults had fired. Reproducing the same request outside the app with
+an equivalent payload returned a clean, schema-valid response in 2737ms, and the next in-app
+attempt succeeded — so the failure was a one-off model flake, not a defect in this change.
+
+The silence was the real problem, and it is the same class as §6: `recommendations.ts` now
+`console.error`s at each of the three `invalid_response` branches (non-string content,
+unparseable JSON, schema mismatch), naming the branch and including the first 500 characters
+of what came back. Same `eslint-disable-next-line no-console` convention as
+`catalog.astro`/`stats.astro`. On Workers these failures previously left no trace in
+production either.
+
+Not turned into a retry: one flake in four live calls does not justify spending a second
+request per failure against a 50/day quota, and the degradation path is already correct.
+If the flake rate turns out to be higher in real use, the log now says what to fix.

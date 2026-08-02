@@ -123,7 +123,12 @@ export async function recommend(
     return { ok: false, reason: isAbortError(err) ? "timeout" : "provider_error" };
   }
 
+  // `invalid_response` is one user-facing message for three different provider
+  // faults; without naming which one fired, the log leaves nothing to act on
+  // (same reasoning as the page-level catches in `catalog.astro`/`stats.astro`).
   if (typeof content !== "string") {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] provider returned no string content", { content });
     return { ok: false, reason: "invalid_response" };
   }
 
@@ -131,11 +136,15 @@ export async function recommend(
   try {
     json = JSON.parse(content);
   } catch {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] provider content is not JSON", content.slice(0, 500));
     return { ok: false, reason: "invalid_response" };
   }
 
   const parsed = responseSchema.safeParse(json);
   if (!parsed.success) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] provider JSON failed the schema", parsed.error.issues, content.slice(0, 500));
     return { ok: false, reason: "invalid_response" };
   }
 

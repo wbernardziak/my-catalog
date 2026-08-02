@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Users, Clock, Tag, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { PlayerCount, PlayTime } from "@/components/ui/GameMeta";
+import { LoanBadge, PlayedMeeple, PlayerCount, PlayTime } from "@/components/ui/GameMeta";
 import { FormField } from "@/components/auth/FormField";
 import {
   describeFailure,
@@ -228,13 +228,19 @@ function Results({ view }: { view: ViewState }) {
             <span className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
               {item.rank}
             </span>
-            <div className="min-w-0">
-              <h3 className="font-semibold">{item.title}</h3>
+            {/* Same badge set and order as a catalog card (GameCard.tsx): loan
+                state beside the title, then genre / players / time / played. */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="font-semibold">{item.title}</h3>
+                <LoanBadge loaned={item.loanStatus === "loaned"} className="shrink-0" />
+              </div>
               <p className="text-ink-muted mt-1 text-sm">{item.reason}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <span className="text-ink-muted text-sm">{item.genre}</span>
                 <PlayerCount min={item.minPlayers} max={item.maxPlayers} />
                 <PlayTime minutes={item.averagePlayMinutes} />
+                <PlayedMeeple played={item.played} />
               </div>
             </div>
           </div>

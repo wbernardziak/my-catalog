@@ -1,5 +1,11 @@
 import { z } from "zod";
-import type { CandidateGame, RankedRecommendation, RecommendationCriteria, RecommendationResult } from "@/types";
+import type {
+  CandidateGame,
+  LoanStatus,
+  RankedRecommendation,
+  RecommendationCriteria,
+  RecommendationResult,
+} from "@/types";
 
 /**
  * Pure view logic for the "what should we play?" flow (S-05), extracted so the
@@ -62,10 +68,22 @@ export function parseCriteria(input: unknown): CriteriaParseResult {
 }
 
 /**
+ * What the join reads from: the ranker contract plus the loan state the result
+ * card shows. `CandidateGame` deliberately stops at what the ranker needs, and
+ * loan state is not a ranking input — `recommend()` picks its prompt fields
+ * explicitly, so the extra field never reaches the model.
+ */
+export type RecommendationDisplayGame = CandidateGame & { loanStatus: LoanStatus };
+
+/**
  * A ranked recommendation enriched with the display fields the UI needs. The
  * service returns only `gameId`/`reason`/`rank` (no display fields), so the
  * server joins each id back to the candidate it already holds — the client never
  * receives the full catalog.
+ *
+ * Carries the same badge set as a catalog card (genre, players, play time,
+ * played, loan) so a recommended game reads identically in both places — in
+ * particular, a loaned or already-played game says so here too.
  */
 export interface RecommendationViewItem {
   gameId: string;
@@ -76,16 +94,21 @@ export interface RecommendationViewItem {
   minPlayers: number;
   maxPlayers: number;
   averagePlayMinutes: number;
+  played: boolean;
+  loanStatus: LoanStatus;
 }
 
 /**
  * Join ranked recommendations to their candidate games by `gameId`, preserving
  * rank order and skipping any id absent from the candidate list (defense in
  * depth; `recommend()` already enforces catalog-only in code).
+ *
+ * `played` is optional on the ranker contract (undefined until the caller merges
+ * per-member state); absent reads as not played, which is what the meeple shows.
  */
 export function enrichRecommendations(
   recommendations: RankedRecommendation[],
-  candidates: CandidateGame[],
+  candidates: RecommendationDisplayGame[],
 ): RecommendationViewItem[] {
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
   return [...recommendations]
@@ -103,6 +126,8 @@ export function enrichRecommendations(
           minPlayers: game.minPlayers,
           maxPlayers: game.maxPlayers,
           averagePlayMinutes: game.averagePlayMinutes,
+          played: game.played === true,
+          loanStatus: game.loanStatus,
         },
       ];
     });

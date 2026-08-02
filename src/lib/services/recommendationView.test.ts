@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { describeFailure, enrichRecommendations, parseCriteria } from "./recommendationView";
-import type { CandidateGame, RankedRecommendation } from "@/types";
+import {
+  describeFailure,
+  enrichRecommendations,
+  parseCriteria,
+  type RecommendationDisplayGame,
+} from "./recommendationView";
+import type { RankedRecommendation } from "@/types";
 
 /**
  * Pure unit tests for the recommendation view module. No network, no Supabase,
@@ -8,13 +13,14 @@ import type { CandidateGame, RankedRecommendation } from "@/types";
  * verification (consistent with the rest of the app).
  */
 
-const game = (id: string, overrides: Partial<CandidateGame> = {}): CandidateGame => ({
+const game = (id: string, overrides: Partial<RecommendationDisplayGame> = {}): RecommendationDisplayGame => ({
   id,
   title: `Game ${id}`,
   genre: "Strategy",
   minPlayers: 2,
   maxPlayers: 4,
   averagePlayMinutes: 60,
+  loanStatus: "available",
   ...overrides,
 });
 
@@ -70,8 +76,21 @@ describe("enrichRecommendations", () => {
         minPlayers: 2,
         maxPlayers: 4,
         averagePlayMinutes: 60,
+        played: false,
+        loanStatus: "available",
       },
     ]);
+  });
+
+  it("carries played and loan state so the card badges match a catalog card", () => {
+    const rows = [game("a", { played: true, loanStatus: "loaned" })];
+    const recs: RankedRecommendation[] = [{ gameId: "a", reason: "fits", rank: 1 }];
+    expect(enrichRecommendations(recs, rows)[0]).toMatchObject({ played: true, loanStatus: "loaned" });
+  });
+
+  it("reads an absent played flag as not played", () => {
+    const recs: RankedRecommendation[] = [{ gameId: "a", reason: "fits", rank: 1 }];
+    expect(enrichRecommendations(recs, [game("a")])[0]?.played).toBe(false);
   });
 
   it("preserves rank order regardless of input order", () => {

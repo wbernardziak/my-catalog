@@ -1,10 +1,10 @@
 ---
 change_id: visual-identity-themes
 title: Visual identity themes
-status: impl_reviewed
+status: archived
 created: 2026-08-01
 updated: 2026-08-02
-archived_at: null
+archived_at: 2026-08-02T21:42:49Z
 ---
 
 ## Notes

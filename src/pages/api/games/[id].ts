@@ -31,7 +31,9 @@ export const POST: APIRoute = async (context) => {
   let form: FormData;
   try {
     form = await context.request.formData();
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]] could not parse the submitted form", err);
     // An unparseable body must not escape as a framework 500; the house
     // convention is a friendly `?error=` redirect.
     return context.redirect(

@@ -167,7 +167,8 @@ phase lands; before that, the gate is planned.
 
 | Gate | Where | Required? | Catches |
 |------|-------|-----------|---------|
-| lint + typecheck | local (husky/lint-staged) + CI | required (wired) | syntactic / type drift |
+| lint | local (husky/lint-staged) + CI | required (wired) | syntactic drift |
+| typecheck | CI (`npm run typecheck` → `tsc --noEmit`) | required (wired 2026-09-11) | type drift. Nothing type-checked this repo before that date: husky runs `eslint --fix` only, and `astro build` transpiles without checking. ESLint's type-aware rules do not surface raw compiler diagnostics — phase 1's own harness shipped four `tsc` errors through a green lint and build. |
 | build | CI | required (wired) | SSR/adapter build breakage |
 | colour-literal + contrast checks | local | required (wired) | theme token drift, contrast regressions |
 | unit + integration | local + CI | required (wired 2026-09-11) | logic regressions, endpoint contract breakage |

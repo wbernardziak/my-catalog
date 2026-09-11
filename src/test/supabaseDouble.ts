@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi, type Mock } from "vitest";
 
 /**
  * A deliberately shallow stand-in for the Supabase client.
@@ -9,9 +9,15 @@ import { vi } from "vitest";
  * rows per caller could pass while the real RLS policies were wrong, which is
  * the self-fulfilling fake `context/foundation/test-plan.md` §2 warns about.
  *
- * So: use it to prove that a rejected request persisted nothing. Do NOT use it
- * to claim anything about authorization or row visibility — proving those needs
- * the real database, which is rollout phase 2's job.
+ * It does record the filter calls a query made (`filterLog`), so a test can
+ * assert that a write was SCOPED — catching the dropped `.eq("id", id)` that
+ * would turn one soft-delete into a mass delete. That is a structural check on
+ * the query, not proof that the database would honour it.
+ *
+ * So: use it to prove that a rejected request persisted nothing, and that a
+ * write named the row it meant to touch. Do NOT use it to claim anything about
+ * authorization or row visibility — proving those needs the real database,
+ * which is rollout phase 2's job.
  */
 
 export interface QueryResult {
@@ -20,6 +26,9 @@ export interface QueryResult {
 }
 
 type WriteOp = "insert" | "update" | "upsert" | "delete";
+
+/** A recorded write. Indexed by a dynamic op key, so the signature is explicit. */
+type WriteSpy = Mock<(table: string, payload: unknown) => void>;
 
 export interface QueryBuilder extends PromiseLike<{ data: unknown; error: QueryResult["error"] }> {
   select: (...args: unknown[]) => QueryBuilder;
@@ -43,6 +52,14 @@ export interface WriteCall {
   payload: unknown;
 }
 
+/** A filter applied to a query, e.g. `.eq("id", "game-1")`. */
+export interface FilterCall {
+  table: string;
+  method: "eq" | "is" | "lte" | "gte";
+  column: unknown;
+  value: unknown;
+}
+
 export interface SupabaseDoubleOptions {
   /** Result per table name; falls back to `fallback`. */
   results?: Record<string, QueryResult>;
@@ -52,20 +69,25 @@ export interface SupabaseDoubleOptions {
 export interface SupabaseDouble {
   client: { from: (table: string) => QueryBuilder };
   /** Spies per write operation, for call-level assertions. */
-  writes: Record<WriteOp, ReturnType<typeof vi.fn>>;
+  writes: Record<WriteOp, WriteSpy>;
   /** Every write issued, in order — the readable form of "nothing was persisted". */
   writeLog: WriteCall[];
+  /** Every filter applied, in order — lets a test prove a write was scoped. */
+  filterLog: FilterCall[];
   /** `[]` when no write was issued; otherwise `"table.op"` entries. */
   writeSummary: () => string[];
+  /** `[]` when no filter was applied; otherwise `"method(column, value)"` entries. */
+  filterSummary: () => string[];
 }
 
 export function createSupabaseDouble(options: SupabaseDoubleOptions = {}): SupabaseDouble {
   const writeLog: WriteCall[] = [];
-  const writes: Record<WriteOp, ReturnType<typeof vi.fn>> = {
-    insert: vi.fn(),
-    update: vi.fn(),
-    upsert: vi.fn(),
-    delete: vi.fn(),
+  const filterLog: FilterCall[] = [];
+  const writes: Record<WriteOp, WriteSpy> = {
+    insert: vi.fn<(table: string, payload: unknown) => void>(),
+    update: vi.fn<(table: string, payload: unknown) => void>(),
+    upsert: vi.fn<(table: string, payload: unknown) => void>(),
+    delete: vi.fn<(table: string, payload: unknown) => void>(),
   };
 
   const resultFor = (table: string): { data: unknown; error: QueryResult["error"] } => {
@@ -82,12 +104,17 @@ export function createSupabaseDouble(options: SupabaseDoubleOptions = {}): Supab
 
     const passthrough = () => builder;
 
+    const filter = (method: FilterCall["method"]) => (column: unknown, value: unknown) => {
+      filterLog.push({ table, method, column, value });
+      return builder;
+    };
+
     const builder: QueryBuilder = {
       select: passthrough,
-      eq: passthrough,
-      is: passthrough,
-      lte: passthrough,
-      gte: passthrough,
+      eq: filter("eq"),
+      is: filter("is"),
+      lte: filter("lte"),
+      gte: filter("gte"),
       order: passthrough,
       limit: passthrough,
       single: passthrough,
@@ -106,6 +133,8 @@ export function createSupabaseDouble(options: SupabaseDoubleOptions = {}): Supab
     client: { from: (table: string) => createBuilder(table) },
     writes,
     writeLog,
+    filterLog,
     writeSummary: () => writeLog.map((call) => `${call.table}.${call.op}`),
+    filterSummary: () => filterLog.map((call) => `${call.method}(${String(call.column)}, ${String(call.value)})`),
   };
 }

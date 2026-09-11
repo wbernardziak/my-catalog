@@ -1,5 +1,6 @@
+import type { APIRoute } from "astro";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createApiContext, locationOf, queryParamOf, testUser } from "@/test/apiContext";
+import { createApiContext, locationOf, queryParamOf, testUser, type ApiContextOptions } from "@/test/apiContext";
 import { createSupabaseDouble, type SupabaseDouble } from "@/test/supabaseDouble";
 
 /**
@@ -71,7 +72,16 @@ describe("POST /api/games", () => {
  * (the house PRG convention, decided 2026-07-09), so the expectation is a
  * redirect target. `/api/recommendations` is the one JSON endpoint.
  */
-const ENDPOINTS = [
+interface EndpointCase {
+  name: string;
+  handler: APIRoute;
+  context: ApiContextOptions;
+  /** Exactly one of these: the games endpoints redirect, /api/recommendations answers with a status. */
+  deniedLocation?: string;
+  deniedStatus?: number;
+}
+
+const ENDPOINTS: EndpointCase[] = [
   {
     name: "POST /api/games",
     handler: createGame,
@@ -114,7 +124,7 @@ const ENDPOINTS = [
     context: { json: { playerCount: 3 }, url: "https://example.test/api/recommendations" },
     deniedStatus: 401,
   },
-] as const;
+];
 
 describe("the endpoint self-gates against an unauthenticated caller", () => {
   it.each(ENDPOINTS)("$name denies and writes nothing", async ({ handler, context, deniedLocation, deniedStatus }) => {
@@ -124,6 +134,28 @@ describe("the endpoint self-gates against an unauthenticated caller", () => {
       expect(locationOf(response)).toBe(deniedLocation);
     } else {
       expect(response.status).toBe(deniedStatus);
+    }
+    expect(double.writeSummary()).toEqual([]);
+  });
+});
+
+/**
+ * The first branch of every handler's three-step block: no Supabase client at
+ * all (missing env). It fires before the auth guard, so it needs its own row.
+ */
+describe("a missing Supabase client is refused before anything else", () => {
+  beforeEach(() => {
+    holder.client = null;
+  });
+
+  it.each(ENDPOINTS)("$name refuses and writes nothing", async ({ handler, context, deniedStatus }) => {
+    const response = await handler(createApiContext({ ...context, user: testUser() }));
+
+    if (deniedStatus === undefined) {
+      expect(queryParamOf(response, "error")).toBe("Supabase is not configured");
+    } else {
+      // The JSON endpoint reports a missing client as unavailable, not unauthorised.
+      expect(response.status).toBe(503);
     }
     expect(double.writeSummary()).toEqual([]);
   });
@@ -169,6 +201,36 @@ describe("per-member writes are bound to the session", () => {
       op: "upsert",
       payload: { member_id: "member-a", game_id: "game-1", preference: "liked" },
     });
+  });
+});
+
+/**
+ * A write that names no row is a mass write. The double records filter calls,
+ * so these assert the id-scoped endpoints actually narrowed to the row they
+ * were given — a dropped `.eq("id", id)` in the service layer would turn one
+ * soft-delete into a delete of the whole live catalog.
+ */
+describe("id-scoped writes name the row they touch", () => {
+  const AUTHED = testUser();
+
+  it.each<IdCase>([
+    { name: "update", handler: updateGame, form: VALID_GAME },
+    { name: "delete", handler: deleteGame, form: undefined },
+    { name: "loan", handler: setLoan, form: { loanStatus: "loaned" } },
+  ])("$name scopes its write to the id", async ({ handler, form }) => {
+    await handler(createApiContext({ user: AUTHED, params: { id: "game-1" }, form }));
+
+    expect(double.writeSummary()).toEqual(["games.update"]);
+    expect(double.filterSummary()).toContain("eq(id, game-1)");
+  });
+
+  it("played scopes its delete to both the game and the member", async () => {
+    await setPlayed(
+      createApiContext({ user: testUser("member-a"), params: { id: "game-1" }, form: { played: "false" } }),
+    );
+
+    expect(double.writeSummary()).toEqual(["game_played.delete"]);
+    expect(double.filterSummary()).toEqual(["eq(game_id, game-1)", "eq(member_id, member-a)"]);
   });
 });
 
@@ -264,10 +326,16 @@ describe("invalid input is rejected without a write", () => {
  * check it for truthiness only and hand it straight to `.eq("id", id)`. These
  * cases record what that actually does today.
  */
+interface IdCase {
+  name: string;
+  handler: APIRoute;
+  form?: Record<string, string>;
+}
+
 describe("the [id] route param", () => {
   const AUTHED = testUser();
 
-  it.each([
+  it.each<IdCase>([
     { name: "update", handler: updateGame, form: VALID_GAME },
     { name: "delete", handler: deleteGame, form: undefined },
     { name: "loan", handler: setLoan, form: { loanStatus: "loaned" } },
@@ -283,7 +351,7 @@ describe("the [id] route param", () => {
   // The shared not-found copy, asserted through the handlers rather than by
   // grepping their source: an id that matches no live row comes back as a null
   // row from `maybeSingle()`, which each endpoint turns into the same message.
-  it.each([
+  it.each<IdCase>([
     { name: "update", handler: updateGame, form: VALID_GAME },
     { name: "delete", handler: deleteGame, form: undefined },
     { name: "loan", handler: setLoan, form: { loanStatus: "loaned" } },
@@ -326,7 +394,7 @@ describe("a body that cannot be parsed as form data", () => {
     headers: { "content-type": "multipart/form-data; boundary=----nonsense" },
   };
 
-  it.each([
+  it.each<{ name: string; handler: APIRoute; params: Record<string, string> }>([
     { name: "create", handler: createGame, params: {} },
     { name: "update", handler: updateGame, params: { id: "game-1" } },
     { name: "loan", handler: setLoan, params: { id: "game-1" } },

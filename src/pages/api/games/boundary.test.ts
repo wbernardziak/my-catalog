@@ -271,11 +271,31 @@ describe("the [id] route param", () => {
     { name: "update", handler: updateGame, form: VALID_GAME },
     { name: "delete", handler: deleteGame, form: undefined },
     { name: "loan", handler: setLoan, form: { loanStatus: "loaned" } },
+    { name: "played", handler: setPlayed, form: { played: "true" } },
+    { name: "preference", handler: setPreference, form: { preference: "liked" } },
   ])("$name treats a missing id as not-found and writes nothing", async ({ handler, form }) => {
     const response = await handler(createApiContext({ user: AUTHED, params: {}, form }));
 
     expect(queryParamOf(response, "error")).toBe("That game no longer exists.");
     expect(double.writeSummary()).toEqual([]);
+  });
+
+  // The shared not-found copy, asserted through the handlers rather than by
+  // grepping their source: an id that matches no live row comes back as a null
+  // row from `maybeSingle()`, which each endpoint turns into the same message.
+  it.each([
+    { name: "update", handler: updateGame, form: VALID_GAME },
+    { name: "delete", handler: deleteGame, form: undefined },
+    { name: "loan", handler: setLoan, form: { loanStatus: "loaned" } },
+  ])("$name reports an unknown id with the shared not-found copy", async ({ handler, form }) => {
+    // `maybeSingle()` on a row that does not exist (or is already soft-deleted)
+    // resolves to a null row — that is what "unknown id" looks like to the handler.
+    double = createSupabaseDouble({ results: { games: { data: null } } });
+    holder.client = double.client;
+
+    const response = await handler(createApiContext({ user: AUTHED, params: { id: "game-gone" }, form }));
+
+    expect(queryParamOf(response, "error")).toBe("That game no longer exists.");
   });
 
   // A non-UUID id is parameterised by the Supabase client, so it is not an

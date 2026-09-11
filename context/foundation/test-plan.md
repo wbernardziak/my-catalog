@@ -113,7 +113,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | API boundary contract | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4 | integration (route handlers) | researched | `context/changes/testing-api-boundary-contract/` |
+| 1 | API boundary contract | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4 | integration (route handlers) | done | `context/changes/testing-api-boundary-contract/` |
 | 2 | Per-member state attribution | Prove played state and preference stay bound to the correct household member at both the query and the policy layer | #1 | integration + DB-level RLS verification | not started | — |
 | 3 | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games | #6 | integration (query layer) | not started | — |
 | 4 | LLM recommendation guardrails | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses | #3, #5, #7 | contract tests with stubbed provider | not started | — |
@@ -144,7 +144,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 | Layer | Tool | Version | Notes |
 |-------|------|---------|-------|
 | unit + integration | Vitest | 4.1.x | Plain `vitest.config.ts`, not `getViteConfig` — the Astro Cloudflare adapter's Vite plugin rejects a Vitest config at startup. Resolves the `@/*` alias and stubs `astro:env/server`. `environment: "node"`. |
-| test runner script | `npm test` | — | `vitest run --passWithNoTests`; the `--passWithNoTests` flag means an empty run is green, so the CI step below cannot fail on a missing suite — Phase 5 drops the flag once a suite exists. |
+| test runner script | `npm test` | — | `vitest run` — the `--passWithNoTests` flag was dropped on 2026-09-11 (§3 Phase 1), so an empty or uncollectable suite now fails CI. |
 | existing suite | — | — | 12 files / ~1,068 lines: 6 in `src/lib/services/`, 3 API-route, plus theme, types, and one component test. |
 | API / HTTP mocking | none yet — see §3 Phase 4 | — | No MSW or equivalent installed; the provider boundary is currently exercised without a dedicated mocking layer. |
 | DB / RLS verification | Supabase CLI (local stack) | 2.23.x devDependency | `npx supabase start` requires Docker. Not yet used by any test — see §3 Phase 2. |
@@ -170,7 +170,7 @@ phase lands; before that, the gate is planned.
 | lint + typecheck | local (husky/lint-staged) + CI | required (wired) | syntactic / type drift |
 | build | CI | required (wired) | SSR/adapter build breakage |
 | colour-literal + contrast checks | local | required (wired) | theme token drift, contrast regressions |
-| unit + integration | local + CI | required after §3 Phase 1 | logic regressions, endpoint contract breakage |
+| unit + integration | local + CI | required (wired 2026-09-11) | logic regressions, endpoint contract breakage |
 | database policy verification | local + CI | required after §3 Phase 2 | per-member attribution and RLS regressions |
 | provider contract tests | local + CI | required after §3 Phase 4 | out-of-catalog suggestions, silent AI failures, prompt over-sharing |
 | CI test step + edit-loop gate | CI on PR + local agent loop | CI step wired; non-empty-suite enforcement + edit-loop gate required after §3 Phase 5 | regressions reaching a PR, or landing mid-edit |
@@ -193,11 +193,26 @@ phase that will write it.
 
 ### 6.2 Adding an integration test at an API boundary
 
-- TBD — see §3 Phase 1 for the endpoint denial/rejection pattern (an
-  unauthenticated call and an invalid-input call each asserted for the
-  response *and* absence of a write; note the `/api/games/*` endpoints answer
-  every failure with a 302 and an `?error=` query string, not a status code,
-  so the assertion is on the redirect target plus an unwritten Supabase spy).
+- **Location**: `src/pages/api/games/boundary.test.ts` — one suite for the whole
+  boundary, not one file per endpoint.
+- **Harness**: `src/test/apiContext.ts` builds the `APIContext`
+  (`createApiContext({ user, params, form | json | body })`, plus `locationOf`
+  and `queryParamOf` for reading a redirect); `src/test/supabaseDouble.ts`
+  stands in for the client via `vi.mock("@/lib/supabase")`, reached through a
+  `vi.hoisted` holder because `vi.mock` is hoisted above imports.
+- **Adding an endpoint**: add a row to the `ENDPOINTS` table. That row alone
+  proves the endpoint denies an unauthenticated caller and writes nothing.
+- **Assertion shape**: every refusal asserts *two* things — the response
+  (`queryParamOf(response, "error")`, or `response.status` for the one JSON
+  endpoint) **and** `double.writeSummary()` being `[]`. A redirect alone does
+  not prove the write did not happen. Read the error through `queryParamOf`,
+  never as an encoded substring: the two redirect builders encode a space
+  differently (`%20` vs `+`).
+- **The double's limits**: it records writes and models no rows, so it proves
+  "nothing was persisted" and *nothing whatsoever* about authorization or row
+  visibility. Anything RLS-shaped belongs to §3 Phase 2.
+- **Prove the test can fail**: break the behaviour (delete a handler's
+  `if (!context.locals.user)` guard), watch the case go red, restore.
 
 ### 6.3 Adding a test for per-member state
 
@@ -219,7 +234,20 @@ phase that will write it.
 
 ### 6.6 Per-rollout-phase notes
 
-(Filled in after each phase lands.)
+**Phase 1 (2026-09-11).** One production defect was found and fixed by the
+tests rather than by inspection: `context.request.formData()` was called
+outside any try/catch in five handlers, and an unparseable multipart body
+escaped as an unhandled `TypeError` — a framework 500 instead of the house
+`?error=` redirect. The parse is now wrapped in `index.ts`, `[id].ts`,
+`loan.ts`, `played.ts` and `preference.ts`.
+
+`src/pages/api/games/id-endpoints.test.ts` was deleted: it `readFileSync`'d
+each handler and asserted the source text contained `GAME_NOT_FOUND_MESSAGE`,
+which passes even if the constant is never used. The not-found copy is now
+asserted through the handlers themselves.
+
+Phase 1 deliberately asserts no ownership on `games` (shared catalog by design)
+and proves nothing about RLS — see the Risk #2 amendment note in §2.
 
 ## 7. What We Deliberately Don't Test
 

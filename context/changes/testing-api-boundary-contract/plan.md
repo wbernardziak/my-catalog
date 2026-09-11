@@ -396,9 +396,9 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Automated
 
-- [x] 3.1 `npm test` passes
-- [x] 3.2 Every invalid-input case asserts an unfired write spy
-- [x] 3.3 `npm run lint` and `npm run build` pass
+- [x] 3.1 `npm test` passes — 542c0b2
+- [x] 3.2 Every invalid-input case asserts an unfired write spy — 542c0b2
+- [x] 3.3 `npm run lint` and `npm run build` pass — 542c0b2
 
 #### Manual
 
@@ -409,9 +409,9 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Automated
 
-- [ ] 4.1 `npm test` passes and fails when the suite is emptied
-- [ ] 4.2 `npm run lint` passes
-- [ ] 4.3 No `readFileSync` remains under `src/pages/api`
+- [x] 4.1 `npm test` passes and fails when the suite is emptied
+- [x] 4.2 `npm run lint` passes
+- [x] 4.3 No `readFileSync` remains under `src/pages/api`
 
 #### Manual
 

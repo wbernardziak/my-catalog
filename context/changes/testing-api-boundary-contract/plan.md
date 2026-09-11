@@ -371,10 +371,10 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Automated
 
-- [ ] 1.1 `npm test` passes with the new file
-- [ ] 1.2 `npm run lint` passes
-- [ ] 1.3 Negative case fails when the guard in `index.ts` is temporarily deleted
-- [ ] 1.4 Positive case fails when the `insert` spy is temporarily unreachable
+- [x] 1.1 `npm test` passes with the new file
+- [x] 1.2 `npm run lint` passes
+- [x] 1.3 Negative case fails when the guard in `index.ts` is temporarily deleted
+- [x] 1.4 Positive case fails when the `insert` spy is temporarily unreachable
 
 #### Manual
 

@@ -264,13 +264,13 @@ local branch `test/api-boundary-contract`, so no stable blob URL exists yet.
 
 ## Open Questions
 
-1. **Risk #2's wording needs amending in `context/foundation/test-plan.md` §2.**
-   "An authenticated request for a resource the caller does not own" describes a
-   guarantee this codebase deliberately does not offer for `games`. The defensible
-   phase-1 restatement: *every endpoint denies an unauthenticated caller on its
-   own, without relying on middleware; and every per-member write is bound to the
-   session's member id rather than any request field.* Needs the user's call
-   before the plan is written.
+1. ~~**Risk #2's wording needs amending in `context/foundation/test-plan.md` §2.**~~
+   **Resolved 2026-09-11** — the user approved the restatement, and §2 (risk row
+   and response guidance), §3 Phase 1's goal and §6.2 were amended together.
+   Risk #2 now reads as the unguarded-invariant risk: the middleware skips
+   `/api/*`, so each handler's own session guard is the only gate, hand-copied
+   seven times; plus every per-member write must carry the session's member id.
+   The policy-layer half of member attribution stays with Risk #1 (phase 2).
 2. **How deep should the Supabase double go?** The repo convention is not to mock
    Supabase at all. Phase 1 needs *some* double to prove "no write was issued".
    A shallow spy (assert `insert`/`update` never called) is cheap and sufficient

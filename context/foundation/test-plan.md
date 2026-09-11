@@ -46,7 +46,7 @@ research's job, see §1 principle #3).
 | # | Risk (failure scenario) | Impact | Likelihood | Source (evidence — not anchor) |
 |---|--------------------------|--------|------------|--------------------------------|
 | 1 | A household member's played state or like/dislike is attributed to the other member — or one member's personal state is readable or writable as the other's | High | High | PRD §Success Criteria (Guardrails); PRD FR-005; interview Q1, Q3; hot-spot dirs `src/lib/services` (29/90d), `supabase/migrations` (5/90d) |
-| 2 | An unauthenticated request, or an authenticated request for a resource the caller does not own, reaches a catalog or per-member-state endpoint and reads or mutates data it should not | High | High | interview Q4; PRD §Access Control; CLAUDE.md (`PROTECTED_ROUTES` middleware, RLS-per-table rule); hot-spot dirs `src/pages/api/games` (6/90d), `src/pages/api/games/[id]` (7/90d) |
+| 2 | An unauthenticated request reaches a catalog or per-member-state endpoint because a handler's own session guard is missing or was dropped — the middleware does not gate `/api/*` — or a per-member write is attributed to a member id taken from the request instead of the session | High | High | interview Q4; PRD §Access Control; CLAUDE.md (`PROTECTED_ROUTES` middleware, RLS-per-table rule); research 2026-09-11 (`src/middleware.ts:5` covers four page prefixes only; seven hand-copied guards, no shared helper); hot-spot dirs `src/pages/api/games` (6/90d), `src/pages/api/games/[id]` (7/90d) |
 | 3 | A recommendation names a board game the household does not own, or one currently loaned out, presented as a confident suggestion | High | Medium | PRD US-01 acceptance criteria; PRD FR-007 ("the LLM must not suggest games outside the household catalog"); interview Q1; hot-spot dir `src/lib/services` (29/90d) |
 | 4 | Malformed, wrong-typed, or out-of-range input is accepted at an API boundary — persisting invalid state or crashing into an unhandled 5xx | Medium | High | interview Q4; CLAUDE.md (validate input with zod); hot-spot dir `src/pages/api` (6/90d) |
 | 5 | The AI service is unavailable or returns an invalid response, and the user sees an empty or fabricated recommendation instead of a clear failure state | High | Medium | PRD §Non-Functional Requirements (explicit); roadmap F-01 guardrails; archive `2026-07-09-llm-recommendation-service/plan.md` |
@@ -62,6 +62,21 @@ Risk #2 is the abuse/security row required by the auth + user-input surface
 (authorization/IDOR and server-side validation parity). Risk #7 covers the
 secret/PII-leak class. Resource abuse is deliberately not a separate row —
 see the challenger note below.
+
+**Amended 2026-09-11** (`context/changes/testing-api-boundary-contract/research.md`).
+Risk #2 originally read "an authenticated request for a resource the caller does
+not own." Research showed that is a guarantee this codebase deliberately does not
+offer: `games` is one shared catalog, every policy `using (true)` for role
+`authenticated`, and `created_by` is attribution-only, explicitly "NOT used to
+gate access" (`supabase/migrations/20260710120000_create_games.sql:6-7,30-55`).
+A test asserting "member B cannot edit member A's game" would fail by design.
+Research also found no IDOR surface today — the only member-id write sites
+(`played.ts:45`, `preference.ts:48`) both read `context.locals.user.id`. What
+remains genuinely at risk is the *unguarded invariant*: because the middleware
+skips `/api/*`, each handler's own session guard is the only gate, hand-copied
+seven times with no shared helper, and nothing structurally prevents one copy
+from being dropped. Risk #2 now names that. The policy-layer half of member
+attribution stays with Risk #1.
 
 **Challenger notes (authoring, 2026-09-02).**
 
@@ -83,7 +98,7 @@ see the challenger note below.
 | Risk | What would prove protection | Must challenge | Context `/10x-research` must ground | Likely cheapest layer | Anti-pattern to avoid |
 |------|-----------------------------|----------------|--------------------------------------|-----------------------|-----------------------|
 | #1 | Member A's write to their own played/preference state never becomes readable or writable as Member B's, and A's read of the shared catalog returns A's own state rather than a merged or arbitrary row | That "the query filters by user id" proves attribution — the database must deny it too, not just the application query | Where household-member identity enters the request, how it reaches the persisted row, and whether RLS or app code is the actual authority | Integration plus DB-level policy verification against local Supabase | Asserting against a mocked Supabase client that returns whatever the query asked for — such a test cannot fail |
-| #2 | An unauthenticated request, and an authenticated request for a resource the caller does not own, are both denied at the endpoint itself — not merely redirected at the page layer | That middleware `PROTECTED_ROUTES` covers API routes; that "logged in" is the same as "allowed" | Which surfaces the middleware actually gates, how the API layer resolves the caller, and whether ownership is checked separately from authentication | Integration at the route handler | Testing only the 200 path with a stubbed session; treating a redirect as proof of denial |
+| #2 | Each endpoint denies an unauthenticated caller on its own, with the middleware assumed absent; and every per-member write carries the session's member id, never a request-supplied one | That middleware `PROTECTED_ROUTES` covers API routes; that a shared-catalog "any member may edit any game" design also licenses "any caller"; that a 302 to `/auth/signin` is self-evidently a denial rather than a redirect that still ran the write | Which surfaces the middleware actually gates, how each handler resolves the caller, and where the member id for a write comes from | Integration at the route handler | Testing only the happy path with a stubbed session; asserting an ownership check on `games` that the design deliberately does not have |
 | #3 | A recommendation response contains only games present in the eligible catalog set the app supplied, and excludes ineligible ones such as loaned titles, even when the provider returns a plausible hallucinated title | That a well-formed provider response is a valid one; that prompt instructions constitute enforcement | The eligible-set boundary, where provider output is parsed, and what the app does with an unmatched title | Contract test with adversarial stubbed provider responses | Calling the real LLM from tests; taking the expected output from the current implementation instead of from the requirement (oracle problem) |
 | #4 | A request with a missing, wrong-typed, or out-of-range field is rejected with a validated error response and leaves no persisted side effect | That zod is applied everywhere because CLAUDE.md says so; that an unhandled 500 is an acceptable rejection | Every mutating endpoint's real input boundary and its error-translation path | Integration at the route handler | Asserting a zod schema's shape back at itself instead of driving a request through the boundary |
 | #5 | Provider timeout, provider non-2xx, and malformed-JSON-with-200 each surface a distinct clear failure state, and never a rendered empty or invented recommendation | That a 200 from the provider means a usable response; that "no suitable game found" and "the AI failed" may look the same to the user | The failure and error-translation path from the provider boundary to the response the UI consumes | Contract test with stubbed failure responses | Covering only the unavailable case and skipping malformed-but-200 |
@@ -98,7 +113,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | API boundary contract | Prove every endpoint denies unauthenticated and non-owning callers and rejects invalid input without side effects | #2, #4 | integration (route handlers) | researched | `context/changes/testing-api-boundary-contract/` |
+| 1 | API boundary contract | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4 | integration (route handlers) | researched | `context/changes/testing-api-boundary-contract/` |
 | 2 | Per-member state attribution | Prove played state and preference stay bound to the correct household member at both the query and the policy layer | #1 | integration + DB-level RLS verification | not started | — |
 | 3 | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games | #6 | integration (query layer) | not started | — |
 | 4 | LLM recommendation guardrails | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses | #3, #5, #7 | contract tests with stubbed provider | not started | — |
@@ -179,8 +194,10 @@ phase that will write it.
 ### 6.2 Adding an integration test at an API boundary
 
 - TBD — see §3 Phase 1 for the endpoint denial/rejection pattern (an
-  unauthenticated call, a non-owning call, and an invalid-input call each
-  asserted for status *and* absence of side effect).
+  unauthenticated call and an invalid-input call each asserted for the
+  response *and* absence of a write; note the `/api/games/*` endpoints answer
+  every failure with a 302 and an `?error=` query string, not a status code,
+  so the assertion is on the redirect target plus an unwritten Supabase spy).
 
 ### 6.3 Adding a test for per-member state
 
@@ -233,6 +250,10 @@ contributors should respect these unless the underlying assumption changes.
 - Correction 2026-09-11: §4 CI row and §5 gate row claimed no CI test step;
   `.github/workflows/ci.yml` has run `npm test` since `1b3980b`. §3 Phase 5
   narrowed accordingly.
+- Amendment 2026-09-11: Risk #2 rewritten after phase 1 research — the
+  "non-owning caller" clause described a guarantee the shared-catalog design
+  does not offer. §2 risk row, §2 response guidance, §3 Phase 1 goal and §6.2
+  updated together.
 
 Refresh (`/10x-test-plan --refresh`) when:
 

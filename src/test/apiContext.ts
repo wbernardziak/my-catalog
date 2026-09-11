@@ -83,3 +83,15 @@ export function createApiContext(options: ApiContextOptions = {}): APIContext {
 export function locationOf(response: Response): string | null {
   return response.headers.get("Location");
 }
+
+/**
+ * A query parameter from a redirect's `Location`. The two redirect builders in
+ * the app encode differently — `encodeURIComponent` yields `%20`, while
+ * `catalogRedirectTarget`'s `URLSearchParams` yields `+` — so assertions read
+ * the decoded value instead of matching an encoded substring.
+ */
+export function queryParamOf(response: Response, name: string): string | null {
+  const location = locationOf(response);
+  if (location === null) return null;
+  return new URL(location, "https://example.test").searchParams.get(name);
+}

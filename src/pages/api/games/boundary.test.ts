@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createApiContext, locationOf, testUser } from "@/test/apiContext";
+import { createApiContext, locationOf, queryParamOf, testUser } from "@/test/apiContext";
 import { createSupabaseDouble, type SupabaseDouble } from "@/test/supabaseDouble";
 
 /**
@@ -169,5 +169,153 @@ describe("per-member writes are bound to the session", () => {
       op: "upsert",
       payload: { member_id: "member-a", game_id: "game-1", preference: "liked" },
     });
+  });
+});
+
+/**
+ * Risk #4: invalid input is rejected AND persists nothing. Each case asserts
+ * both — a rejection that still wrote would pass on the response alone.
+ */
+describe("invalid input is rejected without a write", () => {
+  const AUTHED = testUser();
+
+  it("rejects a game whose max players is below its min", async () => {
+    const response = await createGame(
+      createApiContext({ user: AUTHED, form: { ...VALID_GAME, minPlayers: "4", maxPlayers: "2" } }),
+    );
+
+    expect(locationOf(response)).toContain("/catalog?error=");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects a game with no title", async () => {
+    const response = await createGame(createApiContext({ user: AUTHED, form: { ...VALID_GAME, title: "" } }));
+
+    expect(locationOf(response)).toContain("/catalog?error=");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects an update whose max players is below its min", async () => {
+    const response = await updateGame(
+      createApiContext({
+        user: AUTHED,
+        params: { id: "game-1" },
+        form: { ...VALID_GAME, minPlayers: "4", maxPlayers: "2" },
+      }),
+    );
+
+    expect(locationOf(response)).toContain("/catalog?error=");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects a loan status outside the enum", async () => {
+    const response = await setLoan(
+      createApiContext({ user: AUTHED, params: { id: "game-1" }, form: { loanStatus: "borrowed" } }),
+    );
+
+    expect(queryParamOf(response, "error")).toBe("Invalid loan status.");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects a non-boolean played state", async () => {
+    const response = await setPlayed(
+      createApiContext({ user: AUTHED, params: { id: "game-1" }, form: { played: "maybe" } }),
+    );
+
+    expect(queryParamOf(response, "error")).toBe("Invalid played state.");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects a preference outside the enum", async () => {
+    const response = await setPreference(
+      createApiContext({ user: AUTHED, params: { id: "game-1" }, form: { preference: "loved" } }),
+    );
+
+    expect(queryParamOf(response, "error")).toBe("Invalid preference.");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects a recommendation request whose body is not JSON", async () => {
+    const response = await recommend(
+      createApiContext({
+        user: AUTHED,
+        body: "not json at all",
+        headers: { "content-type": "application/json" },
+        url: "https://example.test/api/recommendations",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  it("rejects a recommendation request with no player count", async () => {
+    const response = await recommend(
+      createApiContext({ user: AUTHED, json: { genre: "Strategy" }, url: "https://example.test/api/recommendations" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(double.writeSummary()).toEqual([]);
+  });
+});
+
+/**
+ * The `[id]` route param is not validated anywhere: the four id-scoped handlers
+ * check it for truthiness only and hand it straight to `.eq("id", id)`. These
+ * cases record what that actually does today.
+ */
+describe("the [id] route param", () => {
+  const AUTHED = testUser();
+
+  it.each([
+    { name: "update", handler: updateGame, form: VALID_GAME },
+    { name: "delete", handler: deleteGame, form: undefined },
+    { name: "loan", handler: setLoan, form: { loanStatus: "loaned" } },
+  ])("$name treats a missing id as not-found and writes nothing", async ({ handler, form }) => {
+    const response = await handler(createApiContext({ user: AUTHED, params: {}, form }));
+
+    expect(queryParamOf(response, "error")).toBe("That game no longer exists.");
+    expect(double.writeSummary()).toEqual([]);
+  });
+
+  // A non-UUID id is parameterised by the Supabase client, so it is not an
+  // injection risk — it reaches Postgres and comes back as a type-cast error,
+  // which the handler translates into its generic "please try again" copy. The
+  // cost is that a bad id is indistinguishable from a database outage.
+  it("cannot distinguish a malformed id from a database failure", async () => {
+    double = createSupabaseDouble({
+      results: { games: { error: { code: "22P02", message: "invalid input syntax for type uuid" } } },
+    });
+    holder.client = double.client;
+
+    const response = await deleteGame(createApiContext({ user: AUTHED, params: { id: "not-a-uuid" } }));
+
+    expect(queryParamOf(response, "error")).toBe("Could not delete the game. Please try again.");
+  });
+});
+
+/**
+ * Research open question #3, now settled: `formData()` was called outside any
+ * try/catch in five handlers, and an unparseable body DID escape as an
+ * unhandled TypeError (a framework 500). The parse is now wrapped, so the
+ * boundary answers with the house `?error=` redirect like every other refusal.
+ */
+describe("a body that cannot be parsed as form data", () => {
+  const MALFORMED = {
+    body: "%%%not-multipart%%%",
+    headers: { "content-type": "multipart/form-data; boundary=----nonsense" },
+  };
+
+  it.each([
+    { name: "create", handler: createGame, params: {} },
+    { name: "update", handler: updateGame, params: { id: "game-1" } },
+    { name: "loan", handler: setLoan, params: { id: "game-1" } },
+    { name: "played", handler: setPlayed, params: { id: "game-1" } },
+    { name: "preference", handler: setPreference, params: { id: "game-1" } },
+  ])("$name refuses it without an unhandled exception", async ({ handler, params }) => {
+    const response = await handler(createApiContext({ user: testUser(), params, ...MALFORMED }));
+
+    expect(queryParamOf(response, "error")).toBe("Could not read the submitted form. Please try again.");
+    expect(double.writeSummary()).toEqual([]);
   });
 });

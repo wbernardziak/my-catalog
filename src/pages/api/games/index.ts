@@ -64,7 +64,16 @@ export const POST: APIRoute = async (context) => {
     return context.redirect("/auth/signin");
   }
 
-  const form = await context.request.formData();
+  let form: FormData;
+  try {
+    form = await context.request.formData();
+  } catch {
+    // An unparseable body must not escape as a framework 500; the house
+    // convention is a friendly `?error=` redirect.
+    return context.redirect(
+      `/catalog?error=${encodeURIComponent("Could not read the submitted form. Please try again.")}`,
+    );
+  }
   const parsed = newGameSchema.safeParse({
     title: form.get("title") ?? "",
     authors: parseAuthors(form.get("authors")),

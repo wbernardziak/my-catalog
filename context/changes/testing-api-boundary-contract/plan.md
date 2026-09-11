@@ -384,9 +384,9 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Automated
 
-- [x] 2.1 `npm test` passes
-- [x] 2.2 Removing a guard from any one handler turns the suite red (two files spot-checked)
-- [x] 2.3 `npm run lint` passes
+- [x] 2.1 `npm test` passes — 56da2b2
+- [x] 2.2 Removing a guard from any one handler turns the suite red (two files spot-checked) — 56da2b2
+- [x] 2.3 `npm run lint` passes — 56da2b2
 
 #### Manual
 
@@ -396,9 +396,9 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Automated
 
-- [ ] 3.1 `npm test` passes
-- [ ] 3.2 Every invalid-input case asserts an unfired write spy
-- [ ] 3.3 `npm run lint` and `npm run build` pass
+- [x] 3.1 `npm test` passes
+- [x] 3.2 Every invalid-input case asserts an unfired write spy
+- [x] 3.3 `npm run lint` and `npm run build` pass
 
 #### Manual
 

@@ -1,7 +1,7 @@
 ---
 change_id: testing-api-boundary-contract
 title: "Test rollout phase 1: API boundary contract"
-status: implementing
+status: implemented
 created: 2026-09-11
 updated: 2026-09-11
 archived_at: null

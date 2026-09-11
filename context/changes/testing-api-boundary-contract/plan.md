@@ -409,9 +409,9 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Automated
 
-- [x] 4.1 `npm test` passes and fails when the suite is emptied
-- [x] 4.2 `npm run lint` passes
-- [x] 4.3 No `readFileSync` remains under `src/pages/api`
+- [x] 4.1 `npm test` passes and fails when the suite is emptied — d3a297b
+- [x] 4.2 `npm run lint` passes — d3a297b
+- [x] 4.3 No `readFileSync` remains under `src/pages/api` — d3a297b
 
 #### Manual
 

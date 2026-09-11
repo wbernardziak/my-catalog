@@ -98,7 +98,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | API boundary contract | Prove every endpoint denies unauthenticated and non-owning callers and rejects invalid input without side effects | #2, #4 | integration (route handlers) | change opened | `context/changes/testing-api-boundary-contract/` |
+| 1 | API boundary contract | Prove every endpoint denies unauthenticated and non-owning callers and rejects invalid input without side effects | #2, #4 | integration (route handlers) | researched | `context/changes/testing-api-boundary-contract/` |
 | 2 | Per-member state attribution | Prove played state and preference stay bound to the correct household member at both the query and the policy layer | #1 | integration + DB-level RLS verification | not started | — |
 | 3 | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games | #6 | integration (query layer) | not started | — |
 | 4 | LLM recommendation guardrails | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses | #3, #5, #7 | contract tests with stubbed provider | not started | — |

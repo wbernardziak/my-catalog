@@ -415,10 +415,10 @@ check is reverted and never committed.
 
 #### Automated
 
-- [x] 3.1 `npm run test:db` passes
-- [x] 3.2 Deleting either `.eq("member_id", …)` turns the suite red; restored afterwards
-- [x] 3.3 At least one case gives the two members opposing state on the same game
-- [x] 3.4 `npm run lint` and `npm run typecheck` pass
+- [x] 3.1 `npm run test:db` passes — 6aeabb3
+- [x] 3.2 Deleting either `.eq("member_id", …)` turns the suite red; restored afterwards — 6aeabb3
+- [x] 3.3 At least one case gives the two members opposing state on the same game — 6aeabb3
+- [x] 3.4 `npm run lint` and `npm run typecheck` pass — 6aeabb3
 
 #### Manual
 
@@ -429,8 +429,8 @@ check is reverted and never committed.
 #### Automated
 
 - [ ] 4.1 The CI job passes on a real push
-- [ ] 4.2 `npm test`, `npm run test:db`, lint, typecheck and build all pass
-- [ ] 4.3 `npm run test:db` fails the CI job when a test is made to fail deliberately
+- [x] 4.2 `npm test`, `npm run test:db`, lint, typecheck and build all pass
+- [x] 4.3 `npm run test:db` fails the CI job when a test is made to fail deliberately
 
 #### Manual
 

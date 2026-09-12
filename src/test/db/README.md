@@ -65,4 +65,8 @@ npx supabase start     # once
 npm run test:db
 ```
 
-`SUPABASE_URL` and `SUPABASE_KEY` override the local defaults if you point elsewhere.
+`SUPABASE_URL` / `SUPABASE_KEY` override the defaults — intended for pointing at a
+**different local stack**. The harness refuses any non-localhost host: this suite signs
+up users it cannot delete and hard-deletes `games` rows, which cascades every member's
+played and preference state away irreversibly. Targeting a hosted project therefore
+needs a deliberate `DB_TESTS_ALLOW_REMOTE=1`, and you almost certainly do not want it.

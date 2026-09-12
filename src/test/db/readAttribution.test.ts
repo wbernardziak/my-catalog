@@ -48,10 +48,16 @@ beforeAll(async () => {
   ({ memberA, memberB } = await createTwoMembers());
 
   const stamp = Date.now();
-  opposed = await createGame(memberA, `attribution opposed ${stamp}`);
-  onlyA = await createGame(memberA, `attribution only-a ${stamp}`);
-  onlyB = await createGame(memberA, `attribution only-b ${stamp}`);
-  createdGames.push(opposed, onlyA, onlyB);
+  // Recorded one at a time: a batch push after the last create would leak the
+  // earlier rows if any create threw.
+  const fresh = async (name: string) => {
+    const id = await createGame(memberA, `attribution ${name} ${stamp}`);
+    createdGames.push(id);
+    return id;
+  };
+  opposed = await fresh("opposed");
+  onlyA = await fresh("only-a");
+  onlyB = await fresh("only-b");
 
   await seedMemberState(memberA, opposed, "liked");
   await seedMemberState(memberB, opposed, "disliked");

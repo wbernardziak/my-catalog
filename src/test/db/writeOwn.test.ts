@@ -72,9 +72,19 @@ describe("game_played is write-own at the policy layer", () => {
     const gameId = await freshGame("played delete");
     await seedMemberState(memberA, gameId);
 
-    await memberB.client.from("game_played").delete().eq("game_id", gameId).eq("member_id", memberA.id);
+    // `.select()` makes the refusal affirmative: a well-formed request that the
+    // database accepted and which matched zero rows. Discarding the result would
+    // let a typo'd table or a dead connection read as a denial.
+    const denied = await memberB.client
+      .from("game_played")
+      .delete()
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id)
+      .select();
+    expect(denied.error).toBeNull();
+    expect(denied.data).toEqual([]);
 
-    // The row must still be there — an empty delete result alone would prove nothing.
+    // And the row must still be there.
     const afterDenied = await memberA.client
       .from("game_played")
       .select("member_id")
@@ -90,6 +100,76 @@ describe("game_played is write-own at the policy layer", () => {
       .eq("game_id", gameId)
       .eq("member_id", memberA.id);
     expect(afterOwned.data).toHaveLength(0);
+  });
+});
+
+describe("game_played UPDATE is write-own at the policy layer", () => {
+  it("leaves another member's played row untouched on update, while the owner can touch it", async () => {
+    const gameId = await freshGame("played update");
+    await seedMemberState(memberA, gameId);
+    const before = await memberA.client
+      .from("game_played")
+      .select("updated_at")
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id)
+      .single();
+
+    const stamp = new Date(0).toISOString();
+    const denied = await memberB.client
+      .from("game_played")
+      .update({ updated_at: stamp })
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id)
+      .select();
+    expect(denied.error).toBeNull();
+    expect(denied.data).toEqual([]);
+
+    const afterDenied = await memberA.client
+      .from("game_played")
+      .select("updated_at")
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id)
+      .single();
+    expect(afterDenied.data).toEqual(before.data);
+
+    // Positive control: A can update their own row.
+    const owned = await memberA.client
+      .from("game_played")
+      .update({ updated_at: stamp })
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id)
+      .select();
+    expect(owned.error).toBeNull();
+    expect(owned.data).toHaveLength(1);
+  });
+
+  /**
+   * The UPDATE `with check` predicate, pinned on its own.
+   *
+   * The denial cases above pass if EITHER of update's two predicates holds:
+   * `using` hides another member's row, and `with check` rejects the new one. So
+   * they pin only the conjunction. This case isolates `with check` — the member
+   * owns the row (satisfying `using`) and tries to hand it to the other member,
+   * which only `with check` can refuse. Without it, `with check` could be
+   * loosened to `true` and the suite would stay green.
+   */
+  it("refuses a member re-assigning their OWN row to the other member", async () => {
+    const gameId = await freshGame("played reassign");
+    await seedMemberState(memberA, gameId);
+
+    const reassign = await memberA.client
+      .from("game_played")
+      .update({ member_id: memberB.id })
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id);
+    expect(reassign.error?.code).toBe("42501");
+
+    const still = await memberA.client
+      .from("game_played")
+      .select("member_id")
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id);
+    expect(still.data).toHaveLength(1);
   });
 });
 
@@ -121,11 +201,14 @@ describe("game_preference is write-own at the policy layer", () => {
     const gameId = await freshGame("preference update");
     await seedMemberState(memberA, gameId, "liked");
 
-    await memberB.client
+    const denied = await memberB.client
       .from("game_preference")
       .update({ preference: "disliked" })
       .eq("game_id", gameId)
-      .eq("member_id", memberA.id);
+      .eq("member_id", memberA.id)
+      .select();
+    expect(denied.error).toBeNull();
+    expect(denied.data).toEqual([]);
 
     // The value, not the row count, is what proves the denial.
     const afterDenied = await memberA.client
@@ -155,7 +238,14 @@ describe("game_preference is write-own at the policy layer", () => {
     const gameId = await freshGame("preference delete");
     await seedMemberState(memberA, gameId, "liked");
 
-    await memberB.client.from("game_preference").delete().eq("game_id", gameId).eq("member_id", memberA.id);
+    const denied = await memberB.client
+      .from("game_preference")
+      .delete()
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id)
+      .select();
+    expect(denied.error).toBeNull();
+    expect(denied.data).toEqual([]);
 
     const afterDenied = await memberA.client
       .from("game_preference")
@@ -171,6 +261,26 @@ describe("game_preference is write-own at the policy layer", () => {
       .eq("game_id", gameId)
       .eq("member_id", memberA.id);
     expect(afterOwned.data).toHaveLength(0);
+  });
+  /** The `with check` predicate on its own — see the note on the played equivalent. */
+  it("refuses a member re-assigning their OWN preference to the other member", async () => {
+    const gameId = await freshGame("preference reassign");
+    await seedMemberState(memberA, gameId, "liked");
+    await seedMemberState(memberB, gameId);
+
+    const reassign = await memberA.client
+      .from("game_preference")
+      .update({ member_id: memberB.id })
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id);
+    expect(reassign.error?.code).toBe("42501");
+
+    const still = await memberA.client
+      .from("game_preference")
+      .select("preference")
+      .eq("game_id", gameId)
+      .eq("member_id", memberA.id);
+    expect(still.data).toHaveLength(1);
   });
 });
 

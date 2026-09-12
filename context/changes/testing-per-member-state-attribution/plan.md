@@ -146,7 +146,8 @@ database, without a service_role key and without shared state between runs.
 
 **Contract**: Exports a way to obtain two signed-in `SupabaseClient`s (members A and B)
 plus their user ids, created per run with unique emails through the anon auth API, and a
-cleanup that removes the rows and users a run created. Also exports a preflight that
+cleanup that removes the rows a run created — deliberately NOT the auth users, which would
+need a service_role key this codebase does not have. Also exports a preflight that
 **fails loudly** with an actionable message naming `npx supabase start` when the stack on
 `SUPABASE_URL` is unreachable — never a skip. Reads `SUPABASE_URL` / `SUPABASE_KEY` from
 `process.env`, defaulting to the local stack's `http://127.0.0.1:54331`.
@@ -365,7 +366,8 @@ authenticated members, and read attribution through the real service functions.
 
 The database suite costs Docker startup in CI (~1-2 min) and seconds locally. It stays out
 of the default `npm test` for exactly that reason. Fresh users per run keep it
-parallel-safe at the cost of rows in local `auth.users`, which the cleanup removes.
+parallel-safe at the cost of two rows per file in local `auth.users`, which the cleanup
+deliberately leaves behind (removing them would need a service_role key).
 
 ## Migration Notes
 

@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
 // Plain Vitest config (not astro/config's getViteConfig): the Astro Cloudflare
@@ -21,7 +21,7 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "node",
-          exclude: ["**/node_modules/**", "**/dist/**", "src/test/db/**"],
+          exclude: [...configDefaults.exclude, "src/test/db/**"],
         },
       },
       {
@@ -30,6 +30,10 @@ export default defineConfig({
           name: "db",
           environment: "node",
           include: ["src/test/db/**/*.test.ts"],
+          // A cold GoTrue plus two bcrypt-backed sign-ups in beforeAll runs well
+          // past Vitest's 10s default on a freshly started stack.
+          hookTimeout: 30_000,
+          testTimeout: 20_000,
           // A real stack is slower than the unit suite and the members are
           // created per file; keep files serial so runs stay legible.
           fileParallelism: false,

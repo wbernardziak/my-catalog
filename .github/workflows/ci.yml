@@ -32,6 +32,8 @@ jobs:
   # only way to observe RLS behaviour — see src/test/db/README.md.
   db-tests:
     runs-on: ubuntu-latest
+    # A hung image pull would otherwise burn the 6-hour default.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,7 +41,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx supabase start
+      # Only db + auth + rest are needed. Analytics/vector in particular is the
+      # most common `supabase start` failure on hosted runners.
+      - run: npx supabase start -x studio,imgproxy,edge-runtime,logflare,vector,storage-api,mailpit
       - run: npm run test:db
       - if: always()
         run: npx supabase stop

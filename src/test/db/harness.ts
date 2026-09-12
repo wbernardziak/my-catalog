@@ -29,37 +29,84 @@ const START_HINT =
   `Cannot reach a Supabase stack at ${SUPABASE_URL}.\n` +
   `  Start it with:  npx supabase start\n` +
   `  This repo's stack is project_id "my-catalog" on ports 54330-54339 (API 54331).\n` +
-  `  Override with SUPABASE_URL / SUPABASE_KEY if you are pointing somewhere else.\n` +
   `  These tests never skip: a database suite that quietly passes with no database\n` +
   `  is indistinguishable from one that has no assertions.`;
 
+/** Hosts these tests are allowed to touch without an explicit opt-in. */
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+
 /**
- * Fail loudly — never skip — when no stack is reachable. Call from `beforeAll`.
+ * Refuse to run against anything but a local stack.
+ *
+ * This suite is destructive in ways the application never is: it signs up users
+ * it cannot remove (that needs a service_role key), inserts into the shared
+ * catalog, and HARD-deletes `games` rows. The app only ever soft-deletes, and a
+ * hard delete cascades played + preference state away for every member,
+ * irreversibly (`supabase/migrations/20260722092117_create_member_game_state.sql:17-23`).
+ *
+ * `SUPABASE_URL` is an override for pointing at a DIFFERENT LOCAL STACK. Aiming
+ * it at a hosted project would do all of the above to real data, so that needs a
+ * deliberate `DB_TESTS_ALLOW_REMOTE=1`.
+ */
+function requireLocalHost(): void {
+  const host = new URL(SUPABASE_URL).hostname;
+  if (LOCAL_HOSTS.has(host)) return;
+  if (process.env.DB_TESTS_ALLOW_REMOTE === "1") return;
+  throw new Error(
+    `Refusing to run destructive database tests against non-local host "${host}".\n` +
+      `  This suite signs up users it cannot delete and HARD-deletes rows from \`games\`,\n` +
+      `  which cascades every member's played and preference state away irreversibly.\n` +
+      `  If you genuinely mean to target ${SUPABASE_URL}, set DB_TESTS_ALLOW_REMOTE=1.`,
+  );
+}
+
+async function probe(path: string, headers: Record<string, string> = {}): Promise<Response> {
+  return fetch(`${SUPABASE_URL}${path}`, { headers, signal: AbortSignal.timeout(5000) });
+}
+
+/**
+ * Fail loudly — never skip — when the stack is missing, unmigrated, or half up.
+ *
+ * A bare `GET /rest/v1/` answers 200 even with no apikey, so it proves almost
+ * nothing. These three checks each have a distinct, actionable failure.
  */
 export async function requireLocalStack(): Promise<void> {
-  let response: Response;
+  requireLocalHost();
+
+  let rest: Response;
   try {
-    response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-      headers: { apikey: SUPABASE_ANON_KEY },
-      signal: AbortSignal.timeout(5000),
-    });
+    rest = await probe("/rest/v1/games?select=id&limit=1", { apikey: SUPABASE_ANON_KEY });
   } catch (err) {
     throw new Error(`${START_HINT}\n  Underlying error: ${String(err)}`);
   }
-  if (!response.ok) {
-    throw new Error(`${START_HINT}\n  Reachable but answered HTTP ${response.status}.`);
+
+  // PGRST205: reachable, but `public.games` is not in the schema cache — the
+  // stack is up and this repo's migrations were never applied to it.
+  if (rest.status === 404) {
+    throw new Error(
+      `Reached ${SUPABASE_URL} but \`public.games\` does not exist.\n` +
+        `  The stack is running someone else's schema, or migrations were never applied.\n` +
+        `  Fix with:  npx supabase db reset`,
+    );
+  }
+  if (!rest.ok) {
+    throw new Error(`${START_HINT}\n  Reachable but /rest/v1/games answered HTTP ${rest.status}.`);
+  }
+
+  // Every member is created through GoTrue; if it is down the failure would
+  // otherwise surface as an opaque sign-up error.
+  const auth = await probe("/auth/v1/health", { apikey: SUPABASE_ANON_KEY });
+  if (!auth.ok) {
+    throw new Error(`${START_HINT}\n  REST is up but the auth service answered HTTP ${auth.status}.`);
   }
 }
 
 /**
- * The client type every service in `src/lib/services/` accepts
- * (`games.ts:9` defines it the same way). We build members with supabase-js
- * rather than the app's cookie-bound wrapper — a test needs one JWT per member,
- * not one per request — but the two are the same object at runtime, and phase 3
- * hands these clients directly to `listMemberState`, so this is the type they
- * must have. supabase-js's own default generics resolve every table row to
- * `never`, so this alias — not supabase-js's own return type — is what makes
- * `.from(...)` usable here.
+ * The client type these tests hand around. Inferred from `anonClient` rather than
+ * annotated: supabase-js's own default generics resolve every table row to `never`,
+ * and writing the app's client type here would require an `any` the lint rules
+ * reject. Structurally compatible with the services' `SupabaseClient`
+ * (`src/lib/services/games.ts:9`), which is why `listMemberState` accepts it.
  */
 type TestClient = ReturnType<typeof anonClient>;
 
@@ -170,8 +217,9 @@ export async function seedMemberState(
  * the service_role key, which this codebase does not have anywhere, and stray
  * rows in a local `auth.users` are untidy rather than harmful.
  */
-export async function deleteGames(member: TestMember, gameIds: string[]): Promise<void> {
-  if (gameIds.length === 0) return;
+export async function deleteGames(member: TestMember | undefined, gameIds: string[]): Promise<void> {
+  // `member` can be undefined when beforeAll threw before creating one.
+  if (!member || gameIds.length === 0) return;
   const { error } = await member.client.from("games").delete().in("id", gameIds);
   if (error) throw new Error(`Could not clean up games: ${error.message}`);
 }

@@ -40,14 +40,18 @@ describe("the two-member harness", () => {
     const gameId = await createGame(memberA, `harness probe ${Date.now()}`);
     createdGames.push(gameId);
 
-    const writes = await Promise.all([
+    const [writeA, writeB] = await Promise.all([
       memberA.client.from("game_played").insert({ game_id: gameId, member_id: memberA.id }),
       memberB.client.from("game_played").insert({ game_id: gameId, member_id: memberB.id }),
     ]);
-    expect(writes.map((w) => w.error)).toEqual([null, null]);
+    expect(writeA.error).toBeNull();
+    expect(writeB.error).toBeNull();
 
-    const { data } = await memberA.client.from("game_played").select("member_id").eq("game_id", gameId);
-    const owners = (data as { member_id: string }[]).map((row) => row.member_id).sort();
+    const read = await memberA.client.from("game_played").select("member_id").eq("game_id", gameId);
+    // Assert the read succeeded before touching `data`, so a failure fails an
+    // assertion instead of throwing a bare TypeError on null.
+    expect(read.error).toBeNull();
+    const owners = (read.data ?? []).map((row: { member_id: string }) => row.member_id).sort();
     expect(owners).toEqual([memberA.id, memberB.id].sort());
   });
 });

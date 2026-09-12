@@ -26,3 +26,20 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       - run: npm test
+
+  # The database suite runs on its own so the fast hermetic job above stays the
+  # signal most pushes need. It boots a real local Supabase stack, which is the
+  # only way to observe RLS behaviour — see src/test/db/README.md.
+  db-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx supabase start
+      - run: npm run test:db
+      - if: always()
+        run: npx supabase stop

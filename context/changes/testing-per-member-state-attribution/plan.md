@@ -387,11 +387,11 @@ check is reverted and never committed.
 
 #### Automated
 
-- [x] 1.1 `npm run test:db` passes against a running local stack
-- [x] 1.2 `npm test` still passes and runs the pre-existing 12 files, unchanged
-- [x] 1.3 `npm test` completes without a running Supabase stack
-- [x] 1.4 `npm run test:db` fails with the actionable message when no stack is reachable
-- [x] 1.5 `npm run lint` and `npm run typecheck` pass
+- [x] 1.1 `npm run test:db` passes against a running local stack — eba60a8
+- [x] 1.2 `npm test` still passes and runs the pre-existing 12 files, unchanged — eba60a8
+- [x] 1.3 `npm test` completes without a running Supabase stack — eba60a8
+- [x] 1.4 `npm run test:db` fails with the actionable message when no stack is reachable — eba60a8
+- [x] 1.5 `npm run lint` and `npm run typecheck` pass — eba60a8
 
 #### Manual
 
@@ -401,11 +401,11 @@ check is reverted and never committed.
 
 #### Automated
 
-- [ ] 2.1 `npm run test:db` passes
-- [ ] 2.2 Every denial case asserts state unchanged, not merely an empty result or an error
-- [ ] 2.3 Each denial case has a positive control in the same file
-- [ ] 2.4 Loosening a `with check` to `true` turns the suite red; scratch migration reverted
-- [ ] 2.5 `npm run lint` and `npm run typecheck` pass
+- [x] 2.1 `npm run test:db` passes
+- [x] 2.2 Every denial case asserts state unchanged, not merely an empty result or an error
+- [x] 2.3 Each denial case has a positive control in the same file
+- [x] 2.4 Loosening a `with check` to `true` turns the suite red; scratch migration reverted
+- [x] 2.5 `npm run lint` and `npm run typecheck` pass
 
 #### Manual
 

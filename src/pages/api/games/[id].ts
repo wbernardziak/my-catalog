@@ -28,7 +28,18 @@ export const POST: APIRoute = async (context) => {
     return context.redirect(`/catalog?error=${encodeURIComponent(GAME_NOT_FOUND_MESSAGE)}`);
   }
 
-  const form = await context.request.formData();
+  let form: FormData;
+  try {
+    form = await context.request.formData();
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]] could not parse the submitted form", err);
+    // An unparseable body must not escape as a framework 500; the house
+    // convention is a friendly `?error=` redirect.
+    return context.redirect(
+      `/catalog?error=${encodeURIComponent("Could not read the submitted form. Please try again.")}`,
+    );
+  }
   const parsed = newGameSchema.safeParse({
     title: form.get("title") ?? "",
     authors: parseAuthors(form.get("authors")),

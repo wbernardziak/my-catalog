@@ -99,7 +99,7 @@ npx supabase start
 4. Copy the credentials printed by the CLI into your `.env` and `.dev.vars`:
 
 ```
-SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_URL=http://127.0.0.1:54331
 SUPABASE_KEY=<anon key from CLI output>
 ```
 
@@ -109,9 +109,15 @@ SUPABASE_KEY=<anon key from CLI output>
 npx supabase stop
 ```
 
-The local Studio UI is available at `http://localhost:54323`.
+The local Studio UI is available at `http://localhost:54333`.
 
-No database tables or migrations are required — this project uses Supabase Auth's built-in `auth.users` table only.
+This project's stack runs on ports 54330-54339 rather than the CLI defaults, and
+under `project_id = "my-catalog"`. Both are deliberate: the starter's default id
+(`10x-astro-starter`) collides with any other repo left on it, and `supabase start`
+would then silently reuse that project's containers — leaving this repo's
+migrations unapplied against a foreign schema.
+
+`supabase start` applies the migrations in `supabase/migrations/` on a fresh stack: `games`, `game_played` and `game_preference`, alongside Supabase Auth's built-in `auth.users`.
 
 ### Using a cloud Supabase project instead
 

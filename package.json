@@ -9,11 +9,12 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "lint:fix": "eslint . --fix",
     "lint:colors": "node scripts/check-color-literals.mjs",
     "lint:contrast": "node scripts/check-contrast.mjs",
     "format": "prettier --write .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {

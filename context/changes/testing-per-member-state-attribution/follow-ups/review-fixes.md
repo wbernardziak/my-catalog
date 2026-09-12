@@ -1,7 +1,10 @@
 # Follow-ups from the 2026-09-12 implementation review
 
-Deferred findings from `../reviews/impl-review.md`. Everything else was fixed in
-the review-fix commit.
+Deferred findings from `../reviews/impl-review.md`.
+
+> **RESOLVED 2026-09-12.** Both gaps below were closed after all, in
+> `src/test/db/policyBackstops.test.ts` — five tests, each break-checked. Kept for
+> the record of why they were originally deferred.
 
 ## F9 — Untested authorization claims only the db suite can check
 

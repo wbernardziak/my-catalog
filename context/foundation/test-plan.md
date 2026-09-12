@@ -291,6 +291,11 @@ payload }` when the payload matters (e.g. the member id came from the session,
   same game, and at least one pair of _opposing_ preferences. The preference map is
   built unordered with last-write-wins, so identical state lets a dropped member
   filter pass unnoticed.
+- **Database-only guarantees live in `policyBackstops.test.ts`**: the `anon` role
+  (which the app-boundary suite cannot speak to — that proves the _app_ turns a
+  sessionless caller away, not that the _database_ would) and the composite FK
+  enforcing FR-005. Break-check these by adding an `anon` policy or dropping the FK.
+  Dropping the FK lets orphan rows in, so clean them out before restoring it.
 - **Do not assert member-vs-member read isolation.** Cross-member reads are
   intended (FR-006, `/stats`); such a test fails by design. The deliberate read-all
   test in `writeOwn.test.ts` records that decision.

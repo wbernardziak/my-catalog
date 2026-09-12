@@ -117,7 +117,12 @@ export interface TestMember {
   client: TestClient;
 }
 
-function anonClient() {
+/**
+ * An unauthenticated client: the anon key and no session. This is what a caller
+ * with no cookie looks like to the database, and the role every policy in this
+ * schema deliberately omits.
+ */
+export function anonClient() {
   return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });

@@ -1,10 +1,10 @@
 ---
 change_id: testing-per-member-state-attribution
 title: "Test rollout phase 2: per-member state attribution"
-status: impl_reviewed
+status: archived
 created: 2026-09-12
 updated: 2026-09-12
-archived_at: null
+archived_at: 2026-09-12T18:55:58Z
 ---
 
 ## Notes

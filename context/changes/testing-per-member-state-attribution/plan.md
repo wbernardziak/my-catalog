@@ -428,7 +428,7 @@ check is reverted and never committed.
 
 #### Automated
 
-- [ ] 4.1 The CI job passes on a real push
+- [x] 4.1 The CI job passes on a real push — 9925cc5 (run 34709440165)
 - [x] 4.2 `npm test`, `npm run test:db`, lint, typecheck and build all pass — 9902521
 - [x] 4.3 `npm run test:db` fails the CI job when a test is made to fail deliberately — 9902521
 

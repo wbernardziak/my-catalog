@@ -71,6 +71,12 @@ describe("POST /api/games", () => {
  * `/api/games/*` answers every failure with a 302 and an `?error=` query string
  * (the house PRG convention, decided 2026-07-09), so the expectation is a
  * redirect target. `/api/recommendations` is the one JSON endpoint.
+ *
+ * These seven are every route under `src/pages/api` that touches Supabase. The
+ * four deliberately absent: `auth/signin`, `auth/signup` and `auth/signout` are
+ * the sign-in surface itself, and `theme.ts` is unauthenticated by design (a
+ * signed-out visitor must be able to switch themes) and writes only a cookie —
+ * it is covered by `src/pages/api/theme.test.ts`.
  */
 interface EndpointCase {
   name: string;

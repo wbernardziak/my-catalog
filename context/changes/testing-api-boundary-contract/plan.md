@@ -36,8 +36,8 @@ Grounded in `context/changes/testing-api-boundary-contract/research.md`
 ## Desired End State
 
 `npm test` executes every in-scope handler for real. An unauthenticated call to
-any of the seven endpoints is proven to be denied *and* to write nothing; an
-invalid body is proven to be rejected *and* to write nothing; the two per-member
+any of the seven endpoints is proven to be denied _and_ to write nothing; an
+invalid body is proven to be rejected _and_ to write nothing; the two per-member
 writes are proven to carry the session's member id. A guard deleted from any one
 handler turns the suite red. CI fails on an empty or uncollectable suite.
 
@@ -74,8 +74,8 @@ handler turns the suite red. CI fails on an empty or uncollectable suite.
 
 Harness first, then one phase per risk, then cleanup. The double is deliberately
 shallow: chainable, with `insert`/`update`/`upsert`/`delete` as `vi.fn()` spies
-returning a canned result. It answers exactly one question — *was a write
-issued?* — which is what "no persisted side effect" needs, and it cannot
+returning a canned result. It answers exactly one question — _was a write
+issued?_ — which is what "no persisted side effect" needs, and it cannot
 accidentally masquerade as an authorization oracle.
 
 Where a test exposes a genuine defect (the most likely being an unhandled 500
@@ -134,7 +134,7 @@ yields a chainable, thenable object supporting `select`, `insert`, `update`,
 `upsert`, `delete`, `eq`, `is`, `single`, `maybeSingle`, resolving to a
 configurable `{ data, error }`; and `writes` exposes the `vi.fn()` spies for
 `insert`/`update`/`upsert`/`delete` plus a convenience assertion that none fired.
-A doc comment must state plainly that this double proves *no write was issued*
+A doc comment must state plainly that this double proves _no write was issued_
 and proves nothing about authorization — phase 2 owns that.
 
 #### 3. First end-to-end proof
@@ -143,7 +143,7 @@ and proves nothing about authorization — phase 2 owns that.
 
 **Purpose**: Prove the harness works before building on it: one unauthenticated
 `POST /api/games` asserting the redirect to `/auth/signin` and an unfired write
-spy, and one valid authenticated post asserting the write *did* fire.
+spy, and one valid authenticated post asserting the write _did_ fire.
 
 **Contract**: Uses `vi.mock("@/lib/supabase")` so `createClient` returns the
 double's client; the positive case is what makes the negative case meaningful —
@@ -197,7 +197,7 @@ request field — the app-layer half of member attribution, with the policy half
 left to phase 2 of the rollout.
 
 **Contract**: For `played` and `preference`, post a body that also contains a
-`memberId`/`member_id` field naming a *different* user, and assert the value
+`memberId`/`member_id` field naming a _different_ user, and assert the value
 handed to the service (or reaching the double's `upsert`) is the session user's
 id. Covers `played.ts:45` and `preference.ts:48`.
 
@@ -229,13 +229,13 @@ malformed-`formData()` probe. Fix only what a test proves broken.
 **File**: `src/pages/api/games/boundary.test.ts`
 
 **Purpose**: Assert that a malformed, wrong-typed or out-of-range body is rejected
-*and* leaves no write, for each validating endpoint.
+_and_ leaves no write, for each validating endpoint.
 
 **Contract**: At minimum — `POST /api/games` with `maxPlayers < minPlayers` and
 with a missing title; `loan` with a value outside `available|loaned`; `played`
 with a non-boolean; `preference` with a value outside `liked|disliked|clear`;
 `/api/recommendations` with a non-JSON body (expect 400) and with a missing
-`playerCount` (expect 400). Each asserts the redirect target or status *and* an
+`playerCount` (expect 400). Each asserts the redirect target or status _and_ an
 unfired write spy.
 
 #### 2. The `[id]` param
@@ -343,13 +343,13 @@ from planned to wired. Add a §6.6 note recording any handler fix made in phase 
 ### Integration tests
 
 - All new work is integration at the route-handler layer: real handler, real `Request`, fake client.
-- Each case asserts a response *and* the absence (or presence) of a write. A response assertion alone would let a "denied" redirect that still wrote pass.
+- Each case asserts a response _and_ the absence (or presence) of a write. A response assertion alone would let a "denied" redirect that still wrote pass.
 
 ### Deliberate-break checks
 
 - Delete a guard → suite red (phase 2).
 - Empty the suite → `npm test` red (phase 4).
-These are the evidence that the tests can fail; run them, then revert.
+  These are the evidence that the tests can fail; run them, then revert.
 
 ### Manual steps
 
@@ -378,7 +378,7 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Manual
 
-- [ ] 1.5 Double's doc comment states its limits
+- [x] 1.5 Double's doc comment states its limits — verified 2026-09-12
 
 ### Phase 2: The auth invariant
 
@@ -390,7 +390,7 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Manual
 
-- [ ] 2.4 The table reads as a legible inventory of the boundary
+- [x] 2.4 The table reads as a legible inventory of the boundary — verified 2026-09-12; the doc comment now names the four excluded routes
 
 ### Phase 3: Input rejection without side effects
 
@@ -402,8 +402,8 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Manual
 
-- [ ] 3.4 If handlers were edited, a valid game still saves through the UI
-- [ ] 3.5 If handlers were edited, an invalid post still shows the friendly error
+- [x] 3.4 If handlers were edited, a valid game still saves through the UI — verified 2026-09-12 against a real local database
+- [x] 3.5 If handlers were edited, an invalid post still shows the friendly error — verified 2026-09-12 against the running dev server
 
 ### Phase 4: Cleanup and gate
 
@@ -415,4 +415,4 @@ These are the evidence that the tests can fail; run them, then revert.
 
 #### Manual
 
-- [ ] 4.4 §6.2 alone is enough to add a test for a new endpoint
+- [x] 4.4 §6.2 alone is enough to add a test for a new endpoint — verified 2026-09-12; §6.2 gained the positive-case and write-assertion bullets

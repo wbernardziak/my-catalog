@@ -63,7 +63,7 @@ afterAll(async () => {
   await deleteGames(memberA, createdGames);
 });
 
-describe("listMemberState returns only the calling member's rows", () => {
+describe("listMemberState is scoped by the app, not the policy layer — SELECT is using(true)", () => {
   it("gives member A their own played set — B's game is absent, not merely ranked lower", async () => {
     const state = await listMemberState(memberA.client, memberA.id);
 
@@ -102,7 +102,7 @@ describe("listMemberState returns only the calling member's rows", () => {
   });
 });
 
-describe("listCatalogGames merges each member's own state onto the shared catalog", () => {
+describe("listCatalogGames merges each member's own state onto the shared catalog (app-enforced)", () => {
   it("shows member A their own played flags and preferences", async () => {
     const games = await listCatalogGames(memberA.client, memberA.id, {});
     const byId = new Map(games.map((g) => [g.id, g]));

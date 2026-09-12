@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "test": "vitest run --project unit",
     "test:db": "vitest run --project db",
-    "test:watch": "vitest"
+    "test:watch": "vitest --project unit"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",

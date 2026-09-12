@@ -395,7 +395,7 @@ check is reverted and never committed.
 
 #### Manual
 
-- [ ] 1.6 `src/test/db/README.md` states the harness's limits as plainly as `supabaseDouble.ts` states its own
+- [x] 1.6 `src/test/db/README.md` states the harness's limits as plainly as `supabaseDouble.ts` states its own — verified 2026-09-12; added a 'What it does NOT prove' section
 
 ### Phase 2: Write-own at the policy layer
 
@@ -409,7 +409,7 @@ check is reverted and never committed.
 
 #### Manual
 
-- [ ] 2.6 The read-all test reads as a deliberate decision record
+- [x] 2.6 The read-all test reads as a deliberate decision record — verified 2026-09-12
 
 ### Phase 3: Read attribution through the services
 
@@ -422,7 +422,7 @@ check is reverted and never committed.
 
 #### Manual
 
-- [ ] 3.5 Test names make clear which half of Risk #1 each case defends
+- [x] 3.5 Test names make clear which half of Risk #1 each case defends — verified 2026-09-12; read-half describes now name the layer
 
 ### Phase 4: CI job and cookbook
 
@@ -434,5 +434,5 @@ check is reverted and never committed.
 
 #### Manual
 
-- [ ] 4.4 §6.3 alone is enough to add a per-member test without reading this plan
-- [ ] 4.5 §3, §4 and §5 match what is actually wired
+- [x] 4.4 §6.3 alone is enough to add a per-member test without reading this plan — verified 2026-09-12; added the filename/glob rule
+- [x] 4.5 §3, §4 and §5 match what is actually wired — verified 2026-09-12; fixed two stale §4 rows and the test:watch scope

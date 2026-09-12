@@ -19,6 +19,23 @@ repo where a claim about authorization or row visibility is legitimate.
 - Seconds per run rather than milliseconds. That is why these tests live in their own
   vitest project, out of `npm test`.
 
+## What it does NOT prove
+
+Its reach stops in three places, and a claim beyond them needs a different test:
+
+- **It proves the migrations' policies, not production's.** The stack is built from
+  `supabase/migrations/` on a fresh database. If a migration was never pushed
+  (`npx supabase db push --linked` — see `context/foundation/lessons.md`), production
+  can be running policies this suite has never seen. Green here is not "prod is safe".
+- **It does not exercise the app's own authentication.** Members here are
+  `@supabase/supabase-js` clients holding a JWT directly; the app builds a
+  cookie-bound SSR client per request (`src/lib/supabase.ts`) behind a session guard.
+  So this suite proves what the _database_ does with a given identity, never that the
+  app resolves the right identity in the first place — that is the API-boundary
+  suite's job (`src/pages/api/games/boundary.test.ts`).
+- **It says nothing about what a user sees.** Nothing here renders a page. A read
+  proven correctly scoped at the service layer can still be displayed wrongly.
+
 ## Contrast with `src/test/supabaseDouble.ts`
 
 The double is the right tool for "was a write issued?" and nothing more — it models no

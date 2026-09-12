@@ -401,11 +401,11 @@ check is reverted and never committed.
 
 #### Automated
 
-- [x] 2.1 `npm run test:db` passes
-- [x] 2.2 Every denial case asserts state unchanged, not merely an empty result or an error
-- [x] 2.3 Each denial case has a positive control in the same file
-- [x] 2.4 Loosening a `with check` to `true` turns the suite red; scratch migration reverted
-- [x] 2.5 `npm run lint` and `npm run typecheck` pass
+- [x] 2.1 `npm run test:db` passes — a45b8b1
+- [x] 2.2 Every denial case asserts state unchanged, not merely an empty result or an error — a45b8b1
+- [x] 2.3 Each denial case has a positive control in the same file — a45b8b1
+- [x] 2.4 Loosening a `with check` to `true` turns the suite red; scratch migration reverted — a45b8b1
+- [x] 2.5 `npm run lint` and `npm run typecheck` pass — a45b8b1
 
 #### Manual
 
@@ -415,10 +415,10 @@ check is reverted and never committed.
 
 #### Automated
 
-- [ ] 3.1 `npm run test:db` passes
-- [ ] 3.2 Deleting either `.eq("member_id", …)` turns the suite red; restored afterwards
-- [ ] 3.3 At least one case gives the two members opposing state on the same game
-- [ ] 3.4 `npm run lint` and `npm run typecheck` pass
+- [x] 3.1 `npm run test:db` passes
+- [x] 3.2 Deleting either `.eq("member_id", …)` turns the suite red; restored afterwards
+- [x] 3.3 At least one case gives the two members opposing state on the same game
+- [x] 3.4 `npm run lint` and `npm run typecheck` pass
 
 #### Manual
 

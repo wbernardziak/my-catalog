@@ -387,11 +387,11 @@ check is reverted and never committed.
 
 #### Automated
 
-- [ ] 1.1 `npm run test:db` passes against a running local stack
-- [ ] 1.2 `npm test` still passes and runs the pre-existing 12 files, unchanged
-- [ ] 1.3 `npm test` completes without a running Supabase stack
-- [ ] 1.4 `npm run test:db` fails with the actionable message when no stack is reachable
-- [ ] 1.5 `npm run lint` and `npm run typecheck` pass
+- [x] 1.1 `npm run test:db` passes against a running local stack
+- [x] 1.2 `npm test` still passes and runs the pre-existing 12 files, unchanged
+- [x] 1.3 `npm test` completes without a running Supabase stack
+- [x] 1.4 `npm run test:db` fails with the actionable message when no stack is reachable
+- [x] 1.5 `npm run lint` and `npm run typecheck` pass
 
 #### Manual
 

@@ -14,7 +14,8 @@
     "lint:colors": "node scripts/check-color-literals.mjs",
     "lint:contrast": "node scripts/check-contrast.mjs",
     "format": "prettier --write .",
-    "test": "vitest run",
+    "test": "vitest run --project unit",
+    "test:db": "vitest run --project db",
     "test:watch": "vitest"
   },
   "dependencies": {

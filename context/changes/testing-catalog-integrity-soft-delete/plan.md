@@ -619,9 +619,9 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Manual
 
-- [ ] 1.6 Break-check the exclusion (drop `.is()` from `games.ts:31`, observe red, restore)
-- [ ] 1.7 Break-check the storage half (`markDeleted` → `deleteGames`, observe red, restore)
-- [ ] 1.8 Confirm `createGame`'s existing two-argument call sites are unchanged
+- [x] 1.6 Break-check the exclusion (drop `.is()` from `games.ts:31`, observe red, restore) — verified 2026-09-13; 8 db cases red, restored via `git checkout`
+- [x] 1.7 Break-check the storage half (`markDeleted` → `deleteGames`, observe red, restore) — verified 2026-09-13; only "is still selectable by id" red (1/35), which is the right discrimination — a hard delete is also absent, so absence cases cannot catch it
+- [x] 1.8 Confirm `createGame`'s existing two-argument call sites are unchanged — verified 2026-09-13; `overrides` is defaulted, the four prior call sites are untouched on this branch (`git diff main..HEAD -- src/test/db/` lists only README.md, catalogIntegrity.test.ts, harness.ts) and all pass
 
 ### Phase 2: Filter composition matrix
 
@@ -634,9 +634,9 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Manual
 
-- [ ] 2.5 Break-check per layer — every filtered case goes red when the predicate is dropped
-- [ ] 2.6 Break-check the live-row half (`.gte` → `.gt` on `max_players`, observe red, restore)
-- [ ] 2.7 Confirm the added db-suite wall-clock time stays acceptable for CI
+- [x] 2.5 Break-check per layer — every filtered case goes red when the predicate is dropped — verified 2026-09-13; all 7 filter cases plus the unfiltered one reddened (8/8), so no twin is decorative — including the two in-memory layers (`played`, `preference`)
+- [x] 2.6 Break-check the live-row half (`.gte` → `.gt` on `max_players`, observe red, restore) — verified 2026-09-13; `players` and all-six cases red with `expected [] to include '<live id>'`, i.e. failing in the drops-a-live-game direction, not the resurrection one
+- [x] 2.7 Confirm the added db-suite wall-clock time stays acceptable for CI — verified 2026-09-13; 3.61s with the new file vs 2.73s without (+0.88s for 12 tests), against a job whose cost is dominated by booting the stack
 
 ### Phase 3: Shape gate in the unit project
 
@@ -649,8 +649,8 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Manual
 
-- [ ] 3.5 Break-check: dropping `.is()` turns `npm test` red on its own
-- [ ] 3.6 Confirm the file's doc comment states its limits
+- [x] 3.5 Break-check: dropping `.is()` turns `npm test` red on its own — verified 2026-09-13; 2 unit tests red with no Docker and no db project
+- [x] 3.6 Confirm the file's doc comment states its limits — verified 2026-09-13; `games.test.ts:9-15` says these prove NOTHING about row visibility and names `catalogIntegrity.test.ts` as where the behavioural proof lives
 
 ### Phase 4: Structural guard against a future read path
 
@@ -663,9 +663,9 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Manual
 
-- [ ] 4.5 Break-check positive: an unguarded `games` read is flagged with its `file:line`
-- [ ] 4.6 Break-check negative: a guarded read stays green
-- [ ] 4.7 Confirm the multi-line `listGames` chain is recognised as guarded
+- [x] 4.5 Break-check positive: an unguarded `games` read is flagged with its `file:line` — verified 2026-09-13; throwaway `src/lib/__breakcheck-read.ts:7` reported by name, exit 1. The same break at `games.ts:31` (row 1.6) was also flagged
+- [x] 4.6 Break-check negative: a guarded read stays green — verified 2026-09-13; the same call with `.is("deleted_at", null)` passes, exit 0, counted among the reads rather than skipped
+- [x] 4.7 Confirm the multi-line `listGames` chain is recognised as guarded — verified 2026-09-13; counted in the guard's read total (not "unrecognised"), and a throwaway chain broken across six lines also passed
 
 ### Phase 5: Verify the RLS thesis and write the cookbook entry
 
@@ -677,6 +677,6 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Manual
 
-- [ ] 5.4 Confirm the SELECT policy is restored to `using (true)` via `pg_policies`
-- [ ] 5.5 Confirm §6.4 reads as instructions to a future author
-- [ ] 5.6 Confirm the §3 rollout row and the §4/§5 tables match what shipped
+- [x] 5.4 Confirm the SELECT policy is restored to `using (true)` via `pg_policies` — verified 2026-09-13; `select policyname, cmd, qual from pg_policies where tablename='games'` shows `authenticated can select games | SELECT | true`, no `deleted_at` in any of the four policies
+- [x] 5.5 Confirm §6.4 reads as instructions to a future author — verified 2026-09-13; imperative throughout and forward-looking ("Do not add a `deleted_at` RLS backstop without…"). Its `:65`/`listGenres` break-check claim was also executed and holds (1 case red)
+- [x] 5.6 Confirm the §3 rollout row and the §4/§5 tables match what shipped — verified 2026-09-13; §4 counts match exactly (13 unit files/150 tests, 5 db/35). Found and fixed two stale claims: §4's `ci` enumeration omitted `lint:reads` (wired at `ci.yml:24`), and both §4 and §5 still billed dropping `--passWithNoTests` to Phase 5 though it went in Phase 1 — Phase 5 now owes the edit-loop gate alone

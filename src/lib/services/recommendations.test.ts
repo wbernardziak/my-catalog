@@ -116,7 +116,11 @@ describe("recommend", () => {
     expect(result.recommendations.map((r) => r.gameId)).toEqual(["c"]);
   });
 
-  it("returns no_match when every recommendation is out-of-catalog", async () => {
+  // An answer whose every id was fabricated is a provider failure, not a
+  // no-match: the criteria were never the problem, so the user must not be told
+  // to adjust them (prd.md:93).
+  it("returns out_of_catalog when every recommendation is fabricated, and logs the dropped ids", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     stubFetch(() =>
       Promise.resolve(
         recsResponse([
@@ -125,6 +129,19 @@ describe("recommend", () => {
         ]),
       ),
     );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("outside the catalog"), ["zzz", "yyy"]);
+    errorSpy.mockRestore();
+  });
+
+  // The other half of the split: the model answering "nothing suitable" is a
+  // genuine no-match, and keeps the neutral copy.
+  it("returns no_match when the model itself returns an empty list", async () => {
+    stubFetch(() => Promise.resolve(recsResponse([])));
     const recommend = await loadRecommend();
 
     const result = await recommend(criteria, candidates);

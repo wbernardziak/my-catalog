@@ -155,7 +155,17 @@ export async function recommend(
     .filter((r) => validIds.has(r.gameId))
     .sort((a, b) => a.rank - b.rank);
 
+  // Two different events used to share `no_match`. An empty answer from the
+  // model genuinely means "nothing suitable"; an answer whose every id was
+  // fabricated is a provider failure, and reporting it as a no-match sends the
+  // household off adjusting criteria that were never the problem.
   if (recommendations.length === 0) {
+    if (parsed.data.recommendations.length > 0) {
+      const droppedIds = parsed.data.recommendations.map((r) => r.gameId);
+      // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+      console.error("[recommendations] provider named only games outside the catalog", droppedIds);
+      return { ok: false, reason: "out_of_catalog" };
+    }
     return { ok: false, reason: "no_match" };
   }
 

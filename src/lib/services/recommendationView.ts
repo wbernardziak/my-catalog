@@ -175,5 +175,10 @@ export function describeFailure(reason: FailureReason): { kind: "error" | "empty
         kind: "error",
         message: "We couldn't read the recommendation response. Please try again.",
       };
+    case "out_of_catalog":
+      return {
+        kind: "error",
+        message: "The AI suggested games that aren't in your catalog. Please try again.",
+      };
   }
 }

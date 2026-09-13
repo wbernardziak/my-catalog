@@ -128,7 +128,7 @@ describe("describeFailure", () => {
   });
 
   it("maps every other reason to an error panel with distinct non-empty copy", () => {
-    const reasons = ["not_configured", "timeout", "provider_error", "invalid_response"] as const;
+    const reasons = ["not_configured", "timeout", "provider_error", "invalid_response", "out_of_catalog"] as const;
     const messages = reasons.map((reason) => {
       const result = describeFailure(reason);
       expect(result.kind).toBe("error");

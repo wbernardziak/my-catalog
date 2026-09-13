@@ -617,8 +617,8 @@ fixture is not fat enough.
 
 #### Automated
 
-- [x] 2.1 `npm test` passes
-- [x] 2.2 `npm run lint` passes
+- [x] 2.1 `npm test` passes — 4821fce
+- [x] 2.2 `npm run lint` passes — 4821fce
 
 #### Manual
 
@@ -630,11 +630,11 @@ fixture is not fat enough.
 
 #### Automated
 
-- [ ] 3.1 `npm test` passes
-- [ ] 3.2 `npm run typecheck` passes
-- [ ] 3.3 `npm run lint` passes
-- [ ] 3.4 `npm run build` passes
-- [ ] 3.5 `console.error` on the hallucination path asserted with `vi.spyOn`, incl. the dropped ids
+- [x] 3.1 `npm test` passes
+- [x] 3.2 `npm run typecheck` passes
+- [x] 3.3 `npm run lint` passes
+- [x] 3.4 `npm run build` passes
+- [x] 3.5 `console.error` on the hallucination path asserted with `vi.spyOn`, incl. the dropped ids
 
 #### Manual
 

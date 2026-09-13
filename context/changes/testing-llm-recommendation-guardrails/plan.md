@@ -117,7 +117,7 @@ next thing is safe to change.
    cheap to land next and they widen the net before behaviour moves.
 3. **Then the two production changes**, in dependency order: the union gains
    `out_of_catalog` first (Phase 3), so Phase 4's guard can be written knowing exactly
-   which reason it must *not* use.
+   which reason it must _not_ use.
 4. **Documentation last**, per the house pattern: the cookbook entry and the `test-plan.md`
    backports record what was learned, including the risk-row correction.
 
@@ -136,7 +136,7 @@ a named, reversible edit in that phase's Manual Verification rows.
   test that passes for the wrong reason (`not_configured` returned before any fetch).
 - **Order inside the post-parse block** (`recommendations.ts:153-163`) is load-bearing
   after Phases 3 and 4: catalog allow-list → `out_of_catalog` decision → dedupe → player
-  guard → `no_match`. Deciding `out_of_catalog` *after* the player guard would report a
+  guard → `no_match`. Deciding `out_of_catalog` _after_ the player guard would report a
   criteria mismatch as a hallucination.
 
 ---
@@ -146,8 +146,10 @@ a named, reversible edit in that phase's Manual Verification rows.
 ### Overview
 
 Prove that only the minimal prompt contract crosses the wire, starting from database rows
-rather than from already-sanitized candidates — the only place where both allow-lists are
-under test at once. This is Risk #7's whole assertion.
+rather than from already-sanitized candidates — the only place where what actually crosses
+the wire is under test. This is Risk #7's whole assertion. (Amended 2026-09-13: the phase was
+written believing this one test exercised both allow-lists in the chain; break-check 1.5
+showed otherwise — see that row.)
 
 ### Changes Required:
 
@@ -230,9 +232,9 @@ returning `not_configured` before any request. Do not delete it as redundant.
   `src/lib/services/recommendations.ts:73`, run `npm test`, confirm **both** the key-set
   case and the forbidden-key case go red, restore
 - Break-check the row allow-list: add `...row` to `mapRowToCandidateGame`
-  (`src/types.ts:136`), confirm both payload cases **plus** `src/types.test.ts:26` (which
-  asserts that mapper's exact key set) go red — three expected casualties, nothing else —
-  restore
+  (`src/types.ts:136`), confirm `src/types.test.ts:26` goes red. The payload cases stay
+  **green**, and that is correct: the prompt pick re-narrows to eight fields downstream, so
+  nothing extra reaches the provider. Restore
 - Confirm the success case would fail for the right reason: temporarily drop the view join
   so `title` is absent from the response, confirm only the envelope case reddens, restore
 - A reader can tell from the test names which assertion defends the minimal-prompt NFR and
@@ -579,7 +581,7 @@ fixture is not fat enough.
 ### Manual testing steps:
 
 1. `npm test` — full unit suite green, new files collected.
-2. Run each break-check in order, confirming the *named* cases redden and nothing else does.
+2. Run each break-check in order, confirming the _named_ cases redden and nothing else does.
 3. `npm run dev` and exercise `/play` once end to end: a normal recommendation renders, and
    a hallucinated answer (stub or misconfigured model) renders the red panel rather than the
    neutral one.
@@ -608,10 +610,10 @@ fixture is not fat enough.
 
 #### Manual
 
-- [ ] 1.4 Break-check the payload allow-list (`...g` at `recommendations.ts:73`) — both payload cases red
-- [ ] 1.5 Break-check the row allow-list (`...row` in `mapRowToCandidateGame`) — both payload cases plus `types.test.ts:26` red
-- [ ] 1.6 Break-check the envelope case by dropping the view join — only that case red
-- [ ] 1.7 Test names make clear which assertion defends the NFR and which the route contract
+- [x] 1.4 Break-check the payload allow-list (`...g` at `recommendations.ts:73`) — both payload cases red — verified 2026-09-13; `...g` reddened exactly the 2 payload cases, nothing else
+- [x] 1.5 Break-check the row allow-list (`...row` in `mapRowToCandidateGame`) — `types.test.ts:26` red; payload cases stay green because the prompt pick re-narrows downstream — verified 2026-09-13; only `types.test.ts` reddened. Expectation was wrong: the prompt pick re-narrows downstream, so no leak reaches the wire. Plan, §6.5 and the suite header corrected
+- [x] 1.6 Break-check the envelope case by dropping the view join — only that case red — verified 2026-09-13; the envelope case reddened, together with the sibling `recommendationView` join test, which guards the same join
+- [x] 1.7 Test names make clear which assertion defends the NFR and which the route contract — verified 2026-09-13; two describes split it: “outbound prompt payload” (NFR) vs “response contract” (route)
 
 ### Phase 2: Close the provider-suite gaps
 
@@ -622,9 +624,9 @@ fixture is not fat enough.
 
 #### Manual
 
-- [ ] 2.3 Break-check the non-2xx branch — that case red
-- [ ] 2.4 Break-check the signal assertion (remove `signal` from the init) — only that case red
-- [ ] 2.5 The comment explaining why the 8s cap is unassertable is present and states the fake-timer reason
+- [x] 2.3 Break-check the non-2xx branch — that case red — verified 2026-09-13; only the non-OK case reddened
+- [x] 2.4 Break-check the signal assertion (remove `signal` from the init) — only that case red — verified 2026-09-13; only the request-shape case reddened
+- [x] 2.5 The comment explaining why the 8s cap is unassertable is present and states the fake-timer reason — verified 2026-09-13; comment at the request-shape case names `AbortSignal.timeout` and sinon fake timers
 
 ### Phase 3: Separate a hallucinated answer from a genuine no-match
 
@@ -638,7 +640,7 @@ fixture is not fat enough.
 
 #### Manual
 
-- [ ] 3.6 Break-check the split (return `no_match` from the new branch) — hallucination case red, empty-array case green
+- [x] 3.6 Break-check the split (return `no_match` from the new branch) — hallucination case red, empty-array case green — verified 2026-09-13; the hallucination case reddened, the empty-array case stayed green
 - [ ] 3.7 Deterministic provocation on `/play` renders the red panel with the new copy
 
 ### Phase 4: Player-count guard and duplicate collapse
@@ -652,10 +654,10 @@ fixture is not fat enough.
 
 #### Manual
 
-- [ ] 4.5 Break-check the guard (`<=` → `<`) — boundary case red
-- [ ] 4.6 Break-check the dedupe — duplicate case red
-- [ ] 4.7 Break-check the reason choice (guard path returns `out_of_catalog`) — all-violating case red
-- [ ] 4.8 The "time is not enforced" case is named as deliberate
+- [x] 4.5 Break-check the guard (`<=` → `<`) — boundary case red — verified 2026-09-13; the boundary case reddened plus 5 fixtures that also sit on a boundary (Azul 2-4, Codenames 4-8, the route's row 2-4), which is what those fixtures are for
+- [x] 4.6 Break-check the dedupe — duplicate case red — verified 2026-09-13; only the duplicate case reddened
+- [x] 4.7 Break-check the reason choice (guard path returns `out_of_catalog`) — all-violating case red — verified 2026-09-13; the “nothing in the catalog fits” case reddened (post-F1 semantics)
+- [x] 4.8 The "time is not enforced" case is named as deliberate — verified 2026-09-13; “keeps a game that exceeds the available minutes”, with a comment stating why
 - [ ] 4.9 A normal recommendation on `/play` still renders after the guard lands
 
 ### Phase 5: Cookbook entry, test-plan backports, and the gate
@@ -667,6 +669,6 @@ fixture is not fat enough.
 
 #### Manual
 
-- [ ] 5.3 §6.5 alone is enough to add a new case at this boundary
-- [ ] 5.4 §2, §3, §4, §5 and §7 match what is actually wired
-- [ ] 5.5 The Risk #3 amendment states the evidence, not just the conclusion
+- [x] 5.3 §6.5 alone is enough to add a new case at this boundary — verified 2026-09-13; re-read after the 1.5 correction, which added the what-it-does-not-guard bullet
+- [x] 5.4 §2, §3, §4, §5 and §7 match what is actually wired — verified 2026-09-13; cross-checked row by row during impl-review, plus the §6.5 correction from 1.5
+- [x] 5.5 The Risk #3 amendment states the evidence, not just the conclusion — verified 2026-09-13; the amendment quotes prd.md:57-60, the ranker-contract anchors and the 2026-08 badge decision

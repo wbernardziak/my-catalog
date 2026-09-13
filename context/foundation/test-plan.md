@@ -392,11 +392,17 @@ payload }` when the payload matters (e.g. the member id came from the session,
   owns everything that takes candidates as input — failure shapes, the catalog
   allow-list, the reason union, the player-count guard.
   `src/pages/api/recommendations.test.ts` owns anything about _what leaves the
-  process_, because `recommend()` receives candidates already sanitised: the row →
-  prompt chain has two independent allow-lists (`mapRowToCandidateGame` in
-  `src/types.ts`, and the prompt pick in `recommendations.ts`), and only a test
-  starting from a stored row exercises both. A payload assertion written at the
-  service layer proves half the chain and reads as if it proved all of it.
+  process_, because `recommend()` receives candidates already sanitised — a payload
+  assertion written at the service layer proves half the chain and reads as if it
+  proved all of it.
+- **What the route payload test does and does not guard.** It asserts what crosses
+  the wire, which is exactly what the NFR asks. It does **not** guard the first of
+  the chain's two allow-lists: spreading `...row` into `mapRowToCandidateGame`
+  (`src/types.ts`) leaves it green, because the prompt pick narrows to eight fields
+  again downstream — correctly, since nothing extra reached the provider. The first
+  allow-list is guarded by `src/types.test.ts`'s exact-key-set assertion instead.
+  Verified by break-check 2026-09-13; the earlier claim that one test exercised
+  both was wrong.
 - **The seam is `vi.stubGlobal("fetch", …)`** (`recommendations.test.ts:43-47`).
   No mocking library is installed and none is wanted — see §4. The stub controls
   the response _and_ captures the request, which is where every outbound

@@ -9,11 +9,17 @@ import { initOf, recsResponse, stubFetch, type FetchMock } from "@/test/provider
  *
  * This suite exists one layer above `recommendations.test.ts` for one reason:
  * `recommend()` receives candidates as a PARAMETER, already sanitised, so a
- * service test can never prove what the ROUTE feeds it. The row → prompt chain
- * has two independent allow-lists — `mapRowToCandidateGame` (`src/types.ts`) and
- * the prompt pick (`recommendations.ts`) — and only a test that starts from a
- * stored row exercises both at once. That is what makes the minimal-prompt NFR
- * (`prd.md:92`) assertable.
+ * service test can never prove what the ROUTE actually puts on the wire. Starting
+ * from a stored row is what makes the minimal-prompt NFR (`prd.md:92`) assertable:
+ * the assertion is about what crosses the boundary, whatever produced it.
+ *
+ * What this suite does NOT guard — verified by break-check 2026-09-13 — is the
+ * FIRST of the chain's two allow-lists. Spreading `...row` into
+ * `mapRowToCandidateGame` (`src/types.ts`) leaves these cases green, because the
+ * prompt pick in `recommendations.ts` narrows to eight fields again downstream.
+ * That is the right outcome — nothing extra reached the provider, so there was no
+ * leak — but it means the first allow-list is guarded by `src/types.test.ts`,
+ * which asserts its exact key set directly, and not by this file.
  *
  * The expected field set is taken from the requirement and the `CandidateGame`
  * contract, never read off the assembly code, and the prompt string is never

@@ -52,6 +52,10 @@ const SYSTEM_PROMPT = [
 /**
  * Rank caller-supplied catalog games against household criteria via OpenRouter.
  *
+ * Returns a discriminated union rather than throwing — a guarantee that assumes
+ * `criteria` is an object, as the route's validated `parseCriteria` output always
+ * is, since the player-count guard reads a property off it.
+ *
  * Returns a discriminated union rather than throwing. The catalog-only invariant
  * (a recommendation may only reference a game in `candidateGames`) is enforced in
  * code after parsing — the prompt instruction alone is not trusted.
@@ -154,15 +158,23 @@ export async function recommend(
   const byId = new Map(candidateGames.map((g) => [g.id, g]));
   const inCatalog = parsed.data.recommendations.filter((r) => byId.has(r.gameId)).sort((a, b) => a.rank - b.rank);
 
+  // Log every silent drop, not only a wholesale one: a partly fabricated answer
+  // is the commonest shape of provider drift and would otherwise leave no trace
+  // at all. Ids are provider-controlled strings, so truncate them the way the
+  // parse-failure logs above truncate `content`.
+  if (inCatalog.length < parsed.data.recommendations.length) {
+    const fabricated = parsed.data.recommendations.filter((r) => !byId.has(r.gameId)).map((r) => r.gameId);
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] provider named games outside the catalog", fabricated.slice(0, 20));
+  }
+
   // Two different events used to share `no_match`. An empty answer from the
   // model genuinely means "nothing suitable"; an answer whose every id was
   // fabricated is a provider failure, and reporting it as a no-match sends the
   // household off adjusting criteria that were never the problem.
   if (inCatalog.length === 0) {
     if (parsed.data.recommendations.length > 0) {
-      const droppedIds = parsed.data.recommendations.map((r) => r.gameId);
-      // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
-      console.error("[recommendations] provider named only games outside the catalog", droppedIds);
+      // Already logged above by the drop check.
       return { ok: false, reason: "out_of_catalog" };
     }
     return { ok: false, reason: "no_match" };
@@ -192,10 +204,17 @@ export async function recommend(
   });
 
   if (recommendations.length === 0) {
-    const droppedIds = [...deduped.values()].map((r) => r.gameId);
+    const droppedIds = [...deduped.values()].map((r) => r.gameId).slice(0, 20);
     // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
     console.error("[recommendations] every recommended game failed the player-count criterion", droppedIds);
-    return { ok: false, reason: "no_match" };
+    // `no_match` is only honest when the catalog itself has nothing for this
+    // party. If a fitting game was on the table and the model named none of
+    // them, that is a provider failure wearing a no-match's clothes — the same
+    // conflation the `out_of_catalog` split exists to undo.
+    const someCandidateFits =
+      playerCount !== undefined &&
+      candidateGames.some((game) => game.minPlayers <= playerCount && playerCount <= game.maxPlayers);
+    return { ok: false, reason: someCandidateFits ? "out_of_catalog" : "no_match" };
   }
 
   return { ok: true, recommendations };

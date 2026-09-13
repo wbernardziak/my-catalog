@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApiContext, testUser } from "@/test/apiContext";
 import { createSupabaseDouble, type SupabaseDouble } from "@/test/supabaseDouble";
 import type { GameRow } from "@/types";
+import { initOf, recsResponse, stubFetch, type FetchMock } from "@/test/providerStub";
 
 /**
  * Contract for the recommendation route (test-plan phase 4, risks #3/#5/#7).
@@ -101,33 +102,9 @@ function seedCatalog(): SupabaseDouble {
   });
 }
 
-type FetchMock = ReturnType<typeof vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>>;
-
-function providerResponse(recs: { gameId: string; reason: string; rank: number }[]): Response {
-  return {
-    ok: true,
-    json: () => Promise.resolve({ choices: [{ message: { content: JSON.stringify({ recommendations: recs }) } }] }),
-  } as unknown as Response;
-}
-
 /** A well-formed provider answer naming the seeded game. */
 function defaultAnswer(): Promise<Response> {
-  return Promise.resolve(providerResponse([{ gameId: FAT_ROW.id, reason: "fits the table", rank: 1 }]));
-}
-
-function stubFetch(impl: () => Promise<Response> = defaultAnswer): FetchMock {
-  const mock: FetchMock = vi.fn(impl);
-  vi.stubGlobal("fetch", mock);
-  return mock;
-}
-
-/** The `RequestInit` the route handed to `fetch`, or a failure if it never called it. */
-function initOf(mock: FetchMock): RequestInit {
-  const init = mock.mock.calls[0]?.[1];
-  if (init === undefined) {
-    throw new Error("the route never called fetch with an init object");
-  }
-  return init;
+  return Promise.resolve(recsResponse([{ gameId: FAT_ROW.id, reason: "fits the table", rank: 1 }]));
 }
 
 /**
@@ -173,7 +150,7 @@ afterEach(() => {
 
 describe("POST /api/recommendations — outbound prompt payload", () => {
   it("sends each candidate game as exactly the minimal prompt contract", async () => {
-    const fetchMock = stubFetch();
+    const fetchMock = stubFetch(defaultAnswer);
     const POST = await loadRoute();
 
     await POST(requestFor());
@@ -184,7 +161,7 @@ describe("POST /api/recommendations — outbound prompt payload", () => {
   });
 
   it("sends no household column, member id or secret beyond that contract", async () => {
-    const fetchMock = stubFetch();
+    const fetchMock = stubFetch(defaultAnswer);
     const POST = await loadRoute();
 
     await POST(requestFor());
@@ -196,7 +173,7 @@ describe("POST /api/recommendations — outbound prompt payload", () => {
   });
 
   it("sends only the validated criteria at the top level", async () => {
-    const fetchMock = stubFetch();
+    const fetchMock = stubFetch(defaultAnswer);
     const POST = await loadRoute();
 
     await POST(requestFor());
@@ -210,7 +187,7 @@ describe("POST /api/recommendations — outbound prompt payload", () => {
   // ROUTE's own import bound the key, so a green run cannot mean the handler
   // short-circuited on `not_configured` without ever calling the provider.
   it("authenticates with the configured key, proving the route bound the env", async () => {
-    const fetchMock = stubFetch();
+    const fetchMock = stubFetch(defaultAnswer);
     const POST = await loadRoute();
 
     await POST(requestFor());
@@ -221,7 +198,7 @@ describe("POST /api/recommendations — outbound prompt payload", () => {
 
 describe("POST /api/recommendations — response contract", () => {
   it("returns the enriched envelope carrying display fields the model never saw", async () => {
-    stubFetch();
+    stubFetch(defaultAnswer);
     const POST = await loadRoute();
 
     const response = await POST(requestFor());
@@ -240,7 +217,7 @@ describe("POST /api/recommendations — response contract", () => {
   });
 
   it("returns 500 and issues no provider call when the catalog read fails", async () => {
-    const fetchMock = stubFetch();
+    const fetchMock = stubFetch(defaultAnswer);
     double = createSupabaseDouble({ results: { games: { error: { message: "boom" } } } });
     holder.client = double.client;
     const POST = await loadRoute();

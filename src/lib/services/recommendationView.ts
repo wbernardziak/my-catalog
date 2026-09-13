@@ -178,7 +178,7 @@ export function describeFailure(reason: FailureReason): { kind: "error" | "empty
     case "out_of_catalog":
       return {
         kind: "error",
-        message: "The AI suggested games that aren't in your catalog. Please try again.",
+        message: "The AI suggested games that don't fit what you asked for. Please try again.",
       };
   }
 }

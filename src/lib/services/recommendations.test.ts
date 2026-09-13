@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CandidateGame, RecommendationCriteria } from "@/types";
+import { initOf, providerResponse, recsResponse, stubFetch } from "@/test/providerStub";
 
 /**
  * Guardrail unit tests for the OpenRouter recommendation service.
@@ -12,12 +13,6 @@ import type { CandidateGame, RecommendationCriteria } from "@/types";
  * `OPENROUTER_API_KEY`.
  */
 
-interface ModelRec {
-  gameId: string;
-  reason: string;
-  rank: number;
-}
-
 const criteria: RecommendationCriteria = { playerCount: 4, availableMinutes: 30, genre: "party" };
 
 const candidates: CandidateGame[] = [
@@ -25,26 +20,6 @@ const candidates: CandidateGame[] = [
   { id: "b", title: "Catan", genre: "strategy", minPlayers: 3, maxPlayers: 4, averagePlayMinutes: 90 },
   { id: "c", title: "Codenames", genre: "party", minPlayers: 4, maxPlayers: 8, averagePlayMinutes: 15 },
 ];
-
-/** Build a fake OpenRouter Response whose message content is `content`. */
-function providerResponse(content: string, ok = true): Response {
-  return {
-    ok,
-    json: () => Promise.resolve({ choices: [{ message: { content } }] }),
-  } as unknown as Response;
-}
-
-/** Convenience: a successful provider response carrying the given recommendations. */
-function recsResponse(recs: ModelRec[]): Response {
-  return providerResponse(JSON.stringify({ recommendations: recs }));
-}
-
-/** Stub the global `fetch` with a vi mock and return it for assertions. */
-function stubFetch(impl: () => Promise<Response>): ReturnType<typeof vi.fn> {
-  const mock = vi.fn(impl);
-  vi.stubGlobal("fetch", mock);
-  return mock;
-}
 
 /** Fresh import of the service after the current env/module state is set. */
 async function loadRecommend() {
@@ -61,6 +36,10 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // Spies are restored here rather than at the end of each test body: an
+  // assertion that fails above an inline `mockRestore()` would otherwise leave
+  // `console.error` silenced for every case after it.
+  vi.restoreAllMocks();
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.OPENROUTER_MODEL;
 });
@@ -135,7 +114,6 @@ describe("recommend", () => {
 
     expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("outside the catalog"), ["zzz", "yyy"]);
-    errorSpy.mockRestore();
   });
 
   // The other half of the split: the model answering "nothing suitable" is a
@@ -259,8 +237,8 @@ describe("recommend", () => {
 
     await recommend(criteria, candidates);
 
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
+    const init = initOf(fetchMock);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://openrouter.ai/api/v1/chat/completions");
     expect(init.method).toBe("POST");
     expect((init.headers as Record<string, string>).Authorization).toBe("Bearer test-key");
     expect(init.signal).toBeInstanceOf(AbortSignal);
@@ -274,8 +252,7 @@ describe("recommend", () => {
 
     await recommend(criteria, candidates);
 
-    const init = fetchMock.mock.calls[0][1] as RequestInit;
-    expect((JSON.parse(init.body as string) as { model: string }).model).toBe("openai/gpt-4o-mini");
+    expect((JSON.parse(initOf(fetchMock).body as string) as { model: string }).model).toBe("openai/gpt-4o-mini");
   });
   // Player-count fixtures sit exactly on the boundary: `<=` becoming `<` must
   // redden the case, which a mid-range fixture would not.
@@ -303,16 +280,47 @@ describe("recommend", () => {
     });
   });
 
-  it("returns no_match when every recommended game fails the player count, and logs the ids", async () => {
+  // A guard that empties the list means one of two very different things, and
+  // only one of them is the household's fault.
+  it("returns out_of_catalog when the model ignores the count although a fitting game was offered", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "still ignores it", rank: 1 }])));
     const recommend = await loadRecommend();
 
     const result = await recommend(criteria, boundaryCandidates);
 
-    expect(result).toEqual({ ok: false, reason: "no_match" });
+    expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("player-count criterion"), ["duo"]);
-    errorSpy.mockRestore();
+  });
+
+  it("returns no_match when nothing in the catalog fits the requested party", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "the only option", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, [boundaryCandidates[1]]);
+
+    expect(result).toEqual({ ok: false, reason: "no_match" });
+  });
+
+  // The mixed answer impl-review found: one fabricated id, one real game the
+  // party cannot play, while a perfect fit sat in the catalog. Before the fix
+  // this read as "adjust your criteria".
+  it("returns out_of_catalog for an answer that is part fabricated, part unplayable", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    stubFetch(() =>
+      Promise.resolve(
+        recsResponse([
+          { gameId: "zzz", reason: "fabricated", rank: 1 },
+          { gameId: "duo", reason: "ignores the count", rank: 2 },
+        ]),
+      ),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, boundaryCandidates);
+
+    expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
   });
 
   it("applies no player-count guard when the criteria carry no count", async () => {
@@ -328,8 +336,8 @@ describe("recommend", () => {
     stubFetch(() =>
       Promise.resolve(
         recsResponse([
-          { gameId: "a", reason: "best reason", rank: 1 },
           { gameId: "a", reason: "duplicate", rank: 3 },
+          { gameId: "a", reason: "best reason", rank: 1 },
         ]),
       ),
     );

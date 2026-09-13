@@ -176,11 +176,12 @@ export interface RankedRecommendation {
  * - `invalid_response` — the model returned unparseable or schema-violating JSON.
  * - `no_match` — a successful call (or empty input) that yields zero eligible
  *   games; the explicit "no suitable game found" state (US-01 acceptance).
- * - `out_of_catalog` — the model returned at least one recommendation and none
- *   survived the catalog allow-list. A provider failure, not a no-match: the
- *   household's criteria were never the problem, so it must not borrow
- *   `no_match`'s "try adjusting your criteria" copy (`prd.md:93` requires a clear
- *   failure state rather than a silent one).
+ * - `out_of_catalog` — the model answered, but nothing it named was usable:
+ *   either no id survived the catalog allow-list, or every named game failed the
+ *   player-count criterion while a fitting game was on offer. A provider failure,
+ *   not a no-match: the household's criteria were never the problem, so it must
+ *   not borrow `no_match`'s "try adjusting your criteria" copy (`prd.md:93`
+ *   requires a clear failure state rather than a silent one).
  */
 export type RecommendationResult =
   | { ok: true; recommendations: RankedRecommendation[] }

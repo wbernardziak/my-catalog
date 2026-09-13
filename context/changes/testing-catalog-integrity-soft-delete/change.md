@@ -1,7 +1,7 @@
 ---
 change_id: testing-catalog-integrity-soft-delete
 title: "Test rollout phase 3: catalog integrity under soft-delete"
-status: implementing
+status: implemented
 created: 2026-09-13
 updated: 2026-09-13
 archived_at: null

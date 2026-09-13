@@ -671,9 +671,9 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [x] 5.1 Everything still green after the policy restore: `npm run test:db`
-- [x] 5.2 Full local gate passes (typecheck, lint, colors, contrast, reads, test)
-- [x] 5.3 Build passes: `npm run build`
+- [x] 5.1 Everything still green after the policy restore: `npm run test:db` — 8077f2a
+- [x] 5.2 Full local gate passes (typecheck, lint, colors, contrast, reads, test) — 8077f2a
+- [x] 5.3 Build passes: `npm run build` — 8077f2a
 
 #### Manual
 

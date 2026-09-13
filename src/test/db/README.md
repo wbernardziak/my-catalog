@@ -10,7 +10,10 @@ repo where a claim about authorization or row visibility is legitimate.
   A loosened `with check` shows up here and nowhere else.
 - **Real row visibility.** Two members' rows genuinely coexist in the database, so a
   read that forgets to scope by `member_id` returns the other member's rows — the
-  regression that no other suite in this repo can see.
+  regression that no other suite in this repo can see. The same applies to
+  soft-delete: a deleted row is really there, so a query that drops
+  `.is("deleted_at", null)` really returns it
+  (`catalogIntegrity.test.ts`).
 
 ## What it costs
 
@@ -35,6 +38,11 @@ Its reach stops in three places, and a claim beyond them needs a different test:
   suite's job (`src/pages/api/games/boundary.test.ts`).
 - **It says nothing about what a user sees.** Nothing here renders a page. A read
   proven correctly scoped at the service layer can still be displayed wrongly.
+- **The shape gate in `npm test` is not a substitute for this suite.**
+  `src/lib/services/games.test.ts` asserts that `games.ts` still _issues_
+  `is(deleted_at, null)`, which catches the commonest regression in milliseconds
+  without Docker. It proves nothing about whether the database withholds the row,
+  because the double honours no filters. Green there is not green here.
 
 ## Contrast with `src/test/supabaseDouble.ts`
 
@@ -42,6 +50,20 @@ The double is the right tool for "was a write issued?" and nothing more — it m
 rows and honours no filters, so it can never prove that a query came back scoped. Its
 own doc comment says so. When a question is about **whether the data that came back was
 the right member's**, or **whether the database would refuse**, it belongs here.
+
+## Fixture helpers worth knowing
+
+- `createGame(member, title, overrides?)` — the third argument varies `genre`,
+  `min_players`, `max_players`, `avg_play_minutes` and `loan_status`, which is
+  what makes a catalog-filter test possible. Omit it and the row keeps the fixed
+  values every older call site relies on.
+- `markDeleted(member, gameId)` — stamps `deleted_at` the way the app does. Use
+  it for fixtures in tests whose subject is a **read**, so a read assertion never
+  fails because `softDeleteGame` regressed; the one test whose subject is the
+  deletion calls the real service instead.
+- `deleteGames(member, ids)` — teardown only, and a **hard** delete. The app never
+  hard-deletes. Reaching for this instead of `markDeleted` is how a suite quietly
+  stops testing soft-delete.
 
 ## Rules
 

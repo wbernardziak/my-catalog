@@ -9,6 +9,7 @@ tags: [research, codebase, soft-delete, catalog, filters, games-service, rls, te
 status: complete
 last_updated: 2026-09-13
 last_updated_by: Wojciech Bernardziak
+last_updated_note: "Settled Open Question 4 — the RLS-backstop thesis was verified against the local stack and corrected"
 ---
 
 # Research: Catalog integrity under soft-delete
@@ -82,9 +83,9 @@ Two functions issue a catalog read against `games`:
 
   ```ts
   let query = supabase.from("games").select("*").is("deleted_at", null);
-  if (filters.genre !== undefined)      query = query.eq("genre", filters.genre);
-  if (filters.players !== undefined)    query = query.lte("min_players", filters.players)
-                                                     .gte("max_players", filters.players);
+  if (filters.genre !== undefined) query = query.eq("genre", filters.genre);
+  if (filters.players !== undefined)
+    query = query.lte("min_players", filters.players).gte("max_players", filters.players);
   if (filters.maxMinutes !== undefined) query = query.lte("avg_play_minutes", filters.maxMinutes);
   if (filters.loanStatus !== undefined) query = query.eq("loan_status", filters.loanStatus);
   const result = await query.order("created_at", { ascending: false });
@@ -99,13 +100,13 @@ Two functions issue a catalog read against `games`:
 
 Consumer graph — every user-visible surface:
 
-| Surface | Entry point | Read path | Excludes deleted? |
-| --- | --- | --- | --- |
-| Catalog list + filters | `src/pages/catalog.astro:33` | `listCatalogGames` → `listGames` | yes, via `games.ts:31` |
-| Genre dropdown options | `src/pages/catalog.astro:33` → `CatalogFilters.astro` | `listGenres` | yes, via `games.ts:65` |
-| AI recommendation eligible set | `src/pages/api/recommendations.ts:60` | `listCatalogGames` → `listGames` | yes, via `games.ts:31` |
-| Game edit form / card | `src/components/catalog/GameCard.tsx:35` (`fromRow`) | none — reuses the in-memory row from the list | n/a (already filtered) |
-| `/stats` | `src/pages/stats.astro:20` | `listPreferenceStats` — reads `game_played`/`game_preference` only | does not read `games` at all |
+| Surface                        | Entry point                                           | Read path                                                          | Excludes deleted?            |
+| ------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------- |
+| Catalog list + filters         | `src/pages/catalog.astro:33`                          | `listCatalogGames` → `listGames`                                   | yes, via `games.ts:31`       |
+| Genre dropdown options         | `src/pages/catalog.astro:33` → `CatalogFilters.astro` | `listGenres`                                                       | yes, via `games.ts:65`       |
+| AI recommendation eligible set | `src/pages/api/recommendations.ts:60`                 | `listCatalogGames` → `listGames`                                   | yes, via `games.ts:31`       |
+| Game edit form / card          | `src/components/catalog/GameCard.tsx:35` (`fromRow`)  | none — reuses the in-memory row from the list                      | n/a (already filtered)       |
+| `/stats`                       | `src/pages/stats.astro:20`                            | `listPreferenceStats` — reads `game_played`/`game_preference` only | does not read `games` at all |
 
 `listCatalogGames` (`src/lib/services/catalogGames.ts:53-60`) has **no independent
 `deleted_at` guard of its own** — it inherits exclusion entirely from `listGames`.
@@ -144,14 +145,14 @@ structure, not a constraint. Exclusion is 100% convention.
 
 Each hazard was checked against the shipped code, not assumed:
 
-| Hazard | Status | Evidence |
-| --- | --- | --- |
-| A branch builds a query omitting the deleted predicate | not possible | `.is()` is applied at `games.ts:31` before any `if`, and every branch re-assigns the same `query` |
-| `.or()` precedence widening past the deleted predicate | not applicable | `.or(` has zero matches in `src/` |
-| Postgres `NULL` semantics dropping live rows | not possible | `genre`, `min_players`, `max_players`, `avg_play_minutes`, `loan_status` are all `not null` (`20260710120000_create_games.sql:17-21`); only `deleted_at` is nullable and it is compared with `.is()`, never `.eq()` |
-| Inconsistent range boundaries | correct | `players`: `min_players ≤ N ≤ max_players`, both inclusive (`games.ts:37`); `maxMinutes`: `avg_play_minutes ≤ X` (`games.ts:40`). Matches the documented semantics at `games.ts:25-28` |
-| Embedded/joined select desyncing the condition | not applicable | `listGames` uses `select("*")`; no embedded select (`games(*)`, `game_played(...)`) exists anywhere |
-| JS re-filtering resurrecting a deleted row | not possible | `mergeAndFilterCatalog` (`catalogGames.ts:29-42`) maps over the `games` array from `listGames`; per-member state is looked **up** by row id, never iterated as the source |
+| Hazard                                                 | Status         | Evidence                                                                                                                                                                                                            |
+| ------------------------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A branch builds a query omitting the deleted predicate | not possible   | `.is()` is applied at `games.ts:31` before any `if`, and every branch re-assigns the same `query`                                                                                                                   |
+| `.or()` precedence widening past the deleted predicate | not applicable | `.or(` has zero matches in `src/`                                                                                                                                                                                   |
+| Postgres `NULL` semantics dropping live rows           | not possible   | `genre`, `min_players`, `max_players`, `avg_play_minutes`, `loan_status` are all `not null` (`20260710120000_create_games.sql:17-21`); only `deleted_at` is nullable and it is compared with `.is()`, never `.eq()` |
+| Inconsistent range boundaries                          | correct        | `players`: `min_players ≤ N ≤ max_players`, both inclusive (`games.ts:37`); `maxMinutes`: `avg_play_minutes ≤ X` (`games.ts:40`). Matches the documented semantics at `games.ts:25-28`                              |
+| Embedded/joined select desyncing the condition         | not applicable | `listGames` uses `select("*")`; no embedded select (`games(*)`, `game_played(...)`) exists anywhere                                                                                                                 |
+| JS re-filtering resurrecting a deleted row             | not possible   | `mergeAndFilterCatalog` (`catalogGames.ts:29-42`) maps over the `games` array from `listGames`; per-member state is looked **up** by row id, never iterated as the source                                           |
 
 The last row is the one worth stating precisely, because it is the property a
 future refactor could break: `listMemberState` (`src/lib/services/memberGameState.ts:109-134`)
@@ -208,7 +209,7 @@ that never assert the deleted/live boundary."
 (`:126`) resolves to the same canned `resultFor(table)` regardless of the chain.
 A query with `.is("deleted_at", null)` and one without return identical data. Its
 own doc comment (`:4-19`) says so: do not use it to claim anything about row
-visibility. Its `filterSummary()` can still assert that the *call was issued* —
+visibility. Its `filterSummary()` can still assert that the _call was issued_ —
 useful as a cheap structural check, but it proves the shape of the query, not the
 behaviour of the database.
 
@@ -223,7 +224,7 @@ behaviour of the database.
   **hard** `DELETE`, teardown-only, and phase 2's impl-review already locked it to
   localhost unless `DB_TESTS_ALLOW_REMOTE=1`. Stamping `deleted_at` must go through
   the real `softDeleteGame` service function (which is also the only way the test
-  proves the *service*, not the fixture, does the right thing).
+  proves the _service_, not the fixture, does the right thing).
 
 Project split (`vitest.config.ts`): `unit` excludes `src/test/db/**`; `db` includes
 exactly `src/test/db/**/*.test.ts`, serial, 30s hook / 20s test timeouts.
@@ -263,19 +264,30 @@ applies unchanged.
 - **Filtering is split across two layers by necessity.** Four predicates are
   database-side because they are columns on `games`; `played`/`preference` are
   in-memory because they are per-member facts in other tables. The split is the
-  reason "prove it once" is not enough — a test must drive a filter from *each*
+  reason "prove it once" is not enough — a test must drive a filter from _each_
   layer simultaneously against a fixture containing a deleted row.
 - **The write guards are a second, independent property.** `updateGame`, `setLoan`
   and `softDeleteGame` refusing to touch an already-deleted row is what makes
   "deleted stays deleted" hold under concurrency. It is the same predicate but a
-  different guarantee, and phase 1's double can only see the *shape* of it.
-- **A database backstop is not a free win.** Adding `deleted_at is null` to the
-  `games` SELECT policy would, by Postgres RLS rules, also gate the rows returned
-  by `UPDATE … RETURNING` — which is exactly what `softDeleteGame` relies on
-  (`.select().maybeSingle()` at `games.ts:175-176`). The stamped row would become
-  invisible, `result.data` would be `null`, and a successful delete would report
-  the friendly not-found message. Noted as reasoning, not as a verified fact; see
-  Open Questions.
+  different guarantee, and phase 1's double can only see the _shape_ of it.
+- **A database backstop is not a free win — verified 2026-09-13, and it is worse
+  than predicted.** Adding `deleted_at is null` to the `games` SELECT policy does
+  not make soft-delete mis-report quietly; it makes it **fail outright**. Run
+  against the local stack with that policy in place, `softDeleteGame` raises:
+
+  ```
+  Error: Failed to delete game: new row violates row-level security policy for table "games"
+      at softDeleteGame src/lib/services/games.ts:177
+  ```
+
+  The service's `.select().maybeSingle()` (`games.ts:175-176`) needs the stamped
+  row to be visible for the `RETURNING` clause; when the SELECT policy excludes
+  it, Postgres raises rather than returning an empty result, and `games.ts:177`
+  turns that into a thrown `Error` — so the endpoint hits its generic failure
+  path, not the friendly not-found copy. The original prediction (silent `null`
+  → "not found") was wrong about the mechanism and too mild about the outcome.
+  Any future attempt at a database backstop must therefore change
+  `softDeleteGame` first, or use a policy that exempts the write path.
 
 ## Historical Context (from prior changes)
 
@@ -285,7 +297,7 @@ applies unchanged.
   tests is the one that plan was written to protect.
 - `context/archive/2026-07-10-edit-and-archive-games/plan.md:88-89` — no trash or
   restore UI; recovering a game is a database operation. So "still retrievable from
-  storage" means *the row is there*, not *the app can restore it*. A test asserting
+  storage" means _the row is there_, not _the app can restore it_. A test asserting
   a restore path would be testing something that does not exist.
 - `context/archive/2026-07-11-filter-catalog/plan.md:128-131` — the filter work's
   own contract was to add filters "preserving the current `deleted_at is null`
@@ -329,10 +341,10 @@ applies unchanged.
    and to the `ci` job — it would only fail the separate `db-tests` job. Options
    for the plan: accept it, or pair the db tests with a cheap `filterSummary()`
    shape assertion in the `unit` project that fails fast when `.is("deleted_at",
-   null)` stops being issued. The second is the phase-1 `filterLog` pattern applied
+null)` stops being issued. The second is the phase-1 `filterLog` pattern applied
    to reads.
 2. **How far does "every read path" reach?** Two functions is a small, closed set,
-   so enumerating them exhaustively is cheap. But the durable risk is a *future*
+   so enumerating them exhaustively is cheap. But the durable risk is a _future_
    third read path with no `.is()`. Does the plan want a structural guard (a test
    that greps for `.from("games").select` call sites and asserts each is
    accompanied by the predicate, failing when a new one appears), or does it accept
@@ -341,12 +353,13 @@ applies unchanged.
    service?** Calling `softDeleteGame` is stronger (it proves the service stamps the
    column) but couples the fixture to the unit under test. A likely answer: use the
    real service in the test that owns the delete assertion, and a direct
-   `update({deleted_at})` for fixtures in tests whose subject is a *read*.
-4. **Is the RLS-backstop reasoning in Architecture Insights correct?** The claim
-   that a `deleted_at is null` SELECT policy would break `softDeleteGame`'s
-   `UPDATE … RETURNING` is derived from Postgres RLS semantics, not observed. If the
-   plan considers a database backstop at all, it should verify this against the
-   local stack first — it is cheap to check and would change the recommendation.
+   `update({deleted_at})` for fixtures in tests whose subject is a _read_.
+4. **~~Is the RLS-backstop reasoning correct?~~ SETTLED 2026-09-13.** Verified
+   empirically against the local stack during plan Phase 5: the direction was
+   right, the mechanism and severity were not. A `deleted_at is null` SELECT
+   policy makes `softDeleteGame` throw an RLS-violation error, not report a
+   silent not-found. See the corrected bullet in Architecture Insights. The
+   policy was restored to `using (true)` and `pg_policies` re-checked afterwards.
 5. **`listGenres` deserves its own assertion.** It is the second, independently
    repeated predicate and the one most likely to be forgotten: a deleted game's
    genre reappearing in the dropdown is a visible leak that the catalog-list tests

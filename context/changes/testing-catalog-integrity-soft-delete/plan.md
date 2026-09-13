@@ -656,10 +656,10 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [x] 4.1 The guard passes on the clean tree: `npm run lint:reads`
-- [x] 4.2 Lint and typecheck pass: `npm run lint && npm run typecheck`
-- [x] 4.3 Unit and db suites still pass: `npm test` and `npm run test:db`
-- [x] 4.4 The guard reports a file count on success, like its siblings
+- [x] 4.1 The guard passes on the clean tree: `npm run lint:reads` — 93a8866
+- [x] 4.2 Lint and typecheck pass: `npm run lint && npm run typecheck` — 93a8866
+- [x] 4.3 Unit and db suites still pass: `npm test` and `npm run test:db` — 93a8866
+- [x] 4.4 The guard reports a file count on success, like its siblings — 93a8866
 
 #### Manual
 
@@ -671,9 +671,9 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [ ] 5.1 Everything still green after the policy restore: `npm run test:db`
-- [ ] 5.2 Full local gate passes (typecheck, lint, colors, contrast, reads, test)
-- [ ] 5.3 Build passes: `npm run build`
+- [x] 5.1 Everything still green after the policy restore: `npm run test:db`
+- [x] 5.2 Full local gate passes (typecheck, lint, colors, contrast, reads, test)
+- [x] 5.3 Build passes: `npm run build`
 
 #### Manual
 

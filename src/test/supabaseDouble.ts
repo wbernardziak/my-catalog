@@ -66,8 +66,39 @@ export interface SupabaseDoubleOptions {
   fallback?: QueryResult;
 }
 
+/**
+ * The client shape the service layer asks for (`src/lib/services/games.ts:9`).
+ * Imported structurally rather than by name to avoid pulling `astro:env/server`
+ * into this module's type graph.
+ */
+type ServiceClient = Parameters<typeof import("@/lib/services/games").listGames>[0];
+
 export interface SupabaseDouble {
   client: { from: (table: string) => QueryBuilder };
+  /**
+   * The same double, typed as the real client so it can be passed to a service
+   * function directly.
+   *
+   * Handler tests do not need this: their handlers call `createClient`
+   * themselves, so the double arrives through a `vi.mock` holder typed `unknown`
+   * (`src/pages/api/games/boundary.test.ts:17-21`). Service functions take the
+   * client as a PARAMETER, so a service test must hand it over — and
+   * `tsc --noEmit` rejects that outright:
+   *
+   *   TS2345: Argument of type '{ from: (table: string) => QueryBuilder; }' is
+   *   not assignable to parameter of type 'SupabaseClient<...>'. Missing:
+   *   supabaseUrl, supabaseKey, auth, realtime, and 20 more.
+   *
+   * Since `npm run typecheck` is a required gate, the cast has to live
+   * somewhere. It lives here, once, rather than being copied without
+   * explanation into every future service test. It is sound only because the
+   * services touch exactly one member of that type — `.from(...)` — and unsound
+   * the moment one of them reaches for `.auth` or `.rpc`, which would fail at
+   * runtime here rather than at compile time. That is the trade this accessor
+   * makes, and the reason anything about row visibility belongs in
+   * `src/test/db/` instead (see the header comment above).
+   */
+  serviceClient: ServiceClient;
   /** Spies per write operation, for call-level assertions. */
   writes: Record<WriteOp, WriteSpy>;
   /** Every write issued, in order — the readable form of "nothing was persisted". */
@@ -129,8 +160,11 @@ export function createSupabaseDouble(options: SupabaseDoubleOptions = {}): Supab
     return builder;
   };
 
+  const client = { from: (table: string) => createBuilder(table) };
+
   return {
-    client: { from: (table: string) => createBuilder(table) },
+    client,
+    serviceClient: client as unknown as ServiceClient,
     writes,
     writeLog,
     filterLog,

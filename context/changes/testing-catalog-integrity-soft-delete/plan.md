@@ -627,10 +627,10 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [x] 2.1 The composition suite passes: `npm run test:db`
-- [x] 2.2 Typecheck passes: `npm run typecheck`
-- [x] 2.3 Lint passes: `npm run lint`
-- [x] 2.4 Whole db suite still green end to end: `npm run test:db`
+- [x] 2.1 The composition suite passes: `npm run test:db` — ea231d3
+- [x] 2.2 Typecheck passes: `npm run typecheck` — ea231d3
+- [x] 2.3 Lint passes: `npm run lint` — ea231d3
+- [x] 2.4 Whole db suite still green end to end: `npm run test:db` — ea231d3
 
 #### Manual
 
@@ -642,10 +642,10 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [ ] 3.1 New unit tests pass: `npm test`
-- [ ] 3.2 Typecheck passes: `npm run typecheck`
-- [ ] 3.3 Lint passes: `npm run lint`
-- [ ] 3.4 CI-equivalent sequence passes locally: `npm run typecheck && npm run lint && npm test`
+- [x] 3.1 New unit tests pass: `npm test`
+- [x] 3.2 Typecheck passes: `npm run typecheck`
+- [x] 3.3 Lint passes: `npm run lint`
+- [x] 3.4 CI-equivalent sequence passes locally: `npm run typecheck && npm run lint && npm test`
 
 #### Manual
 

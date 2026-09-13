@@ -277,4 +277,78 @@ describe("recommend", () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     expect((JSON.parse(init.body as string) as { model: string }).model).toBe("openai/gpt-4o-mini");
   });
+  // Player-count fixtures sit exactly on the boundary: `<=` becoming `<` must
+  // redden the case, which a mid-range fixture would not.
+  const boundaryCandidates: CandidateGame[] = [
+    { id: "exact", title: "Exactly Four", genre: "party", minPlayers: 4, maxPlayers: 4, averagePlayMinutes: 20 },
+    { id: "duo", title: "Two Player Only", genre: "duel", minPlayers: 1, maxPlayers: 2, averagePlayMinutes: 20 },
+  ];
+
+  it("drops a game the requested party cannot play and keeps its boundary twin", async () => {
+    stubFetch(() =>
+      Promise.resolve(
+        recsResponse([
+          { gameId: "duo", reason: "ignores the player count", rank: 1 },
+          { gameId: "exact", reason: "fits exactly", rank: 2 },
+        ]),
+      ),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, boundaryCandidates);
+
+    expect(result).toEqual({
+      ok: true,
+      recommendations: [{ gameId: "exact", reason: "fits exactly", rank: 2 }],
+    });
+  });
+
+  it("returns no_match when every recommended game fails the player count, and logs the ids", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "still ignores it", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, boundaryCandidates);
+
+    expect(result).toEqual({ ok: false, reason: "no_match" });
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("player-count criterion"), ["duo"]);
+    errorSpy.mockRestore();
+  });
+
+  it("applies no player-count guard when the criteria carry no count", async () => {
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "anything goes", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend({ genre: "duel" }, boundaryCandidates);
+
+    expect(result).toEqual({ ok: true, recommendations: [{ gameId: "duo", reason: "anything goes", rank: 1 }] });
+  });
+
+  it("collapses a repeated gameId to one recommendation, keeping the best rank", async () => {
+    stubFetch(() =>
+      Promise.resolve(
+        recsResponse([
+          { gameId: "a", reason: "best reason", rank: 1 },
+          { gameId: "a", reason: "duplicate", rank: 3 },
+        ]),
+      ),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: true, recommendations: [{ gameId: "a", reason: "best reason", rank: 1 }] });
+  });
+
+  // Deliberate negative: time is NOT enforced. Catan runs 90 minutes against a
+  // 30-minute budget and is still returned, because `availableMinutes` is soft
+  // in the PRD ("can account for") and a hard filter would kill near-misses.
+  it("keeps a game that exceeds the available minutes", async () => {
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "b", reason: "long but great", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: true, recommendations: [{ gameId: "b", reason: "long but great", rank: 1 }] });
+  });
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { OPENROUTER_API_KEY, OPENROUTER_MODEL } from "astro:env/server";
-import type { CandidateGame, RecommendationCriteria, RecommendationResult } from "@/types";
+import type { CandidateGame, RankedRecommendation, RecommendationCriteria, RecommendationResult } from "@/types";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -149,23 +149,52 @@ export async function recommend(
   }
 
   // Catalog-only invariant, enforced in code: drop anything the model returned
-  // that was not in the caller's candidate list.
-  const validIds = new Set(candidateGames.map((g) => g.id));
-  const recommendations = parsed.data.recommendations
-    .filter((r) => validIds.has(r.gameId))
-    .sort((a, b) => a.rank - b.rank);
+  // that was not in the caller's candidate list. Keyed by id rather than a Set
+  // of ids because the player-count guard below needs each candidate's range.
+  const byId = new Map(candidateGames.map((g) => [g.id, g]));
+  const inCatalog = parsed.data.recommendations.filter((r) => byId.has(r.gameId)).sort((a, b) => a.rank - b.rank);
 
   // Two different events used to share `no_match`. An empty answer from the
   // model genuinely means "nothing suitable"; an answer whose every id was
   // fabricated is a provider failure, and reporting it as a no-match sends the
   // household off adjusting criteria that were never the problem.
-  if (recommendations.length === 0) {
+  if (inCatalog.length === 0) {
     if (parsed.data.recommendations.length > 0) {
       const droppedIds = parsed.data.recommendations.map((r) => r.gameId);
       // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
       console.error("[recommendations] provider named only games outside the catalog", droppedIds);
       return { ok: false, reason: "out_of_catalog" };
     }
+    return { ok: false, reason: "no_match" };
+  }
+
+  // One card per game whatever the model returned: a repeated id renders twice
+  // and gives two React children the same key. Sorted ascending already, so the
+  // first occurrence is the best-ranked one.
+  const deduped = new Map<string, RankedRecommendation>();
+  for (const recommendation of inCatalog) {
+    if (!deduped.has(recommendation.gameId)) {
+      deduped.set(recommendation.gameId, recommendation);
+    }
+  }
+
+  // The PRD ranks player count first (`prd.md:102`) and the app already owns the
+  // predicate in SQL (`games.ts:37`), yet nothing verified the model honoured it.
+  // Enforced in code, inclusive on both ends, and only when a count was asked
+  // for — `playerCount` is optional on this contract, and an absent criterion
+  // cannot be violated. Time and genre stay prompt-only by decision: both are
+  // soft in the PRD, so a hard filter would kill sensible near-misses.
+  const { playerCount } = criteria;
+  const recommendations = [...deduped.values()].filter((recommendation) => {
+    if (playerCount === undefined) return true;
+    const game = byId.get(recommendation.gameId);
+    return game !== undefined && game.minPlayers <= playerCount && playerCount <= game.maxPlayers;
+  });
+
+  if (recommendations.length === 0) {
+    const droppedIds = [...deduped.values()].map((r) => r.gameId);
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] every recommended game failed the player-count criterion", droppedIds);
     return { ok: false, reason: "no_match" };
   }
 

@@ -611,11 +611,11 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [x] 1.1 Typecheck passes: `npm run typecheck`
-- [x] 1.2 Lint passes: `npm run lint`
-- [x] 1.3 Existing db suite still passes with the extended harness: `npm run test:db`
-- [x] 1.4 The new boundary suite passes: `npm run test:db`
-- [x] 1.5 The unit suite is unaffected: `npm test`
+- [x] 1.1 Typecheck passes: `npm run typecheck` — a8edd41
+- [x] 1.2 Lint passes: `npm run lint` — a8edd41
+- [x] 1.3 Existing db suite still passes with the extended harness: `npm run test:db` — a8edd41
+- [x] 1.4 The new boundary suite passes: `npm run test:db` — a8edd41
+- [x] 1.5 The unit suite is unaffected: `npm test` — a8edd41
 
 #### Manual
 
@@ -627,10 +627,10 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [ ] 2.1 The composition suite passes: `npm run test:db`
-- [ ] 2.2 Typecheck passes: `npm run typecheck`
-- [ ] 2.3 Lint passes: `npm run lint`
-- [ ] 2.4 Whole db suite still green end to end: `npm run test:db`
+- [x] 2.1 The composition suite passes: `npm run test:db`
+- [x] 2.2 Typecheck passes: `npm run typecheck`
+- [x] 2.3 Lint passes: `npm run lint`
+- [x] 2.4 Whole db suite still green end to end: `npm run test:db`
 
 #### Manual
 

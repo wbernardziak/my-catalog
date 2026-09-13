@@ -1,6 +1,16 @@
 import { beforeAll, afterAll, describe, expect, it } from "vitest";
+import { listCatalogGames } from "@/lib/services/catalogGames";
 import { listGames, listGenres, softDeleteGame } from "@/lib/services/games";
-import { createGame, createMember, deleteGames, markDeleted, requireLocalStack, type TestMember } from "./harness";
+import type { GameFilters } from "@/types";
+import {
+  createGame,
+  createMember,
+  deleteGames,
+  markDeleted,
+  requireLocalStack,
+  seedMemberState,
+  type TestMember,
+} from "./harness";
 
 /**
  * Risk #6: catalog integrity under soft-delete.
@@ -46,15 +56,69 @@ const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const LIVE_GENRE = `live-genre-${stamp}`;
 const DELETED_GENRE = `deleted-genre-${stamp}`;
 
+/**
+ * The filter values every composition case below uses.
+ *
+ * PLAYERS and MAX_MINUTES are load-bearing, not arbitrary. `listGames` filters a
+ * party of N with `min_players <= N <= max_players` (`games.ts:37`) and a
+ * duration with `avg_play_minutes <= X` (`:40`) — all three boundaries
+ * inclusive. A fixture sitting in the middle of those ranges would keep matching
+ * after `.gte` became `.gt`, so the deliberate break would stay green and prove
+ * nothing. `matchAll` therefore sits EXACTLY on every boundary: min_players and
+ * max_players both equal PLAYERS, avg_play_minutes equals MAX_MINUTES.
+ */
+const MATCH_GENRE = `match-genre-${stamp}`;
+const DECOY_GENRE = `decoy-genre-${stamp}`;
+const PLAYERS = 4;
+const MAX_MINUTES = 90;
+const LOAN = "loaned" as const;
+
+/** Live, and matches all six filter dimensions simultaneously. */
+let matchAll: string;
+/** The same six attributes, soft-deleted. Must never come back under any filter. */
+let deletedTwin: string;
+/** Live, and matches none of them. Proves the filters actually narrow. */
+let decoy: string;
+
 beforeAll(async () => {
   await requireLocalStack();
   member = await createMember("catalog");
 
   liveGame = await createGame(member, `live ${stamp}`, { genre: LIVE_GENRE });
   deletedGame = await createGame(member, `deleted ${stamp}`, { genre: DELETED_GENRE });
-  createdGames.push(liveGame, deletedGame);
+
+  const matchingColumns = {
+    genre: MATCH_GENRE,
+    min_players: PLAYERS,
+    max_players: PLAYERS,
+    avg_play_minutes: MAX_MINUTES,
+    loan_status: LOAN,
+  };
+  matchAll = await createGame(member, `match-all ${stamp}`, matchingColumns);
+
+  // Identical on every filterable column — the twin must be excluded because it
+  // is deleted, never because it failed a filter on its own merits.
+  deletedTwin = await createGame(member, `deleted-twin ${stamp}`, matchingColumns);
+
+  decoy = await createGame(member, `decoy ${stamp}`, {
+    genre: DECOY_GENRE,
+    min_players: 2,
+    max_players: 2,
+    avg_play_minutes: 180,
+    loan_status: "available",
+  });
+
+  createdGames.push(liveGame, deletedGame, matchAll, deletedTwin, decoy);
+
+  // Per-member state for the two JS-layer filters. Seeded on the twin as well:
+  // that is what proves the in-memory merge stage cannot reintroduce a deleted
+  // game through its played/preference rows. Played before preference — the
+  // composite FK requires it.
+  await seedMemberState(member, matchAll, "liked");
+  await seedMemberState(member, deletedTwin, "liked");
 
   await markDeleted(member, deletedGame);
+  await markDeleted(member, deletedTwin);
 }, 30_000);
 
 afterAll(async () => {
@@ -98,6 +162,59 @@ describe("a soft-deleted game stays in storage", () => {
     expect(row).not.toBeNull();
     expect(row?.id).toBe(deletedGame);
     expect(row?.deleted_at).toEqual(expect.any(String));
+  });
+});
+
+/**
+ * The challenge §2 raises for this risk: that excluding deleted rows in ONE
+ * query proves it everywhere. It does not, and the reason is structural —
+ * filtering happens at two layers. `genre`, `players`, `maxMinutes` and
+ * `loanStatus` are columns on `games` and become PostgREST predicates
+ * (`games.ts:34-44`); `played` and `preference` are per-member facts in other
+ * tables and are applied in memory afterwards (`catalogGames.ts:35-40`). A case
+ * per layer is the minimum that can tell the two apart.
+ *
+ * Every case asserts BOTH directions at once: the deleted twin is absent, and
+ * the live game that matches the same filter is present. One without the other
+ * is half a test — absence alone also passes when the query returns nothing.
+ */
+describe("filter composition never resurrects a deleted game, nor drops a live one", () => {
+  const dimensions: { name: string; filters: GameFilters }[] = [
+    { name: "genre", filters: { genre: MATCH_GENRE } },
+    { name: "players", filters: { players: PLAYERS } },
+    { name: "maxMinutes", filters: { maxMinutes: MAX_MINUTES } },
+    { name: "loanStatus", filters: { loanStatus: LOAN } },
+    { name: "played", filters: { played: true } },
+    { name: "preference", filters: { preference: "liked" } },
+  ];
+
+  it.each(dimensions)("holds under the $name filter", async ({ filters }) => {
+    // Via listCatalogGames, not listGames: it is the composite both /catalog and
+    // /api/recommendations call, and the only level where the JS-layer filters
+    // exist at all.
+    const rows = await listCatalogGames(member.client, member.id, filters);
+    const ids = rows.map((row) => row.id);
+
+    expect(ids).not.toContain(deletedTwin);
+    expect(ids).toContain(matchAll);
+  });
+
+  it("holds with all six filters applied at once", async () => {
+    const rows = await listCatalogGames(member.client, member.id, {
+      genre: MATCH_GENRE,
+      players: PLAYERS,
+      maxMinutes: MAX_MINUTES,
+      loanStatus: LOAN,
+      played: true,
+      preference: "liked",
+    });
+    const ids = rows.map((row) => row.id);
+
+    // The genre is unique to this run, so the result set is exactly this
+    // fixture's rows and an equality assertion is safe here.
+    expect(ids).toEqual([matchAll]);
+    expect(ids).not.toContain(deletedTwin);
+    expect(ids).not.toContain(decoy);
   });
 });
 

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import type { GameRow } from "@/types";
 
 /**
  * Harness for tests that need a REAL database.
@@ -155,13 +156,31 @@ export async function createTwoMembers(): Promise<{ memberA: TestMember; memberB
 }
 
 /**
+ * The columns `createGame` lets a caller vary. Based on `GameRow` — the
+ * snake_case stored shape — deliberately, and NOT on `NewGameInput`, which is
+ * the camelCase create payload the API layer validates: camelCase keys would be
+ * silently ignored by PostgREST and the fixture would quietly keep the defaults.
+ *
+ * These are exactly the columns `listGames` filters on
+ * (`src/lib/services/games.ts:34-44`), which is the point — a catalog-filter
+ * test cannot exist until a fixture can place a game inside or outside each
+ * dimension.
+ */
+export type GameOverrides = Partial<
+  Pick<GameRow, "genre" | "min_players" | "max_players" | "avg_play_minutes" | "loan_status">
+>;
+
+/**
  * Insert a game as `member` and return its id.
  *
  * `games` is a shared catalog — every authenticated member may write every row
  * (`supabase/migrations/20260710120000_create_games.sql:32-55`) — so which member
  * creates it carries no meaning for these tests.
+ *
+ * `overrides` place the row inside or outside a catalog filter. Omit it and the
+ * row keeps the fixed values every existing caller relies on.
  */
-export async function createGame(member: TestMember, title: string): Promise<string> {
+export async function createGame(member: TestMember, title: string, overrides: GameOverrides = {}): Promise<string> {
   const { data, error } = await member.client
     .from("games")
     .insert({
@@ -173,6 +192,7 @@ export async function createGame(member: TestMember, title: string): Promise<str
       avg_play_minutes: 60,
       loan_status: "available",
       created_by: member.id,
+      ...overrides,
     })
     .select("id")
     .single();
@@ -185,6 +205,22 @@ export async function createGame(member: TestMember, title: string): Promise<str
   const id: unknown = (data as { id?: unknown } | null)?.id;
   if (typeof id !== "string") throw new Error(`Game "${title}" was created without a usable id`);
   return id;
+}
+
+/**
+ * Soft-delete a game the way the app does: stamp `deleted_at`, leave the row.
+ *
+ * This is NOT `deleteGames`. That one hard-deletes for teardown and is the
+ * opposite of what the app ever does; confusing the two is how a suite silently
+ * stops testing soft-delete and starts testing nothing.
+ *
+ * Deliberately a direct `update` rather than a call to `softDeleteGame`: tests
+ * whose subject is a *read* must not fail because the delete service regressed.
+ * The one test whose subject IS the deletion calls the real service instead.
+ */
+export async function markDeleted(member: TestMember, gameId: string): Promise<void> {
+  const { error } = await member.client.from("games").update({ deleted_at: new Date().toISOString() }).eq("id", gameId);
+  if (error) throw new Error(`Could not soft-delete game ${gameId}: ${error.message}`);
 }
 
 /**

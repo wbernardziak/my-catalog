@@ -602,9 +602,9 @@ fixture is not fat enough.
 
 #### Automated
 
-- [x] 1.1 `npm test` passes with the new file collected by the `unit` project
-- [x] 1.2 `npm run typecheck` passes
-- [x] 1.3 `npm run lint` passes
+- [x] 1.1 `npm test` passes with the new file collected by the `unit` project — d885dd9
+- [x] 1.2 `npm run typecheck` passes — d885dd9
+- [x] 1.3 `npm run lint` passes — d885dd9
 
 #### Manual
 
@@ -617,8 +617,8 @@ fixture is not fat enough.
 
 #### Automated
 
-- [ ] 2.1 `npm test` passes
-- [ ] 2.2 `npm run lint` passes
+- [x] 2.1 `npm test` passes
+- [x] 2.2 `npm run lint` passes
 
 #### Manual
 

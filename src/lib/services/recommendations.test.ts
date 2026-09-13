@@ -203,4 +203,61 @@ describe("recommend", () => {
     expect(result).toEqual({ ok: false, reason: "not_configured" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
+  // The three branches below exist in the service and were never executed by a
+  // test: a rejecting envelope parse, and two shapes of "HTTP 200 but unusable".
+  it("returns provider_error when the response envelope itself fails to parse", async () => {
+    stubFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.reject(new SyntaxError("Unexpected token < in JSON")),
+      } as unknown as Response),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: false, reason: "provider_error" });
+  });
+
+  it.each([
+    ["an empty choices array", { choices: [] }],
+    ["a choice with no message", { choices: [{}] }],
+    ["non-string content", { choices: [{ message: { content: { recommendations: [] } } }] }],
+  ])("returns invalid_response on a 200 carrying %s", async (_label, body) => {
+    stubFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve(body) } as unknown as Response));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: false, reason: "invalid_response" });
+  });
+
+  // Request shape: the parts of the call that the body cannot show. The 8s cap
+  // itself is NOT assertable — sinon fake timers do not patch
+  // `AbortSignal.timeout`, which is a platform API — so the reachable claim is
+  // that the request is bounded at all.
+  it("posts to OpenRouter with the configured key, model and a timeout signal", async () => {
+    const fetchMock = stubFetch(() => Promise.resolve(recsResponse([{ gameId: "a", reason: "fits", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    await recommend(criteria, candidates);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(init.method).toBe("POST");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer test-key");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect((JSON.parse(init.body as string) as { model: string }).model).toBe("test-model");
+  });
+
+  it("falls back to the default model when OPENROUTER_MODEL is unset", async () => {
+    delete process.env.OPENROUTER_MODEL;
+    const fetchMock = stubFetch(() => Promise.resolve(recsResponse([{ gameId: "a", reason: "fits", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    await recommend(criteria, candidates);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((JSON.parse(init.body as string) as { model: string }).model).toBe("openai/gpt-4o-mini");
+  });
 });

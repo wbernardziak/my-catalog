@@ -197,6 +197,13 @@ describe("filter composition never resurrects a deleted game, nor drops a live o
 
     expect(ids).not.toContain(deletedTwin);
     expect(ids).toContain(matchAll);
+
+    // The decoy matches none of the six dimensions, so its absence is what makes
+    // this case sensitive to the filter being REMOVED rather than merely
+    // mis-operated. Without it both assertions above survive deleting the whole
+    // filter branch: the twin stays out on the soft-delete predicate alone, and
+    // matchAll stays in because it matches everything.
+    expect(ids).not.toContain(decoy);
   });
 
   it("holds with all six filters applied at once", async () => {

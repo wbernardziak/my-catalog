@@ -14,8 +14,17 @@
  * that no existing test calls. Only a scan over the source can, which is why
  * this is a ratchet rather than a test — the same shape as check-color-literals.
  *
- * The rule: for every `.from("games")`, look at the chain that follows. If it
- * reaches `.select(` it is a read and must carry `.is("deleted_at", null)`.
+ * The rule: for every `.from("games")`, look at the chain that follows, and sort
+ * it into one of three outcomes.
+ *
+ *   write        — reaches `.insert(`/`.update(`/`.upsert(`/`.delete(`. Not this
+ *                  guard's business; a write returning its own row is fine.
+ *   read         — reaches `.select(`. Must carry `.is("deleted_at", null)`.
+ *   unrecognised — neither. The chain was cut short, almost always because
+ *                  `.from(…)` and `.select(…)` sit in separate statements. This
+ *                  is REPORTED, not ignored: a scanner that silently passes what
+ *                  it cannot read is worse than no scanner, because it looks
+ *                  like coverage.
  *
  * ORDER MATTERS. The write-verb check runs FIRST, because `createGame`
  * (src/lib/services/games.ts:83) is `.from("games").insert({...}).select()` — a
@@ -47,7 +56,13 @@ const EXEMPT_PREFIXES = [
   "src/test/",
 ];
 
-const TABLE = '.from("games")';
+/**
+ * Matches `.from("games")`, `.from('games')` and `` .from(`games`) ``. Prettier
+ * rewrites single quotes to double in this repo and `lint` runs before this
+ * check in CI, but backticks survive both — so the quote style is matched
+ * rather than assumed.
+ */
+const TABLE_RE = /\.from\(\s*(["'`])games\1\s*\)/g;
 const PREDICATE = '.is("deleted_at", null)';
 const WRITE_VERBS = [".insert(", ".update(", ".upsert(", ".delete("];
 
@@ -77,34 +92,64 @@ let reads = 0;
 for (const file of files) {
   const source = readFileSync(join(ROOT, file), "utf8");
 
-  let index = source.indexOf(TABLE);
-  while (index !== -1) {
+  TABLE_RE.lastIndex = 0;
+  let match;
+  while ((match = TABLE_RE.exec(source)) !== null) {
+    const index = match.index;
     const chain = chainAfter(source, index);
+
+    const line = source.slice(0, index).split("\n").length;
 
     // Write first — see the ORDER MATTERS note above.
     const isWrite = WRITE_VERBS.some((verb) => chain.includes(verb));
 
-    if (!isWrite && chain.includes(".select(")) {
+    if (isWrite) {
+      // A write returning its own row. Not this guard's business.
+    } else if (chain.includes(".select(")) {
       reads += 1;
       if (!chain.includes(PREDICATE)) {
-        const line = source.slice(0, index).split("\n").length;
-        hits.push({ file, line });
+        hits.push({ file, line, kind: "unguarded" });
       }
+    } else {
+      // Neither a write nor a recognisable read: the chain was cut short, most
+      // likely because `.from("games")` and `.select(...)` sit in separate
+      // statements (`let q = supabase.from("games"); q = q.select(...)`) — the
+      // very idiom listGames already uses for its filters. This scanner cannot
+      // follow that, and staying silent here would be the worst outcome: an
+      // unguarded read slipping through a check whose whole job is to catch one.
+      // So it reports rather than assumes.
+      hits.push({ file, line, kind: "unrecognised" });
     }
-
-    index = source.indexOf(TABLE, index + TABLE.length);
   }
 }
 
 if (hits.length > 0) {
-  console.error(`Unguarded \`games\` reads found (${hits.length}). Soft-deleted rows would leak into the catalog.\n`);
-  for (const hit of hits) {
-    console.error(`  ${hit.file}:${hit.line}  .from("games") … .select(…) without ${PREDICATE}`);
+  const unguarded = hits.filter((hit) => hit.kind === "unguarded");
+  const unrecognised = hits.filter((hit) => hit.kind === "unrecognised");
+
+  if (unguarded.length > 0) {
+    console.error(
+      `Unguarded \`games\` reads found (${unguarded.length}). Soft-deleted rows would leak into the catalog.\n`,
+    );
+    for (const hit of unguarded) {
+      console.error(`  ${hit.file}:${hit.line}  .from("games") … .select(…) without ${PREDICATE}`);
+    }
+    console.error(`\nAdd ${PREDICATE} to the query chain. RLS will not do it for you:`);
+    console.error("  the `games` SELECT policy is `using (true)` and names no deleted_at condition.\n");
   }
-  console.error(`\nAdd ${PREDICATE} to the query chain. RLS will not do it for you:`);
-  console.error("  the `games` SELECT policy is `using (true)` and names no deleted_at condition.");
-  console.error("If the read genuinely must see deleted rows, add its path to EXEMPT_PREFIXES");
-  console.error(`in ${"scripts/check-games-read-guard.mjs"} with a comment explaining why.`);
+
+  if (unrecognised.length > 0) {
+    console.error(`\`games\` query chains this check could not read (${unrecognised.length}).\n`);
+    for (const hit of unrecognised) {
+      console.error(`  ${hit.file}:${hit.line}  .from("games") with no .select( or write verb in the same statement`);
+    }
+    console.error("\nThis scanner reads one statement at a time, so it cannot follow a chain");
+    console.error('split across statements (`let q = supabase.from("games"); q = q.select(…)`).');
+    console.error("Keep the chain in one statement, or — if the read must see deleted rows —");
+    console.error("add its path to EXEMPT_PREFIXES with a comment explaining why.\n");
+  }
+
+  console.error("Guard: scripts/check-games-read-guard.mjs");
   process.exit(1);
 }
 

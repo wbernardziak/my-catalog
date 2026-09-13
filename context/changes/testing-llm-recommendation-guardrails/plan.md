@@ -662,8 +662,8 @@ fixture is not fat enough.
 
 #### Automated
 
-- [x] 5.1 `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` pass
-- [x] 5.2 `npm run lint:colors`, `npm run lint:contrast`, `npm run lint:reads` pass
+- [x] 5.1 `npm test`, `npm run typecheck`, `npm run lint`, `npm run build` pass — 33e75e0
+- [x] 5.2 `npm run lint:colors`, `npm run lint:contrast`, `npm run lint:reads` pass — 33e75e0
 
 #### Manual
 

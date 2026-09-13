@@ -642,10 +642,10 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [x] 3.1 New unit tests pass: `npm test`
-- [x] 3.2 Typecheck passes: `npm run typecheck`
-- [x] 3.3 Lint passes: `npm run lint`
-- [x] 3.4 CI-equivalent sequence passes locally: `npm run typecheck && npm run lint && npm test`
+- [x] 3.1 New unit tests pass: `npm test` — 203dc4d
+- [x] 3.2 Typecheck passes: `npm run typecheck` — 203dc4d
+- [x] 3.3 Lint passes: `npm run lint` — 203dc4d
+- [x] 3.4 CI-equivalent sequence passes locally: `npm run typecheck && npm run lint && npm test` — 203dc4d
 
 #### Manual
 
@@ -656,10 +656,10 @@ backstop, that would be a separate change and the push rule would bind it.
 
 #### Automated
 
-- [ ] 4.1 The guard passes on the clean tree: `npm run lint:reads`
-- [ ] 4.2 Lint and typecheck pass: `npm run lint && npm run typecheck`
-- [ ] 4.3 Unit and db suites still pass: `npm test` and `npm run test:db`
-- [ ] 4.4 The guard reports a file count on success, like its siblings
+- [x] 4.1 The guard passes on the clean tree: `npm run lint:reads`
+- [x] 4.2 Lint and typecheck pass: `npm run lint && npm run typecheck`
+- [x] 4.3 Unit and db suites still pass: `npm test` and `npm run test:db`
+- [x] 4.4 The guard reports a file count on success, like its siblings
 
 #### Manual
 

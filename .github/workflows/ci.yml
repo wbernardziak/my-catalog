@@ -21,6 +21,7 @@ jobs:
       - run: npm run lint
       - run: npm run lint:colors
       - run: npm run lint:contrast
+      - run: npm run lint:reads
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

@@ -58,4 +58,22 @@ describe("check-games-read-guard", () => {
     expect(writes.status).toBe(1);
     expect(output(writes)).toContain("refusing a zero-read scan");
   });
+
+  it("does not let comments, as const, or indirect table names bypass the guard", () => {
+    const result = runGuard(
+      "scripts/check-games-read-guard.mjs",
+      tree({
+        "src/lib/comment.ts": 'client.from("games").select("*") /* .is("deleted_at", null) */;',
+        "src/lib/as-const.ts": 'client.from("games" as const).select("*");',
+        "src/lib/indirect.ts": 'const table = "games"; client.from(table).select("*"); Array.from([]);',
+        "src/lib/url.ts": 'client.from("games").select("*").eq("url", "https://x//y").is("deleted_at", null);',
+      }),
+    );
+
+    expect(result.status).toBe(1);
+    expect(output(result)).toContain("src/lib/comment.ts");
+    expect(output(result)).toContain("src/lib/as-const.ts");
+    expect(output(result)).toContain("src/lib/indirect.ts");
+    expect(output(result)).toContain("Indirect `games` table names found");
+  });
 });

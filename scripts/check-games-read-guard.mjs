@@ -32,6 +32,10 @@
  * is a write returning its own row. Check `.select(` first and this script
  * fails on correct production code.
  *
+ * Comments are blanked before classification. Regex literals containing quotes
+ * are a known limitation: if blanking loses sync, the file is reported instead
+ * of silently accepted.
+ *
  * Exempt: `src/test/`, which reads storage directly on purpose — proving a
  * soft-deleted row is STILL THERE is the assertion that distinguishes a soft
  * delete from a hard one, and it can only be made by querying without the
@@ -75,7 +79,7 @@ const EXEMPT_PREFIXES = [
  * check in CI, but backticks survive both — so the quote style is matched
  * rather than assumed.
  */
-const TABLE_RE = /\.from\(\s*(["'`])games\1\s*\)/g;
+const TABLE_RE = /\.from\(\s*(["'`])games\1(?:\s+as\s+const)?\s*\)/g;
 const PREDICATE = '.is("deleted_at", null)';
 const WRITE_VERBS = [".insert(", ".update(", ".upsert(", ".delete("];
 
@@ -92,6 +96,43 @@ function chainAfter(source, index) {
   const tail = source.slice(index, index + CHAIN_WINDOW);
   const end = tail.indexOf(";");
   return end === -1 ? tail : tail.slice(0, end);
+}
+
+function blankComments(source) {
+  const out = [...source];
+  let state = "normal";
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (state === "line") {
+      if (char === "\n") state = "normal";
+      else out[index] = " ";
+      continue;
+    }
+    if (state === "block") {
+      if (char === "*" && next === "/") {
+        out[index] = out[index + 1] = " ";
+        index++;
+        state = "normal";
+      } else if (char !== "\n") out[index] = " ";
+      continue;
+    }
+    if (state !== "normal") {
+      if (char === "\\") index++;
+      else if (char === state) state = "normal";
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      out[index] = out[index + 1] = " ";
+      index++;
+      state = "line";
+    } else if (char === "/" && next === "*") {
+      out[index] = out[index + 1] = " ";
+      index++;
+      state = "block";
+    } else if (char === '"' || char === "'" || char === "`") state = char;
+  }
+  return state === "normal" ? out.join("") : null;
 }
 
 const srcPath = join(ROOT, SRC);
@@ -115,12 +156,17 @@ if (files.length === 0) {
 
 for (const file of files) {
   const source = readFileSync(join(ROOT, file), "utf8");
+  const blanked = blankComments(source);
+  if (!blanked) {
+    if (/["'`]games["'`]/.test(source)) hits.push({ file, line: 1, kind: "unrecognised" });
+    continue;
+  }
 
   TABLE_RE.lastIndex = 0;
   let match;
-  while ((match = TABLE_RE.exec(source)) !== null) {
+  while ((match = TABLE_RE.exec(blanked)) !== null) {
     const index = match.index;
-    const chain = chainAfter(source, index);
+    const chain = chainAfter(blanked, index);
 
     const line = source.slice(0, index).split("\n").length;
 
@@ -145,11 +191,21 @@ for (const file of files) {
       hits.push({ file, line, kind: "unrecognised" });
     }
   }
+
+  if (/["'`]games["'`]/.test(blanked)) {
+    for (const indirect of blanked.matchAll(/\.from\(\s*([^\s"'`][^)]*)\)/g)) {
+      const before = blanked.slice(Math.max(0, indirect.index - 40), indirect.index);
+      if (!/[A-Z][A-Za-z0-9_]*$/.test(before)) {
+        hits.push({ file, line: blanked.slice(0, indirect.index).split("\n").length, kind: "indirect" });
+      }
+    }
+  }
 }
 
 if (hits.length > 0) {
   const unguarded = hits.filter((hit) => hit.kind === "unguarded");
   const unrecognised = hits.filter((hit) => hit.kind === "unrecognised");
+  const indirect = hits.filter((hit) => hit.kind === "indirect");
 
   if (unguarded.length > 0) {
     console.error(
@@ -171,6 +227,11 @@ if (hits.length > 0) {
     console.error('split across statements (`let q = supabase.from("games"); q = q.select(…)`).');
     console.error("Keep the chain in one statement, or — if the read must see deleted rows —");
     console.error("add its path to EXEMPT_PREFIXES with a comment explaining why.\n");
+  }
+
+  if (indirect.length > 0) {
+    console.error(`Indirect \`games\` table names found (${indirect.length}).\n`);
+    for (const hit of indirect) console.error(`  ${hit.file}:${hit.line}  use a literal "games" table name`);
   }
 
   console.error("Guard: scripts/check-games-read-guard.mjs");

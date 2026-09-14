@@ -758,8 +758,8 @@ palette and prefix list produce no hits in `src/`.
 
 #### Automated
 
-- [ ] 6.1 Formatting holds: `npx prettier --check context/foundation/test-plan.md CLAUDE.md`
-- [ ] 6.2 Full gate set green: `npm run typecheck && npm run lint && npm run lint:colors && npm run lint:contrast && npm run lint:reads && npm test`
+- [x] 6.1 Formatting holds: `npx prettier --check context/foundation/test-plan.md CLAUDE.md`
+- [x] 6.2 Full gate set green: `npm run typecheck && npm run lint && npm run lint:colors && npm run lint:contrast && npm run lint:reads && npm test`
 
 #### Manual
 

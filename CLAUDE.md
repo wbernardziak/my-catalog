@@ -19,6 +19,8 @@ Tests:
 
 Gates — each of these runs in CI, so run them before handing work back:
 
+Guard self-tests and the wiring test live in `scripts/*.test.ts` and run in `npm test`; adding a guard requires its self-test and an entry in `scripts/gate-wiring.test.ts` (see test-plan §6.8).
+
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:colors` — fails when a colour is named directly in `src/` instead of a token role

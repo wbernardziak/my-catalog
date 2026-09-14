@@ -19,13 +19,25 @@ const themeSchema = z.enum(THEMES);
  * endpoint is an open redirect.
  */
 export const POST: APIRoute = async (context) => {
-  const form = await context.request.formData();
+  let form: FormData;
+  try {
+    form = await context.request.formData();
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[theme] could not parse the submitted form", err);
+    // An unparseable body must not escape as a framework 500. The posted `next`
+    // is unreadable here, so the redirect falls back to the site root.
+    return context.redirect("/");
+  }
   const target = safeNext(form.get("next"));
   const parsed = themeSchema.safeParse(form.get("theme"));
 
   if (!parsed.success) {
     // Unknown theme: send them back untouched rather than writing a cookie the
-    // middleware would only discard.
+    // middleware would only discard. Logged because this endpoint is open and
+    // unauthenticated, so a spike of rejections is worth being able to see.
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[theme] rejected an unknown theme", form.get("theme"));
     return context.redirect(target);
   }
 

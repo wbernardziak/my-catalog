@@ -1,7 +1,7 @@
 ---
 change_id: testing-quality-gate-wiring
 title: "Test rollout phase 5: Quality-gate wiring"
-status: planned
+status: plan_reviewed
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null

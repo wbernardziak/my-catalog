@@ -28,7 +28,10 @@ exists anywhere in the repo.
 ## Desired End State
 
 A code change cannot reach a commit, or be reported as done by the agent,
-without `tsc --noEmit` and the unit suite passing.
+without `tsc --noEmit` and the unit suite passing — unless it is _deliberately_
+bypassed (`--no-verify`, `disableAllHooks`), which stays available by decision.
+CI remains the enforcing boundary; these layers move the signal earlier, they do
+not replace it.
 
 Verifiable by: staging a file carrying a deliberate type error and confirming
 `git commit` refuses it; and by having the agent finish a turn over a failing
@@ -42,8 +45,17 @@ handed back to it.
   `14a54f6`). `typecheck && npm test` adds **5.37s**. The gate roughly doubles a
   commit that already costs ~5s; it does not introduce a wait where none existed.
 - `tsc --noEmit <file>` **ignores `tsconfig.json`** — every `@/*` alias then
-  fails to resolve. Typecheck therefore cannot be a normal `lint-staged` entry,
-  because lint-staged appends staged filenames to each command.
+  fails to resolve. So typecheck cannot be a _string_ `lint-staged` entry, which
+  appends staged filenames. A **function** entry in a JS config returns a
+  complete command and appends nothing ("These strings are considered complete
+  and should include the filename arguments, if wanted" — lint-staged 16.4.0),
+  so a project-wide command can run inside lint-staged.
+- **A pre-commit gate must grade the index, not the working tree.** Verified
+  2026-09-14: with a broken version staged and the working copy fixed,
+  `npm run typecheck` passes, so a working-tree gate admits a broken commit.
+  lint-staged hides unstaged changes around its tasks — by default only for
+  _partially staged_ files, and for all tracked files with `--hide-unstaged`.
+  Untracked files are hidden by neither.
 - `Stop` hooks take **no matcher** and fire on every turn, including a turn that
   only answered a question.
 - Exit code 2 on a `Stop` hook **prevents Claude from stopping and continues the
@@ -82,6 +94,16 @@ gates **turns** — the agent, before it reports success, with no commit needed.
 Phase 5 wants both because "landing mid-edit" (`test-plan.md:230`) describes a
 regression that never reaches a commit at all.
 
+**What the pair does not cover.** The two layers partition the work rather than
+overlapping it: the `Stop` hook's tree guard means it sits out any turn that
+ended in a commit, because the tree is then clean — which is every
+`/10x-implement` phase, since each ends by committing. That is intended (the
+commit gate already graded that content), but it has one consequence worth
+naming: a `git commit --no-verify` skips husky _and_ leaves a clean tree, so it
+skips the `Stop` hook too. Both layers miss the same commit, and CI is the only
+thing left. This is the accepted cost of leaving the bypass unenforced; it is
+not a case the local gates can close.
+
 Both layers run the same two commands, `npm run typecheck && npm test`, so
 there is one definition of "green" locally and no second place to keep in sync.
 
@@ -108,22 +130,44 @@ any code file is staged.
 
 ### Changes Required:
 
-#### 1. The pre-commit hook
+#### 1. lint-staged configuration, moved to JS
+
+**File**: `lint-staged.config.js` (new), replacing the `lint-staged` block in
+`package.json`
+
+**Purpose**: Run the project-wide gate _inside_ lint-staged, so it grades the
+staged snapshot rather than the working tree. That is the whole point: a
+working-tree gate admits a commit whose staged content is broken (verified — see
+Key Discoveries).
+
+**Contract**: Exports an object. The `*.{json,css,md}` key keeps
+`prettier --write` as today. The `*.{ts,tsx,astro}` key becomes a **function**
+returning the ordered command list — `eslint --fix` on the matched files, then
+`npm run typecheck`, then `npm test`. Filenames are appended only to `eslint`;
+the other two are complete commands and get none, which is precisely why a
+function entry is required.
+
+Gating on the glob is what keeps a docs-only commit instant: with no
+`.ts`/`.tsx`/`.astro` staged the key does not match and neither command runs. No
+`--diff-filter` logic is needed either — lint-staged matches staged files
+already, and a pure deletion leaves nothing for the glob to match.
+
+The JSON `lint-staged` block must be _removed_ from `package.json` in the same
+change; two config sources would let one silently win.
+
+#### 2. The pre-commit hook
 
 **File**: `.husky/pre-commit`
 
-**Purpose**: Run the project-wide gate after the file-scoped fixers, but only
-when the commit actually touches code — a docs-only commit must stay instant, or
-the gate loses credibility and trains people into habitual `--no-verify`.
+**Purpose**: Ensure the gate sees only what is being committed.
 
-**Contract**: Keeps `npx lint-staged` as the first line. Then, when
-`git diff --cached --name-only --diff-filter=ACMR` matches `\.(ts|tsx|astro)$`,
-runs `npm run typecheck` followed by `npm test`, and exits non-zero on the first
-failure so the commit aborts. The staged-file check must use the cached diff, not
-the working tree — an unstaged edit is not part of this commit.
+**Contract**: Stays a single `npx lint-staged` line, plus `--hide-unstaged`.
+Without that flag lint-staged hides unstaged changes only for _partially staged_
+files, so an unrelated unstaged edit to another tracked file would still reach
+the project-wide `tsc` and fail a commit that is actually fine.
 
-The `--diff-filter=ACMR` is the non-obvious part: without it a commit that only
-_deletes_ a `.ts` file still triggers the full gate.
+Residual, to be stated in §6 rather than solved: untracked files are hidden by
+neither flag, so a new untracked `.ts` carrying errors can still fail the gate.
 
 ### Success Criteria:
 
@@ -133,6 +177,10 @@ _deletes_ a `.ts` file still triggers the full gate.
 - `npm run lint` passes
 - `npm test` passes
 - `npm run build` passes
+- The configured gate itself refuses a staged type error: with a broken `.ts`
+  staged, running the hook's command exits non-zero. Asserts the deliverable,
+  not just that the repo is currently green — rows above would all pass with the
+  hook never written
 
 #### Manual Verification:
 
@@ -142,7 +190,10 @@ _deletes_ a `.ts` file still triggers the full gate.
   `git commit` aborts naming the test failure, restore
 - A docs-only commit (`*.md` staged, no code) completes without running typecheck
   or the suite, and is visibly fast
-- A commit that only deletes a `.ts` file does not trigger the gate
+- A commit that only deletes a `.ts` file does not trigger the gate (nothing
+  staged matches the glob)
+- Staged-vs-worktree check: stage a broken version, fix the working copy,
+  confirm the commit is still refused — the failure this design exists to close
 - `git commit --no-verify` still bypasses, as designed
 
 **Implementation note**: Stop for human confirmation before continuing.
@@ -166,8 +217,9 @@ a red tree.
 agent from ending its turn when either fails.
 
 **Contract**: Reads the hook input JSON on stdin. Exits 0 immediately when
-`stop_hook_active` is `true`; then exits 0 when the working tree has no modified
-or untracked files; otherwise runs `npm run typecheck` then `npm test`, and on
+`stop_hook_active` is `true` — read with `node`, not `jq`, since node is already
+a hard prerequisite here and jq is not; then exits 0 when the working tree has no
+modified or untracked files; otherwise runs `npm run typecheck` then `npm test`, and on
 failure writes the failing command's output to **stderr** and exits **2**.
 Communicates only through exit codes and stderr — never stdout JSON.
 
@@ -178,7 +230,10 @@ skeleton is given rather than described:
 #!/usr/bin/env bash
 INPUT=$(cat)
 # First: the eight-block cap. Must precede everything else.
-if [ "$(printf '%s' "$INPUT" | jq -r '.stop_hook_active')" = "true" ]; then
+# node, not jq: node is already a hard prerequisite of this repo and jq is not.
+# Exits 0 only when the flag is literally true; malformed input fails safe by
+# falling through to the gate rather than silently disabling it.
+if printf '%s' "$INPUT" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{process.exit(JSON.parse(d).stop_hook_active===true?0:1)}catch{process.exit(1)}})'; then
   exit 0
 fi
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
@@ -235,6 +290,8 @@ Note this file is currently absent and untracked; `.gitignore:31` ignores only
   practice
 - The hook does not double-run against `/10x-implement`'s own per-phase
   verification in a way that makes a long session unpleasant
+- A turn that ends in a commit runs no gate (clean tree), confirming the
+  partition between the two layers is the one described — observed, not assumed
 
 **Implementation note**: Stop for human confirmation before continuing.
 
@@ -278,8 +335,10 @@ also runs typecheck and the unit suite.
 
 **Purpose**: Close the last rollout row.
 
-**Contract**: Phase 5 Status → `complete`; the Change folder cell points at the
-archive path once `/10x-archive` runs, following how rows 1–4 read.
+**Contract**: Phase 5 Status → `complete`, with the Change folder cell pointing
+at `context/changes/testing-quality-gate-wiring/`. The archive path that rows
+1–4 show lands when `/10x-archive` runs, which is after this change closes — it
+is not this phase's to write.
 
 ### Success Criteria:
 
@@ -356,14 +415,16 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 - [ ] 1.2 `npm run lint` passes
 - [ ] 1.3 `npm test` passes
 - [ ] 1.4 `npm run build` passes
+- [ ] 1.5 The configured gate refuses a staged type error: hook command exits non-zero
 
 #### Manual
 
-- [ ] 1.5 Deliberate-break check, type error: staged `tsc` error aborts the commit, restored
-- [ ] 1.6 Deliberate-break check, failing test: staged failing assertion aborts the commit, restored
-- [ ] 1.7 A docs-only commit skips the gate and is visibly fast
-- [ ] 1.8 A commit that only deletes a `.ts` file does not trigger the gate
-- [ ] 1.9 `git commit --no-verify` still bypasses, as designed
+- [ ] 1.6 Deliberate-break check, type error: staged `tsc` error aborts the commit, restored
+- [ ] 1.7 Deliberate-break check, failing test: staged failing assertion aborts the commit, restored
+- [ ] 1.8 A docs-only commit skips the gate and is visibly fast
+- [ ] 1.9 A commit that only deletes a `.ts` file does not trigger the gate (nothing staged matches the glob)
+- [ ] 1.10 Staged-vs-worktree check: a broken staged version with a fixed working copy is still refused
+- [ ] 1.11 `git commit --no-verify` still bypasses, as designed
 
 ### Phase 2: Agent Stop hook
 
@@ -382,6 +443,7 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 - [ ] 2.8 A question-answering turn with a clean tree runs no commands
 - [ ] 2.9 The ~5s turn cost on code-editing turns is tolerable in practice
 - [ ] 2.10 The hook does not double-run against `/10x-implement` in a way that makes a long session unpleasant
+- [ ] 2.11 A turn that ends in a commit runs no gate, confirming the partition between the two layers
 
 ### Phase 3: Close-out
 

@@ -692,9 +692,9 @@ palette and prefix list produce no hits in `src/`.
 
 #### Manual
 
-- [ ] 1.6 Deliberate break: removing the colour floor turns the empty-tree test red
-- [ ] 1.7 Deliberate break: removing the games reads floor turns the write-only test red
-- [ ] 1.8 `npm test` wall time before and after recorded
+- [x] 1.6 Deliberate break: removing the colour floor turns the empty-tree test red
+- [x] 1.7 Deliberate break: removing the games reads floor turns the write-only test red
+- [x] 1.8 `npm test` wall time before and after recorded — 2.47 s median at 1e69ade (2026-09-14)
 
 ### Phase 2: Colour guard tracks the installed Tailwind
 
@@ -707,9 +707,9 @@ palette and prefix list produce no hits in `src/`.
 
 #### Manual
 
-- [ ] 2.5 Deliberate break: filtering `mauve` out turns "every family" red
-- [ ] 2.6 Deliberate break: removing `border-s` turns "every colour root" and the sentinel red
-- [ ] 2.7 Real-repo `lint:colors` file count unchanged
+- [x] 2.5 Deliberate break: filtering `mauve` out turns "every family" red
+- [x] 2.6 Deliberate break: removing `border-s` turns "every colour root" and the sentinel red
+- [x] 2.7 Real-repo `lint:colors` file count unchanged
 
 ### Phase 3: Games-read guard bypasses
 
@@ -722,8 +722,8 @@ palette and prefix list produce no hits in `src/`.
 
 #### Manual
 
-- [ ] 3.5 Deliberate break: bypassing the comment blanker turns both comment tests red
-- [ ] 3.6 Deliberate break: reverting `TABLE_RE` turns the `as const` test red
+- [x] 3.5 Deliberate break: bypassing the comment blanker turns both comment tests red
+- [x] 3.6 Deliberate break: reverting `TABLE_RE` turns the `as const` test red
 
 ### Phase 4: Contrast guard coverage
 
@@ -736,8 +736,8 @@ palette and prefix list produce no hits in `src/`.
 
 #### Manual
 
-- [ ] 4.5 Deliberate break: removing registry coverage turns "unregistered theme" red
-- [ ] 4.6 Deliberate break: removing the gradient count turns "gradient drift" red
+- [x] 4.5 Deliberate break: removing registry coverage turns "unregistered theme" red
+- [x] 4.6 Deliberate break: removing the gradient count turns "gradient drift" red
 
 ### Phase 5: Gate wiring assertions
 
@@ -749,10 +749,10 @@ palette and prefix list produce no hits in `src/`.
 
 #### Manual
 
-- [ ] 5.4 `npm test` under 1.5 s slower than the Phase 1 baseline (median of 3 × `/usr/bin/time -f %e npm test`)
-- [ ] 5.5 Deliberate break: deleting the `lint:reads` step from `ci.yml` turns the CI test red
-- [ ] 5.6 Deliberate break: moving that step into `db-tests` still turns it red
-- [ ] 5.7 Deliberate break: clearing the hook's exec bit turns the hook-health test red (`git update-index --chmod=-x`, then restore with `--chmod=+x`)
+- [x] 5.4 `npm test` under 1.5 s slower than the Phase 1 baseline (median of 3 × `/usr/bin/time -f %e npm test`) — 2.36 s vs 2.47 s baseline, within noise
+- [x] 5.5 Deliberate break: deleting the `lint:reads` step from `ci.yml` turns the CI test red
+- [x] 5.6 Deliberate break: moving that step into `db-tests` still turns it red
+- [x] 5.7 Deliberate break: clearing the hook's exec bit turns the hook-health test red (`git update-index --chmod=-x`, then restore with `--chmod=+x`)
 
 ### Phase 6: Test-plan and project docs
 

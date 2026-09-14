@@ -108,7 +108,7 @@ in S-04 (`context/archive/2026-07-21-played-loan-and-preference/plan-brief.md:22
 re-affirmed when impl-review F7 raised the same concern and resolved it by documenting
 the household-as-tenant assumption rather than changing the policy.
 
-**Amended 2026-09-13** (`context/changes/testing-llm-recommendation-guardrails/research.md`).
+**Amended 2026-09-13** (`context/archive/2026-09-13-testing-llm-recommendation-guardrails/research.md`).
 Risk #3 originally read "...does not own, **or one currently loaned out**", and its response
 cell asked for loaned titles to be excluded. No requirement asks for that. Loan is absent
 from US-01's acceptance criteria (`prd.md:57-60`) and from §Business Logic (`prd.md:102`),
@@ -167,7 +167,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 1   | API boundary contract               | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4        | integration (route handlers)                            | complete                         | `context/archive/2026-09-11-testing-api-boundary-contract/`         |
 | 2   | Per-member state attribution        | Prove played state and preference stay bound to the correct household member at both the query and the policy layer                                    | #1            | integration + DB-level RLS verification                 | complete                         | `context/archive/2026-09-12-testing-per-member-state-attribution/`  |
 | 3   | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games                                           | #6            | integration (query layer) + shape gate + source ratchet | complete                         | `context/archive/2026-09-13-testing-catalog-integrity-soft-delete/` |
-| 4   | LLM recommendation guardrails       | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses                  | #3, #5, #7    | contract tests with stubbed provider                    | complete                         | `context/changes/testing-llm-recommendation-guardrails/`            |
+| 4   | LLM recommendation guardrails       | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses                  | #3, #5, #7    | contract tests with stubbed provider                    | complete                         | `context/archive/2026-09-13-testing-llm-recommendation-guardrails/` |
 | 5   | Quality-gate wiring                 | Lock the floor: keep the suite non-optional in CI (the step already runs) and gate the agent's edit loop                                               | cross-cutting | gates                                                   | partially wired (CI step exists) | —                                                                   |
 
 **Order rationale.** Phase 1 is the interview's own stated gap (Q4), sits at

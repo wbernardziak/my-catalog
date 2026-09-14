@@ -51,4 +51,9 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 
 ## CI
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + build on every push and PR to master. Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main` or `master`, in two jobs:
+
+- **`ci`** — `typecheck`, `lint`, `lint:colors`, `lint:contrast`, `lint:reads`, `build`, then `npm test` (the unit project). Requires `SUPABASE_URL` and `SUPABASE_KEY` repository secrets for the build step.
+- **`db-tests`** — boots a real local Supabase stack (`npx supabase start`, minus studio/imgproxy/edge-runtime/logflare/vector/storage-api/mailpit) and runs `npm run test:db`. Separate so the fast hermetic job stays the signal most pushes need; a real stack is the only way to observe RLS behaviour (see `src/test/db/README.md`).
+
+Both suites therefore run in CI — `test:db` is not local-only.

@@ -27,16 +27,37 @@
  * to switch the guard off.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isAbsolute, join } from "node:path";
 
-const CSS_PATH = fileURLToPath(new URL("../src/styles/global.css", import.meta.url));
+const DEFAULT_ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+function rootFromArgs() {
+  const args = process.argv.slice(2);
+  const [argument] = args;
+  if (!argument) return DEFAULT_ROOT;
+  if (args.length !== 1 || !argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+    console.error("Usage: node scripts/check-contrast.mjs [--root=<absolute dir>]");
+    process.exit(1);
+  }
+  return argument.slice("--root=".length);
+}
+
+const ROOT = rootFromArgs();
+if (ROOT !== DEFAULT_ROOT) console.log(`Scanned root: ${ROOT}`);
+const CSS_PATH = join(ROOT, "src/styles/global.css");
+
+if (!existsSync(CSS_PATH)) {
+  console.error(`No src/styles/global.css under ${ROOT}. Check the --root argument.`);
+  process.exit(1);
+}
 
 /** The theme blocks, by the selector that carries them. */
 const THEMES = [
-  { name: "Felt Table", selector: ":root" },
-  { name: "Bright Shelf", selector: ".theme-shelf" },
-  { name: "Punchboard", selector: ".theme-punchboard" },
+  { key: "felt", name: "Felt Table", selector: ":root" },
+  { key: "shelf", name: "Bright Shelf", selector: ".theme-shelf" },
+  { key: "punchboard", name: "Punchboard", selector: ".theme-punchboard" },
 ];
 
 /** The rule that re-points ink roles onto the card surface. */
@@ -151,6 +172,25 @@ function contrast(aHex, bHex) {
 }
 
 const css = readFileSync(CSS_PATH, "utf8");
+const themePath = join(ROOT, "src/lib/theme.ts");
+const themeSource = existsSync(themePath) ? readFileSync(themePath, "utf8") : "";
+const registryMatch = /export const THEMES\s*=\s*\[([^\]]*)\]\s*as const/.exec(themeSource);
+if (!registryMatch) {
+  console.error(`Could not parse theme registry in ${themePath}.`);
+  process.exit(1);
+}
+const registeredThemes = [...registryMatch[1].matchAll(/["']([^"']+)["']/g)].map((match) => match[1]);
+const sourceFiles = readdirSync(join(ROOT, "src"), { recursive: true, encoding: "utf8" }).map((file) =>
+  file.split("\\").join("/"),
+);
+// Tests can mention the class without rendering it; counting them would fail on a comment.
+const gradientCount = sourceFiles
+  .filter((file) => /\.(astro|tsx?|jsx?|css)$/.test(file))
+  .filter((file) => !file.startsWith("test/") && !/\.test\.[jt]sx?$/.test(file))
+  .reduce(
+    (count, file) => count + (readFileSync(join(ROOT, "src", file), "utf8").match(/bg-clip-text/g)?.length ?? 0),
+    0,
+  );
 
 const cardBlock = blockFor(css, CARD_CONTEXT_SELECTOR);
 if (!cardBlock) {
@@ -162,6 +202,30 @@ const cardContext = aliasesIn(cardBlock);
 
 const failures = [];
 let checks = 0;
+
+for (const key of registeredThemes) {
+  if (!THEMES.some((theme) => theme.key === key))
+    failures.push(`theme \`${key}\` is registered in src/lib/theme.ts but has no contrast entry`);
+}
+for (const theme of THEMES) {
+  if (!registeredThemes.includes(theme.key))
+    failures.push(`theme \`${theme.key}\` has a contrast entry but is not registered in src/lib/theme.ts`);
+}
+if (gradientCount !== GRADIENT_TEXT.length) {
+  failures.push(`bg-clip-text count ${gradientCount} differs from GRADIENT_TEXT entries ${GRADIENT_TEXT.length}`);
+}
+// A matching count is not enough: a commented-out class keeps the count while the gradient is gone.
+for (const { what, where } of GRADIENT_TEXT) {
+  const [path, lineNumber] = where.split(":");
+  const file = join(ROOT, path);
+  const line = existsSync(file) ? (readFileSync(file, "utf8").split("\n")[Number(lineNumber) - 1] ?? "") : "";
+  const code = line.replace(/<!--.*?-->|\/\*.*?\*\/|\/\/.*$/g, "");
+  if (!/\bbg-clip-text\b/.test(code)) {
+    failures.push(`GRADIENT_TEXT entry for the ${what} points at ${where}, which has no bg-clip-text class`);
+  }
+}
+// Everything pushed so far is list drift, fixed in this script rather than in global.css.
+const coverageFailures = failures.length;
 
 for (const theme of THEMES) {
   const block = blockFor(css, theme.selector);
@@ -246,9 +310,21 @@ for (const theme of THEMES) {
 if (failures.length > 0) {
   console.error(`Contrast check failed — ${failures.length} of ${checks} assertions:\n`);
   for (const failure of failures) console.error(`  ${failure}`);
-  console.error("\nFix the token value in src/styles/global.css. If an ink role is unreadable on a");
-  console.error("surface it genuinely lands on, that surface needs its own variant of the role —");
-  console.error("see the card context rule for the pattern.");
+  if (coverageFailures > 0) {
+    console.error("\nKeep THEMES and GRADIENT_TEXT in scripts/check-contrast.mjs in step with");
+    console.error("src/lib/theme.ts and the bg-clip-text headings in src/, so every one is checked.");
+  }
+  if (failures.length > coverageFailures) {
+    console.error("\nFix the token value in src/styles/global.css. If an ink role is unreadable on a");
+    console.error("surface it genuinely lands on, that surface needs its own variant of the role —");
+    console.error("see the card context rule for the pattern.");
+  }
+  process.exit(1);
+}
+
+// Defensive: unreachable while THEMES and the role lists are non-empty, so no fixture tests it.
+if (checks === 0) {
+  console.error("Contrast check ran zero assertions; refusing a vacuous result.");
   process.exit(1);
 }
 

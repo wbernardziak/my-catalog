@@ -13,10 +13,14 @@
  *   3. Colour props in inline CSS — `style="color: …"`, `<style>` blocks
  *
  * Exempt: the token definitions themselves, and the brand mark, which keeps
- * fixed colours across themes by design.
+ * fixed colours across themes by design. Palette families are read from
+ * Tailwind's theme.css at runtime so an upgrade cannot silently open a hole.
+ * The v4 roots inset-shadow, text-shadow, drop-shadow, inset-ring and mask
+ * gradients are matched through their inner prefixes; self-tests pin that.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,35 +44,30 @@ if (overriddenRoot) console.log(`Scanned root: ${ROOT}`);
 
 const EXEMPT = new Set(["src/styles/global.css", "src/components/BrandMark.astro"]);
 
-const PALETTE = [
-  "white",
-  "black",
-  "slate",
-  "gray",
-  "zinc",
-  "neutral",
-  "stone",
-  "red",
-  "orange",
-  "amber",
-  "yellow",
-  "lime",
-  "green",
-  "emerald",
-  "teal",
-  "cyan",
-  "sky",
-  "blue",
-  "indigo",
-  "violet",
-  "purple",
-  "fuchsia",
-  "pink",
-  "rose",
-].join("|");
+const require = createRequire(import.meta.url);
+
+function paletteFromTailwind() {
+  let themePath;
+  try {
+    themePath = require.resolve("tailwindcss/theme.css");
+    const theme = readFileSync(themePath, "utf8");
+    const families = new Set([...theme.matchAll(/--color-([a-z-]+)-\d{2,3}\s*:/g)].map((match) => match[1]));
+    if (/--color-white\s*:/.test(theme)) families.add("white");
+    if (/--color-black\s*:/.test(theme)) families.add("black");
+    if (families.size < 10) throw new Error(`found only ${families.size} colour families`);
+    return [...families].join("|");
+  } catch (error) {
+    console.error(
+      `Could not load Tailwind colour families from ${themePath ?? "tailwindcss/theme.css"}: ${error.message}`,
+    );
+    process.exit(1);
+  }
+}
+
+const PALETTE = paletteFromTailwind();
 
 const PREFIX =
-  "bg|text|border|border-[trblxy]|from|via|to|ring|ring-offset|placeholder|divide|outline|fill|stroke|shadow|accent|caret|decoration";
+  "bg|text|border|border-[trblxy]|border-s|border-e|border-bs|border-be|from|via|to|ring|ring-offset|placeholder|divide|outline|fill|stroke|shadow|accent|caret|decoration";
 
 const RULES = [
   {

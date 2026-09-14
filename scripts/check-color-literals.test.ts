@@ -1,4 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
+import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { __unstable__loadDesignSystem } from "tailwindcss";
 
 import { makeTree, removeTree, runGuard } from "./guardHarness";
 
@@ -9,6 +12,14 @@ const tree = (files: Record<string, string>) => {
   return root;
 };
 const output = (result: ReturnType<typeof runGuard>) => `${result.stdout}${result.stderr}`;
+const require = createRequire(import.meta.url);
+const themeCss = readFileSync(require.resolve("tailwindcss/theme.css"), "utf8");
+// Tailwind marks this API unstable. If it changes, fail loudly and replace this
+// oracle with hand-written fixtures rather than deleting the coverage.
+const designSystem = await __unstable__loadDesignSystem(themeCss);
+const classNames = designSystem.getClassList().map(([name]) => name);
+const families = [...new Set(classNames.flatMap((name) => /^bg-(.+)-500$/.exec(name)?.[1] ?? []))];
+const roots = [...new Set(classNames.flatMap((name) => /^(.+)-red-500$/.exec(name)?.[1] ?? []))];
 
 afterAll(() => {
   trees.forEach(removeTree);
@@ -58,5 +69,50 @@ describe("check-color-literals", () => {
     expect(missing.status).toBe(1);
     expect(output(missing)).toContain("No src/ under");
     expect(output(missing)).not.toContain("No colour literals");
+  });
+
+  it("reports every Tailwind colour family without mirroring the guard parser", () => {
+    expect(families.length).toBeGreaterThanOrEqual(20);
+    const lines = [
+      ...families.map((family) => `bg-${family}-500`),
+      "bg-white",
+      "bg-black",
+      "hover:bg-mauve-500",
+      "text-olive-700/70",
+    ];
+    const result = runGuard("scripts/check-color-literals.mjs", tree({ "src/lib/families.ts": lines.join("\n") }));
+
+    expect(result.status).toBe(1);
+    lines.forEach((_, index) => {
+      expect(output(result)).toContain(`src/lib/families.ts:${index + 1}`);
+    });
+  });
+
+  it("reports every Tailwind colour utility root", () => {
+    expect(roots.length).toBeGreaterThanOrEqual(30);
+    const result = runGuard(
+      "scripts/check-color-literals.mjs",
+      tree({ "src/lib/roots.ts": roots.map((root) => `${root}-red-500`).join("\n") }),
+    );
+
+    expect(result.status).toBe(1);
+    roots.forEach((_, index) => {
+      expect(output(result)).toContain(`src/lib/roots.ts:${index + 1}`);
+    });
+  });
+
+  it("keeps sentinels for known Tailwind holes", () => {
+    const result = runGuard(
+      "scripts/check-color-literals.mjs",
+      tree({
+        "src/lib/sentinels.ts": "bg-mauve-500\ntext-olive-700\nborder-s-red-500\nborder-e-red-500",
+      }),
+    );
+
+    expect(result.status).toBe(1);
+    expect(output(result)).toContain("src/lib/sentinels.ts:1");
+    expect(output(result)).toContain("src/lib/sentinels.ts:2");
+    expect(output(result)).toContain("src/lib/sentinels.ts:3");
+    expect(output(result)).toContain("src/lib/sentinels.ts:4");
   });
 });

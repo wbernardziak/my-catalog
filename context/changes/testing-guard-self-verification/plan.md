@@ -684,11 +684,11 @@ palette and prefix list produce no hits in `src/`.
 
 #### Automated
 
-- [x] 1.1 Guard self-tests pass: `npx vitest run --project unit scripts/`
-- [x] 1.2 Full unit suite passes: `npm test`
-- [x] 1.3 Real repo still clean: `npm run lint:colors && npm run lint:reads && npm run lint:contrast`
-- [x] 1.4 Typecheck passes: `npm run typecheck`
-- [x] 1.5 Lint passes: `npm run lint`
+- [x] 1.1 Guard self-tests pass: `npx vitest run --project unit scripts/` — 1e69ade
+- [x] 1.2 Full unit suite passes: `npm test` — 1e69ade
+- [x] 1.3 Real repo still clean: `npm run lint:colors && npm run lint:reads && npm run lint:contrast` — 1e69ade
+- [x] 1.4 Typecheck passes: `npm run typecheck` — 1e69ade
+- [x] 1.5 Lint passes: `npm run lint` — 1e69ade
 
 #### Manual
 
@@ -700,10 +700,10 @@ palette and prefix list produce no hits in `src/`.
 
 #### Automated
 
-- [ ] 2.1 Guard self-tests pass: `npx vitest run --project unit scripts/`
-- [ ] 2.2 Real repo still clean: `npm run lint:colors`
-- [ ] 2.3 Full unit suite passes: `npm test`
-- [ ] 2.4 Typecheck and lint pass: `npm run typecheck && npm run lint`
+- [x] 2.1 Guard self-tests pass: `npx vitest run --project unit scripts/`
+- [x] 2.2 Real repo still clean: `npm run lint:colors`
+- [x] 2.3 Full unit suite passes: `npm test`
+- [x] 2.4 Typecheck and lint pass: `npm run typecheck && npm run lint`
 
 #### Manual
 

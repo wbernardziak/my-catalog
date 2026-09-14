@@ -729,10 +729,10 @@ palette and prefix list produce no hits in `src/`.
 
 #### Automated
 
-- [ ] 4.1 Guard self-tests pass: `npx vitest run --project unit scripts/`
-- [ ] 4.2 Real repo still clean: `npm run lint:contrast` (87 assertions, 3 themes)
-- [ ] 4.3 Full unit suite passes: `npm test`
-- [ ] 4.4 Typecheck and lint pass: `npm run typecheck && npm run lint`
+- [x] 4.1 Guard self-tests pass: `npx vitest run --project unit scripts/`
+- [x] 4.2 Real repo still clean: `npm run lint:contrast` (87 assertions, 3 themes)
+- [x] 4.3 Full unit suite passes: `npm test`
+- [x] 4.4 Typecheck and lint pass: `npm run typecheck && npm run lint`
 
 #### Manual
 

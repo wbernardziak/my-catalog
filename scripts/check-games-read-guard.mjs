@@ -51,9 +51,10 @@ const SRC = "src";
 const EXTENSIONS = [".astro", ".tsx", ".ts", ".jsx", ".js"];
 
 function rootFromArgs() {
-  const [argument] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const [argument] = args;
   if (!argument) return DEFAULT_ROOT;
-  if (!argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+  if (args.length !== 1 || !argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
     console.error("Usage: node scripts/check-games-read-guard.mjs [--root=<absolute dir>]");
     process.exit(1);
   }
@@ -158,7 +159,7 @@ for (const file of files) {
   const source = readFileSync(join(ROOT, file), "utf8");
   const blanked = blankComments(source);
   if (!blanked) {
-    if (/["'`]games["'`]/.test(source)) hits.push({ file, line: 1, kind: "unrecognised" });
+    if (/["'`]games["'`]/.test(source)) hits.push({ file, line: 1, kind: "desynchronised" });
     continue;
   }
 
@@ -206,6 +207,7 @@ if (hits.length > 0) {
   const unguarded = hits.filter((hit) => hit.kind === "unguarded");
   const unrecognised = hits.filter((hit) => hit.kind === "unrecognised");
   const indirect = hits.filter((hit) => hit.kind === "indirect");
+  const desynchronised = hits.filter((hit) => hit.kind === "desynchronised");
 
   if (unguarded.length > 0) {
     console.error(
@@ -232,6 +234,10 @@ if (hits.length > 0) {
   if (indirect.length > 0) {
     console.error(`Indirect \`games\` table names found (${indirect.length}).\n`);
     for (const hit of indirect) console.error(`  ${hit.file}:${hit.line}  use a literal "games" table name`);
+  }
+  if (desynchronised.length > 0) {
+    console.error("Comment blanker lost sync (likely an unterminated literal or regex literal containing a quote).\n");
+    for (const hit of desynchronised) console.error(`  ${hit.file}:${hit.line}  could not safely scan this file`);
   }
 
   console.error("Guard: scripts/check-games-read-guard.mjs");

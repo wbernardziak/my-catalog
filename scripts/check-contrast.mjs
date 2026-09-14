@@ -27,16 +27,17 @@
  * to switch the guard off.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { isAbsolute, join } from "node:path";
 
 const DEFAULT_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 function rootFromArgs() {
-  const [argument] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const [argument] = args;
   if (!argument) return DEFAULT_ROOT;
-  if (!argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+  if (args.length !== 1 || !argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
     console.error("Usage: node scripts/check-contrast.mjs [--root=<absolute dir>]");
     process.exit(1);
   }
@@ -54,9 +55,9 @@ if (!existsSync(CSS_PATH)) {
 
 /** The theme blocks, by the selector that carries them. */
 const THEMES = [
-  { name: "Felt Table", selector: ":root" },
-  { name: "Bright Shelf", selector: ".theme-shelf" },
-  { name: "Punchboard", selector: ".theme-punchboard" },
+  { key: "felt", name: "Felt Table", selector: ":root" },
+  { key: "shelf", name: "Bright Shelf", selector: ".theme-shelf" },
+  { key: "punchboard", name: "Punchboard", selector: ".theme-punchboard" },
 ];
 
 /** The rule that re-points ink roles onto the card surface. */
@@ -171,6 +172,21 @@ function contrast(aHex, bHex) {
 }
 
 const css = readFileSync(CSS_PATH, "utf8");
+const themePath = join(ROOT, "src/lib/theme.ts");
+const themeSource = existsSync(themePath) ? readFileSync(themePath, "utf8") : "";
+const registryMatch = /export const THEMES\s*=\s*\[([^\]]*)\]\s*as const/.exec(themeSource);
+if (!registryMatch) {
+  console.error(`Could not parse theme registry in ${themePath}.`);
+  process.exit(1);
+}
+const registeredThemes = [...registryMatch[1].matchAll(/["']([^"']+)["']/g)].map((match) => match[1]);
+const sourceFiles = readdirSync(join(ROOT, "src"), { recursive: true, encoding: "utf8" });
+const gradientCount = sourceFiles
+  .filter((file) => /\.(astro|tsx?|jsx?|css)$/.test(file))
+  .reduce(
+    (count, file) => count + (readFileSync(join(ROOT, "src", file), "utf8").match(/bg-clip-text/g)?.length ?? 0),
+    0,
+  );
 
 const cardBlock = blockFor(css, CARD_CONTEXT_SELECTOR);
 if (!cardBlock) {
@@ -182,6 +198,18 @@ const cardContext = aliasesIn(cardBlock);
 
 const failures = [];
 let checks = 0;
+
+for (const key of registeredThemes) {
+  if (!THEMES.some((theme) => theme.key === key))
+    failures.push(`theme \`${key}\` is registered in src/lib/theme.ts but has no contrast entry`);
+}
+for (const theme of THEMES) {
+  if (!registeredThemes.includes(theme.key))
+    failures.push(`theme \`${theme.key}\` has a contrast entry but is not registered in src/lib/theme.ts`);
+}
+if (gradientCount !== GRADIENT_TEXT.length) {
+  failures.push(`bg-clip-text count ${gradientCount} differs from GRADIENT_TEXT entries ${GRADIENT_TEXT.length}`);
+}
 
 for (const theme of THEMES) {
   const block = blockFor(css, theme.selector);
@@ -269,6 +297,12 @@ if (failures.length > 0) {
   console.error("\nFix the token value in src/styles/global.css. If an ink role is unreadable on a");
   console.error("surface it genuinely lands on, that surface needs its own variant of the role —");
   console.error("see the card context rule for the pattern.");
+  process.exit(1);
+}
+
+// Defensive: unreachable while THEMES and the role lists are non-empty, so no fixture tests it.
+if (checks === 0) {
+  console.error("Contrast check ran zero assertions; refusing a vacuous result.");
   process.exit(1);
 }
 

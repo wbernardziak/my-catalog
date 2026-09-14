@@ -29,9 +29,10 @@ const SRC = "src";
 const EXTENSIONS = [".astro", ".tsx", ".ts", ".jsx", ".js", ".css"];
 
 function rootFromArgs() {
-  const [argument] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const [argument] = args;
   if (!argument) return DEFAULT_ROOT;
-  if (!argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+  if (args.length !== 1 || !argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
     console.error("Usage: node scripts/check-color-literals.mjs [--root=<absolute dir>]");
     process.exit(1);
   }

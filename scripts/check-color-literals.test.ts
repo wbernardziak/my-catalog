@@ -2,6 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { __unstable__loadDesignSystem } from "tailwindcss";
+import { spawnSync } from "node:child_process";
 
 import { makeTree, removeTree, runGuard } from "./guardHarness";
 
@@ -114,5 +115,13 @@ describe("check-color-literals", () => {
     expect(output(result)).toContain("src/lib/sentinels.ts:2");
     expect(output(result)).toContain("src/lib/sentinels.ts:3");
     expect(output(result)).toContain("src/lib/sentinels.ts:4");
+  });
+
+  it("rejects unknown command-line arguments", () => {
+    const result = spawnSync(process.execPath, ["scripts/check-color-literals.mjs", "typo"], {
+      encoding: "utf8",
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Usage:");
   });
 });

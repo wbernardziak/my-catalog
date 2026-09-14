@@ -76,4 +76,13 @@ describe("check-games-read-guard", () => {
     expect(output(result)).toContain("src/lib/indirect.ts");
     expect(output(result)).toContain("Indirect `games` table names found");
   });
+
+  it("fails closed when comment blanking loses sync", () => {
+    const result = runGuard(
+      "scripts/check-games-read-guard.mjs",
+      tree({ "src/lib/regex.ts": 'const re = /["\']/; client.from("games").select("*");' }),
+    );
+    expect(result.status).toBe(1);
+    expect(output(result)).toContain("Comment blanker lost sync");
+  });
 });

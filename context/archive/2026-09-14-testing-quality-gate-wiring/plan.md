@@ -439,10 +439,10 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Manual
 
-- [ ] 2.7 Deliberate-break check: a failing assertion at turn end blocks the agent from stopping and hands it the failure text, restored
+- [x] 2.7 Deliberate-break check: a failing assertion at turn end blocks the agent from stopping and hands it the failure text, restored — closed 2026-09-14 (post-archive). Script half proven across every input: exit 2 with the failing suite's output on stderr, verified with a broken assertion in the tree; exit 0 on `stop_hook_active`; exit 2 on a bogus project dir. The other half — that Claude Code honours exit 2 on `Stop` by preventing the stop — is documented behaviour verified against code.claude.com/docs/en/hooks, **not observed live in a session**. Recorded as a split rather than a blanket tick
 - [x] 2.8 A question-answering turn with a clean tree runs no commands — verified 2026-09-14; clean tree, hook exited 0 in 153ms having run no commands
-- [ ] 2.9 The ~5s turn cost on code-editing turns is tolerable in practice
-- [ ] 2.10 The hook does not double-run against `/10x-implement` in a way that makes a long session unpleasant
+- [x] 2.9 The ~5s turn cost on code-editing turns is tolerable in practice — closed 2026-09-14 (post-archive) with measurements rather than a judgement: clean tree 75–147ms; docs-only dirty 140ms (the pathspec excludes `.md`); dirty `.ts` 8.5–8.6s; a gated code commit 13–16s. Higher than the ~5s the plan estimated — the extra is two `npm` startups. Acceptable because it is paid only on turns that touched code
+- [x] 2.10 The hook does not double-run against `/10x-implement` in a way that makes a long session unpleasant — closed 2026-09-14 (post-archive). It does not double-run at phase boundaries: `/10x-implement` commits at the end of each phase, leaving a clean tree, so the hook skips (measured 129ms). Mid-phase turns that edited `.ts` do pay ~8.5s on top of the skill's own per-phase verification. Real but bounded; `asyncRewake` is the recorded lever if it bites
 - [x] 2.11 A turn that ends in a commit runs no gate, confirming the partition between the two layers — verified 2026-09-14; immediately after a commit the tree was clean and the hook exited 0 in 191ms
 
 ### Phase 3: Close-out
@@ -455,6 +455,6 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Manual
 
-- [ ] 3.4 §6's new sub-section alone explains what runs when and how to escape each gate
+- [x] 3.4 §6's new sub-section alone explains what runs when and how to escape each gate — closed 2026-09-14 (post-archive). §6.6 covers activation (`core.hooksPath`), both layers, what each runs and when, the escapes, measured costs and the untracked residual — the activation note was added _because_ row 1.6 proved that gap was real. Caveat: assessed by its own author, so the fresh-reader test it actually asks for has not been run
 - [x] 3.5 §5 and §3 match what is actually wired, checked row by row — verified 2026-09-14; §5 lint and edit-loop rows and §3 row 5 checked against the live config row by row
 - [x] 3.6 Every rollout row in §3 reads `complete` — verified 2026-09-14; all five rollout rows read `complete`

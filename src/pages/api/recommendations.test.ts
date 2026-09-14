@@ -222,6 +222,58 @@ describe("POST /api/recommendations — response contract", () => {
     expect(text).not.toContain("test-key");
   });
 
+  /**
+   * Both of these reach the island as one indistinguishable "Something went
+   * wrong" panel, so the separation they assert is the one the SERVER makes:
+   * the status the caller can act on, and the log line that identifies which
+   * branch fired. A transient observed on 2026-09-14 during the phase 4 manual
+   * check produced that panel with nothing at all in the server log, which is
+   * what these cases and the route's `fail()` exist to prevent recurring.
+   */
+  it("returns a retryable 503, not a 401, when the session could not be resolved", async () => {
+    const fetchMock = stubFetch(defaultAnswer);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const POST = await loadRoute();
+
+    const response = await POST(
+      createApiContext({ user: null, sessionUnresolved: true, json: CRITERIA, url: ROUTE_URL }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "We couldn't verify your session. Please try again." });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("the session could not be resolved"));
+  });
+
+  it("returns 401 when there is simply no session", async () => {
+    const fetchMock = stubFetch(defaultAnswer);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const POST = await loadRoute();
+
+    const response = await POST(createApiContext({ user: null, json: CRITERIA, url: ROUTE_URL }));
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: "Your session has expired. Please sign in again." });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("no session"));
+  });
+
+  it("logs the branch when the catalog read fails, naming the underlying error", async () => {
+    stubFetch(defaultAnswer);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    double = createSupabaseDouble({ results: { games: { error: { message: "boom" } } } });
+    holder.client = double.client;
+    const POST = await loadRoute();
+
+    await POST(requestFor());
+
+    // Flattened to strings because the second argument is the caught error
+    // itself: what matters is that the branch AND the underlying cause both
+    // reach the log, not the error's exact shape.
+    const logged = errorSpy.mock.calls.map((args: unknown[]) => args.map((arg) => String(arg)).join(" "));
+    expect(logged.some((line) => line.includes("could not load the catalog") && line.includes("boom"))).toBe(true);
+  });
+
   it("returns 500 and issues no provider call when the catalog read fails", async () => {
     const fetchMock = stubFetch(defaultAnswer);
     double = createSupabaseDouble({ results: { games: { error: { message: "boom" } } } });

@@ -22,6 +22,10 @@ export function testUser(id = "member-a"): User {
 export interface ApiContextOptions {
   /** `null` (the default) is an unauthenticated caller. */
   user?: User | null;
+  /** Mirrors `locals.sessionUnresolved`: `true` is a caller whose session could
+   * not be resolved at all (Supabase erroring), as opposed to one with no
+   * session. Both carry `user: null`; only this separates them. */
+  sessionUnresolved?: boolean;
   /** Route params, e.g. `{ id: "game-1" }` for `/api/games/[id]`. */
   params?: Record<string, string | undefined>;
   /** Form fields; sent as a `FormData` body. */
@@ -65,6 +69,7 @@ export function createApiContext(options: ApiContextOptions = {}): APIContext {
     params: options.params ?? {},
     locals: {
       user: options.user ?? null,
+      sessionUnresolved: options.sessionUnresolved ?? false,
       theme: DEFAULT_THEME,
     },
     cookies: {

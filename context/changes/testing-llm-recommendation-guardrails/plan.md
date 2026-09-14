@@ -641,7 +641,7 @@ fixture is not fat enough.
 #### Manual
 
 - [x] 3.6 Break-check the split (return `no_match` from the new branch) — hallucination case red, empty-array case green — verified 2026-09-13; the hallucination case reddened, the empty-array case stayed green
-- [ ] 3.7 Deterministic provocation on `/play` renders the red panel with the new copy
+- [x] 3.7 Deterministic provocation on `/play` renders the red panel with the new copy — verified 2026-09-14 in Chrome; with the allow-list filter forced to drop every id (`recommendations.ts:159`), players=2/time=45 rendered the **red** error panel reading “The AI suggested games that don’t fit what you asked for. Please try again.” (`out_of_catalog`), not the neutral no-match copy; `[recommendations] provider named games outside the catalog` fired server-side. Its id list was empty because the break edits only the filter, not the `fabricated` computation — the ids themselves are asserted by 3.5. Edit restored, tree clean
 
 ### Phase 4: Player-count guard and duplicate collapse
 
@@ -658,7 +658,7 @@ fixture is not fat enough.
 - [x] 4.6 Break-check the dedupe — duplicate case red — verified 2026-09-13; only the duplicate case reddened
 - [x] 4.7 Break-check the reason choice (guard path returns `out_of_catalog`) — all-violating case red — verified 2026-09-13; the “nothing in the catalog fits” case reddened (post-F1 semantics)
 - [x] 4.8 The "time is not enforced" case is named as deliberate — verified 2026-09-13; “keeps a game that exceeds the available minutes”, with a comment stating why
-- [ ] 4.9 A normal recommendation on `/play` still renders after the guard lands
+- [x] 4.9 A normal recommendation on `/play` still renders after the guard lands — verified 2026-09-14 in Chrome; players=2/time=45 against the 4-game catalog returned two ranked cards (Patchwork, Azul — both 2-player, under 45 min) with reasons and shelf/played badges; re-confirmed after the 3.7 edit was restored. One earlier submit showed the generic “Something went wrong” panel with nothing in the server log — a transient provider hiccup, not reproducible across the four later requests
 
 ### Phase 5: Cookbook entry, test-plan backports, and the gate
 

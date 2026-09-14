@@ -1,180 +1,141 @@
-# 10x Astro Starter
+# MyCatalog
 
-![](./public/template.png)
+MyCatalog is a shared board-game shelf for a household. It keeps track of the games you own, what is currently on loan, what each member has played and liked, and helps answer: **what should we play tonight?**
 
-A modern, opinionated starter template for building fast, accessible web applications.
+Built as an Astro SSR application, MyCatalog uses Supabase for authentication and data storage. Its optional AI recommendation flow uses OpenRouter to rank games from the household's own catalog.
 
-## Tech Stack
+## Features
 
-- [Astro](https://astro.build/) v6 - Modern web framework with server-first rendering
-- [React](https://react.dev/) v19 - UI library for interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
-- [Supabase](https://supabase.com/) - Authentication and backend-as-a-service
-- [Cloudflare Workers](https://workers.cloudflare.com/) - Edge deployment runtime
+- Shared authenticated catalog: add, edit, filter, and softly delete board games.
+- Game details: title, authors, genre, supported player count, and average play time.
+- Loan tracking, so the household can see which games are unavailable.
+- Per-member play history and like/dislike preferences.
+- Preference statistics across household members.
+- AI-assisted game-night recommendations based on player count, available time, genre, and recorded preferences. Recommendations are restricted to games already in the catalog.
+- Email/password authentication, protected application routes, and selectable themes.
+
+## Technology
+
+- [Astro](https://astro.build/) 6 with server-side rendering
+- [React](https://react.dev/) 19 islands for interactive UI
+- [TypeScript](https://www.typescriptlang.org/) and [Tailwind CSS](https://tailwindcss.com/) 4
+- [Supabase](https://supabase.com/) Auth and PostgreSQL with row-level security
+- [OpenRouter](https://openrouter.ai/) for optional AI recommendations
+- [Cloudflare Workers](https://workers.cloudflare.com/) deployment target
 
 ## Prerequisites
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+- Node.js 22.14.0 (see `.nvmrc`)
+- npm
+- Docker and the Supabase CLI for a local database, or an existing Supabase project
+- An OpenRouter API key if you want to enable AI recommendations
 
-## Getting Started
+## Getting started
 
-1. Clone the repository:
+1. Install dependencies:
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+   ```bash
+   npm install
+   ```
 
-2. Install dependencies:
+2. Create environment files for Astro and local Cloudflare development:
 
-```bash
-npm install
-```
+   ```bash
+   cp .env.example .env
+   cp .env.example .dev.vars
+   ```
 
-3. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
+3. Configure the required Supabase values in both files:
 
-4. Create a `.dev.vars` file for local Cloudflare dev secrets:
+   ```dotenv
+   SUPABASE_URL=https://<project-ref>.supabase.co
+   SUPABASE_KEY=<supabase-anon-key>
+   ```
 
-```bash
-cp .env.example .dev.vars
-```
+   To enable recommendations, also provide:
 
-5. Run the development server:
+   ```dotenv
+   OPENROUTER_API_KEY=<openrouter-api-key>
+   # Optional; defaults to openai/gpt-4o-mini
+   OPENROUTER_MODEL=<model-id>
+   ```
 
-```bash
-npm run dev
-```
+4. Start the development server:
 
-## Available Scripts
+   ```bash
+   npm run dev
+   ```
 
-- `npm run dev` - Start development server (Cloudflare workerd runtime)
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint with type-checked rules
-- `npm run lint:fix` - Auto-fix ESLint issues
-- `npm run format` - Run Prettier
+5. Open the local URL shown by Astro, create an account, and add games from the **Catalog** page.
 
-## Project Structure
+## Local Supabase
 
-```md
-.
-├── src/
-│ ├── layouts/ # Astro layouts
-│ ├── pages/ # Astro pages
-│ │ └── api/ # API endpoints
-│ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
-├── public/ # Public assets
-├── wrangler.jsonc # Cloudflare Workers config
-```
-
-## Supabase Configuration
-
-This project uses [Supabase](https://supabase.com/) for authentication. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
-
-### First-time setup (local, no cloud project needed)
-
-Requires [Docker](https://www.docker.com/) and ~7 GB RAM.
-
-1. Create your `.env` file:
-
-```bash
-cp .env.example .env
-```
-
-2. Initialize the local Supabase project (creates a `supabase/` config folder):
-
-```bash
-npx supabase init
-```
-
-3. Start the local stack (downloads Docker images on first run):
+The repository includes migrations for the shared `games` catalog and per-member `game_played` and `game_preference` state. To use a local Supabase stack:
 
 ```bash
 npx supabase start
 ```
 
-4. Copy the credentials printed by the CLI into your `.env` and `.dev.vars`:
-
-```
-SUPABASE_URL=http://127.0.0.1:54331
-SUPABASE_KEY=<anon key from CLI output>
-```
-
-5. To stop the stack when done:
+Copy the URL and anon key printed by the CLI into `.env` and `.dev.vars`. The migrations in `supabase/migrations/` are applied when a fresh local stack starts. Stop it with:
 
 ```bash
 npx supabase stop
 ```
 
-The local Studio UI is available at `http://localhost:54333`.
+The local project is deliberately named `my-catalog` and uses ports `54330`–`54339`; its Studio is normally available at `http://localhost:54333`.
 
-This project's stack runs on ports 54330-54339 rather than the CLI defaults, and
-under `project_id = "my-catalog"`. Both are deliberate: the starter's default id
-(`10x-astro-starter`) collides with any other repo left on it, and `supabase start`
-would then silently reuse that project's containers — leaving this repo's
-migrations unapplied against a foreign schema.
+## Available commands
 
-`supabase start` applies the migrations in `supabase/migrations/` on a fresh stack: `games`, `game_played` and `game_preference`, alongside Supabase Auth's built-in `auth.users`.
+| Command             | Description                                        |
+| ------------------- | -------------------------------------------------- |
+| `npm run dev`       | Start the development server.                      |
+| `npm run build`     | Build the production Cloudflare Worker bundle.     |
+| `npm run preview`   | Preview the production build.                      |
+| `npm run typecheck` | Run TypeScript checks.                             |
+| `npm run lint`      | Run ESLint.                                        |
+| `npm test`          | Run the unit and integration test suite.           |
+| `npm run test:db`   | Run database and RLS tests against local Supabase. |
+| `npm run format`    | Format supported files with Prettier.              |
 
-### Using a cloud Supabase project instead
-
-If you prefer to use a hosted Supabase project, add these variables to your `.env` and `.dev.vars` files:
-
-| Variable       | Description                                                |
-| -------------- | ---------------------------------------------------------- |
-| `SUPABASE_URL` | Project URL from Supabase dashboard → Settings → API       |
-| `SUPABASE_KEY` | `anon` public key from Supabase dashboard → Settings → API |
-
-```
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_KEY=<anon-key>
-```
-
-### Email confirmation in local development
-
-By default Supabase requires email confirmation before a user can sign in. To skip this during local development:
-
-1. Open the Supabase dashboard for your project
-2. Go to **Authentication → Email → Confirm email**
-3. Toggle it **off**
-
-Users can then sign in immediately after sign-up without clicking a confirmation link.
-
-### Auth routes
-
-| Route                 | Description                                                             |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/auth/signin`        | Email/password sign-in form                                             |
-| `/auth/signup`        | Email/password sign-up form                                             |
-| `/auth/confirm-email` | Post-signup "check your inbox" page                                     |
-| `/dashboard`          | Example protected page (redirects to `/auth/signin` if unauthenticated) |
-
-Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
-
-## Deployment
-
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/).
-
-1. Build the project:
+Before submitting application changes, run:
 
 ```bash
+npm run typecheck
+npm run lint
+npm test
 npm run build
 ```
 
-2. Deploy with Wrangler:
+## Project structure
+
+```text
+src/
+├── components/       # Astro and React interface components
+├── layouts/          # Shared page layout
+├── lib/              # Supabase client, services, and helpers
+├── pages/            # Routes and API handlers
+│   └── api/          # Authentication, games, theme, and recommendation endpoints
+├── middleware.ts     # Session resolution and route protection
+└── types.ts          # Shared domain and API types
+supabase/migrations/  # Database schema and RLS policies
+```
+
+## Security and data model
+
+All catalog, play-history, and preference data requires authentication. The catalog is shared by authenticated household members; play history and preferences are stored per member. Supabase row-level security backs these rules, so client requests cannot bypass them.
+
+`SUPABASE_URL`, `SUPABASE_KEY`, and `OPENROUTER_API_KEY` are server-only secrets. Do not expose them in client-side code or commit `.env` or `.dev.vars`.
+
+## Deployment
+
+MyCatalog is configured for Cloudflare Workers:
 
 ```bash
+npm run build
 npx wrangler deploy
 ```
 
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
-
-## CI
-
-GitHub Actions runs lint + build on every push and PR to `master`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+Set `SUPABASE_URL`, `SUPABASE_KEY`, and, if recommendations are enabled, `OPENROUTER_API_KEY` as Cloudflare secrets. `OPENROUTER_MODEL` is optional.
 
 ## License
 

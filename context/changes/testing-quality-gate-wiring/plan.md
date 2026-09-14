@@ -411,11 +411,11 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Automated
 
-- [x] 1.1 `npm run typecheck` passes
-- [x] 1.2 `npm run lint` passes
-- [x] 1.3 `npm test` passes
-- [x] 1.4 `npm run build` passes
-- [x] 1.5 The configured gate refuses a staged type error: hook command exits non-zero
+- [x] 1.1 `npm run typecheck` passes — ba6c5ba
+- [x] 1.2 `npm run lint` passes — ba6c5ba
+- [x] 1.3 `npm test` passes — ba6c5ba
+- [x] 1.4 `npm run build` passes — ba6c5ba
+- [x] 1.5 The configured gate refuses a staged type error: hook command exits non-zero — ba6c5ba
 
 #### Manual
 
@@ -430,12 +430,12 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Automated
 
-- [ ] 2.1 `npm run typecheck` passes
-- [ ] 2.2 `npm run lint` passes
-- [ ] 2.3 `npm test` passes
-- [ ] 2.4 `.claude/hooks/quality-gate.sh` is executable and tracked by git
-- [ ] 2.5 `.claude/settings.json` is tracked by git
-- [ ] 2.6 The script exits 0 and runs no commands on `{"stop_hook_active":true}` with a dirty tree
+- [x] 2.1 `npm run typecheck` passes
+- [x] 2.2 `npm run lint` passes
+- [x] 2.3 `npm test` passes
+- [x] 2.4 `.claude/hooks/quality-gate.sh` is executable and tracked by git
+- [x] 2.5 `.claude/settings.json` is tracked by git
+- [x] 2.6 The script exits 0 and runs no commands on `{"stop_hook_active":true}` with a dirty tree
 
 #### Manual
 

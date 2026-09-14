@@ -30,7 +30,9 @@ Fixers (not gates, and not run by CI):
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
 
-Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
+Pre-commit hooks: husky + lint-staged, configured in `lint-staged.config.js`. Staging a `*.{ts,tsx,astro}` file runs `eslint --fix` on it, then `npm run typecheck` and `npm test` project-wide; `*.{json,css,md}` gets `prettier --write`. A docs-only commit therefore skips the code gate. The commands run inside lint-staged on purpose — it hides unstaged changes, so the gate grades the staged index rather than the working tree. See `context/foundation/test-plan.md` §6.6.
+
+Husky activates through the `prepare` script on `npm install`; without it `core.hooksPath` is never set and **no hook runs at all**. If commits are suspiciously fast, check `git config core.hooksPath` — it should be `.husky/_`.
 
 ## Architecture
 

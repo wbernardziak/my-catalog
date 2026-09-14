@@ -793,4 +793,4 @@ weakens a contract; each either keeps a check fail-closed or adds one the plan d
 
 #### Manual
 
-- [ ] 6.3 A fresh agent session finds §6.8 and `gate-wiring.test.ts` when asked how to add a guard
+- [x] 6.3 A fresh agent session finds §6.8 and `gate-wiring.test.ts` when asked how to add a guard — found both from `CLAUDE.md`'s pointer, plus `guardHarness.ts` and the `ci.yml`/`package.json` assertions (2026-09-14)

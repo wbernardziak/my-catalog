@@ -79,7 +79,8 @@ diff.
 - `research.md` present (done).
 - The six planning decisions (made 2026-09-14).
 - Per `lessons.md`, before `/10x-implement`: a GitHub tracking issue, one issue per phase (label `enhancement`), and a `feat/test-plan-refresh-2026-09-14` branch.
-  **Estimated effort:** ~1 session across 3 small phases.
+
+**Estimated effort:** ~1 session across 3 small phases.
 
 ## Open Risks and Assumptions
 

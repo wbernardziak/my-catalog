@@ -208,13 +208,17 @@ Each row is a discrete rollout phase that will open its own change folder
 via `/10x-new`. Status moves left-to-right through the values below; the
 orchestrator updates Status as artifacts appear on disk.
 
-| #   | Phase name                          | Goal (one line)                                                                                                                                        | Risks covered | Test types                                              | Status   | Change folder                                                       |
-| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------------------------------------- | -------- | ------------------------------------------------------------------- |
-| 1   | API boundary contract               | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4        | integration (route handlers)                            | complete | `context/archive/2026-09-11-testing-api-boundary-contract/`         |
-| 2   | Per-member state attribution        | Prove played state and preference stay bound to the correct household member at both the query and the policy layer                                    | #1            | integration + DB-level RLS verification                 | complete | `context/archive/2026-09-12-testing-per-member-state-attribution/`  |
-| 3   | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games                                           | #6            | integration (query layer) + shape gate + source ratchet | complete | `context/archive/2026-09-13-testing-catalog-integrity-soft-delete/` |
-| 4   | LLM recommendation guardrails       | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses                  | #3, #5, #7    | contract tests with stubbed provider                    | complete | `context/archive/2026-09-13-testing-llm-recommendation-guardrails/` |
-| 5   | Quality-gate wiring                 | Lock the floor: keep the suite non-optional in CI (the step already runs) and gate the agent's edit loop                                               | cross-cutting | gates                                                   | complete | `context/archive/2026-09-14-testing-quality-gate-wiring/`           |
+| #   | Phase name                          | Goal (one line)                                                                                                                                                                   | Risks covered | Test types                                                                        | Status      | Change folder                                                       |
+| --- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| 1   | API boundary contract               | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects                            | #2, #4        | integration (route handlers)                                                      | complete    | `context/archive/2026-09-11-testing-api-boundary-contract/`         |
+| 2   | Per-member state attribution        | Prove played state and preference stay bound to the correct household member at both the query and the policy layer                                                               | #1            | integration + DB-level RLS verification                                           | complete    | `context/archive/2026-09-12-testing-per-member-state-attribution/`  |
+| 3   | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games                                                                      | #6            | integration (query layer) + shape gate + source ratchet                           | complete    | `context/archive/2026-09-13-testing-catalog-integrity-soft-delete/` |
+| 4   | LLM recommendation guardrails       | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses                                             | #3, #5, #7    | contract tests with stubbed provider                                              | complete    | `context/archive/2026-09-13-testing-llm-recommendation-guardrails/` |
+| 5   | Quality-gate wiring                 | Lock the floor: keep the suite non-optional in CI (the step already runs) and gate the agent's edit loop                                                                          | cross-cutting | gates                                                                             | complete    | `context/archive/2026-09-14-testing-quality-gate-wiring/`           |
+| 6   | Guard self-verification             | Prove every guard and gate fails on a known-bad input and on an empty scan, tracks the installed tooling, and cannot be dropped from CI unnoticed                                 | #10           | unit self-tests over fixture trees + workflow/script wiring assertion + `bash -n` | not started | —                                                                   |
+| 7   | Configuration parity                | Prove runtime-tunable settings are read at runtime, schema/stub/example config cannot drift silently, and live production parity is checked before every deploy                   | #9            | unit (schema parity) + pre-deploy checklist                                       | not started | —                                                                   |
+| 8   | Provider failure attribution        | Prove every provider refusal or change is logged with its cause and shown to the member truthfully — a daily quota as its own reason, and signup never claiming an email was sent | #8            | contract tests with captured-fixture `Response` stubs                             | not started | —                                                                   |
+| 9   | Session round-trip integration      | Prove a real sign-in cookie is read back by the middleware as the same member, and the page gate admits and refuses correctly, without a browser                                  | #11           | integration (`db` project, local stack) + middleware unit tests                   | not started | —                                                                   |
 
 **Order rationale.** Phase 1 is the interview's own stated gap (Q4), sits at
 the cheapest layer, covers the abuse surface, and establishes the
@@ -226,12 +230,22 @@ deterministic and independent of the database harness, sequenced after the
 data-layer risks so it exercises a catalog layer already trusted. Phase 5 is
 last on purpose: gating a suite that barely exists is noise.
 
-**No browser/e2e phase is proposed.** Under cost × signal every risk above
-has a cheaper deterministic layer that catches it, and interview Q5 rules
-out visual regression. The browser tooling noted in §4 is available for
-manual verification, not as a rollout phase. Revisit if a risk surfaces
-that only the full deployed shape (auth cookie plus handler plus island
-hydration) can expose.
+**Order rationale, Phases 6–9 (refresh 2026-09-14).** Phase 6 goes first: it is
+offline and cheap, it fixes a defect already proven by fixture, and it protects every
+gate the later phases add — a later phase's new check is only as trustworthy as the
+guards around it. Phase 7 is next: also offline, it fixes the build-time
+`OPENROUTER_MODEL` defect and writes the pre-deploy checklist. Phase 8 fixes the one
+branch that hides three failure causes, and follows Phase 7 because the runtime-model
+change touches the same service. Phase 9 is last: it needs the `db` harness and an
+`astro:middleware` alias, and the history shows no production incident behind it.
+
+**Behavioural browser testing is deferred, not ruled out.** The original authoring
+concluded no risk needed a browser. Risk #11 is the deployed-shape risk that paragraph
+asked to revisit for, and research split it: the cookie and middleware half is testable
+in-process, which is Phase 9. What remains browser-only — an island that fails to
+hydrate, and an island's real request to its route — is recorded in §7 ("Behavioural
+browser E2E slice") with the trigger for pulling it into a phase. Visual testing stays
+excluded (interview Q5).
 
 ## 4. Stack
 
@@ -602,14 +616,40 @@ contributors should respect these unless the underlying assumption changes.
 - **Theme and visual regression** — `lint:colors` and `lint:contrast`
   already gate the theme surface deterministically; screenshot diffs on top
   would cost more and add no signal. Re-evaluate if a theme regression ships
-  that neither script catches. (Source: Phase 2 interview Q5.)
+  that neither script catches. (Source: Phase 2 interview Q5.) Issue #43 (porting
+  the runtime contrast audit into E2E) is deliberately outside the 2026-09-14
+  refresh, pending a separate decision; the refresh interview's Q5 kept visual
+  testing excluded.
 - **Preference statistics accuracy** — the only nice-to-have FR (FR-006),
   low blast radius if a count is off by one. Re-evaluate if statistics
   become an input to recommendations rather than a read-only view. (Source:
   Phase 2 interview Q5.)
-- **Browser/e2e layer** — every risk in §2 has a cheaper deterministic layer
-  that catches it. Re-evaluate if a risk surfaces that only the full
-  deployed shape can expose. (Source: §1 principle 1, cost × signal.)
+- **Behavioural browser E2E slice** — at most three flows: sign in → open
+  `/catalog` → sign out → `/catalog` redirects; `/play` with no provider key,
+  where client validation blocks an empty submit and a valid one reaches the
+  `not_configured` panel; optionally Edit on a seeded catalog card, proving the
+  island hydrated. Run against `astro build` plus `astro preview` and the local
+  Supabase stack, never `astro dev` (its Vite cache produced dev-only hydration
+  failures on 2026-08-01). Behavioural only (interview Q5). Excluded for now
+  because §3 Phase 9 covers the cookie and middleware half in-process for far
+  less, and no browser-only regression has reached production. Re-evaluate once
+  Phase 9 has landed **and** either a hydration or island-request regression
+  ships, or manual Chrome verification rows keep recurring in plans. (Source:
+  research 2026-09-14 §Risk D; supersedes the 2026-09-02 "Browser/e2e layer"
+  entry.)
+- **Real-provider smoke test** — a scheduled call to the real LLM provider to
+  catch response drift that stubs cannot see. Excluded because each run spends
+  one of the free tier's 50 daily requests the household itself depends on, and
+  it needs an `OPENROUTER_API_KEY` repository secret CI does not have. §3 Phase 8's
+  captured-fixture contract tests carry the drift signal instead. Re-evaluate if
+  a provider drift reaches production that the captured fixture did not
+  represent; if adopted, run it nightly or on manual dispatch, never per push.
+  (Source: research 2026-09-14 §Risk A.)
+- **Cloudflare Workers platform limits** — CPU time and subrequest caps. No
+  evidence in the repo or its history that a request has come near either; the
+  only mention is an unknown-unknowns note in `infrastructure.md`. Re-evaluate
+  if `wrangler tail` shows a request failing on a platform limit. (Source:
+  research 2026-09-14 §Risk B.)
 - **Runtime accessibility assertions** — `eslint-plugin-jsx-a11y` covers the
   static surface; no §2 risk points at a11y today. Re-evaluate if the
   product takes on users outside the two-person household. (Source: §2 risk

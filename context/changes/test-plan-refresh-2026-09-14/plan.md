@@ -505,11 +505,11 @@ None. The docs-only commit skips the code gate (lint-staged runs only `prettier 
 
 #### Automated
 
-- [x] 1.1 Prettier formats the file cleanly
-- [x] 1.2 §2 risk table has exactly 11 data rows numbered 1–11
-- [x] 1.3 Risk Response Guidance table has rows #1–#11
-- [x] 1.4 No code anchor in the new Source cells
-- [x] 1.5 Rows #1–#7 of both tables unchanged apart from Prettier re-padding
+- [x] 1.1 Prettier formats the file cleanly — 0b9de1c
+- [x] 1.2 §2 risk table has exactly 11 data rows numbered 1–11 — 0b9de1c
+- [x] 1.3 Risk Response Guidance table has rows #1–#11 — 0b9de1c
+- [x] 1.4 No code anchor in the new Source cells — 0b9de1c
+- [x] 1.5 Rows #1–#7 of both tables unchanged apart from Prettier re-padding — 0b9de1c
 
 #### Manual
 
@@ -521,10 +521,10 @@ None. The docs-only commit skips the code gate (lint-staged runs only `prettier 
 
 #### Automated
 
-- [ ] 2.1 Prettier formats the file cleanly
-- [ ] 2.2 §3 has 9 rows and exactly 4 are not started
-- [ ] 2.3 Every §3 status is a parser literal
-- [ ] 2.4 "No browser/e2e phase is proposed" paragraph removed
+- [x] 2.1 Prettier formats the file cleanly
+- [x] 2.2 §3 has 9 rows and exactly 4 are not started
+- [x] 2.3 Every §3 status is a parser literal
+- [x] 2.4 "No browser/e2e phase is proposed" paragraph removed
 
 #### Manual
 

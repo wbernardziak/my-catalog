@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "prepare": "husky",
     "dev": "astro dev",
     "dev:clean": "rm -rf node_modules/.vite && astro dev",
     "build": "astro build",

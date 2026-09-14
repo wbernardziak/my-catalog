@@ -743,9 +743,9 @@ palette and prefix list produce no hits in `src/`.
 
 #### Automated
 
-- [ ] 5.1 Wiring test passes: `npx vitest run --project unit scripts/gate-wiring.test.ts`
-- [ ] 5.2 Full unit suite passes: `npm test`
-- [ ] 5.3 Typecheck and lint pass: `npm run typecheck && npm run lint`
+- [x] 5.1 Wiring test passes: `npx vitest run --project unit scripts/gate-wiring.test.ts`
+- [x] 5.2 Full unit suite passes: `npm test`
+- [x] 5.3 Typecheck and lint pass: `npm run typecheck && npm run lint`
 
 #### Manual
 

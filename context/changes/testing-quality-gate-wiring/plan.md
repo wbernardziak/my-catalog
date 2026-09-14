@@ -419,12 +419,12 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Manual
 
-- [ ] 1.6 Deliberate-break check, type error: staged `tsc` error aborts the commit, restored
-- [ ] 1.7 Deliberate-break check, failing test: staged failing assertion aborts the commit, restored
-- [ ] 1.8 A docs-only commit skips the gate and is visibly fast
-- [ ] 1.9 A commit that only deletes a `.ts` file does not trigger the gate (nothing staged matches the glob)
-- [ ] 1.10 Staged-vs-worktree check: a broken staged version with a fixed working copy is still refused
-- [ ] 1.11 `git commit --no-verify` still bypasses, as designed
+- [x] 1.6 Deliberate-break check, type error: staged `tsc` error aborts the commit, restored — verified 2026-09-14; commit aborted in 13.6s naming `src/lib/__m16.ts(1,14): error TS2322`. First run of this row exposed that husky was never activated (commit succeeded in 30ms); fixed in c5facff
+- [x] 1.7 Deliberate-break check, failing test: staged failing assertion aborts the commit, restored — verified 2026-09-14; commit aborted in 16.5s on `AssertionError: expected {} to deeply equal { probe: 'wrong' }` — the `npm test` leg, which row 1.5 never reached
+- [x] 1.8 A docs-only commit skips the gate and is visibly fast — verified 2026-09-14; docs-only commit succeeded in 1165ms and ran neither typecheck nor the suite
+- [x] 1.9 A commit that only deletes a `.ts` file does not trigger the gate (nothing staged matches the glob) — verified 2026-09-14; deletion-only commit succeeded in 832ms, no typecheck; nothing staged matched the glob
+- [x] 1.10 Staged-vs-worktree check: a broken staged version with a fixed working copy is still refused — verified 2026-09-14; broken version staged with the working copy fixed, commit still refused in 13.8s naming TS2322 — the staged index was graded, not the tree
+- [x] 1.11 `git commit --no-verify` still bypasses, as designed — verified 2026-09-14; `--no-verify` committed a staged type error in 23ms, as designed
 
 ### Phase 2: Agent Stop hook
 
@@ -440,10 +440,10 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 #### Manual
 
 - [ ] 2.7 Deliberate-break check: a failing assertion at turn end blocks the agent from stopping and hands it the failure text, restored
-- [ ] 2.8 A question-answering turn with a clean tree runs no commands
+- [x] 2.8 A question-answering turn with a clean tree runs no commands — verified 2026-09-14; clean tree, hook exited 0 in 153ms having run no commands
 - [ ] 2.9 The ~5s turn cost on code-editing turns is tolerable in practice
 - [ ] 2.10 The hook does not double-run against `/10x-implement` in a way that makes a long session unpleasant
-- [ ] 2.11 A turn that ends in a commit runs no gate, confirming the partition between the two layers
+- [x] 2.11 A turn that ends in a commit runs no gate, confirming the partition between the two layers — verified 2026-09-14; immediately after a commit the tree was clean and the hook exited 0 in 191ms
 
 ### Phase 3: Close-out
 
@@ -456,5 +456,5 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 #### Manual
 
 - [ ] 3.4 §6's new sub-section alone explains what runs when and how to escape each gate
-- [ ] 3.5 §5 and §3 match what is actually wired, checked row by row
-- [ ] 3.6 Every rollout row in §3 reads `complete`
+- [x] 3.5 §5 and §3 match what is actually wired, checked row by row — verified 2026-09-14; §5 lint and edit-loop rows and §3 row 5 checked against the live config row by row
+- [x] 3.6 Every rollout row in §3 reads `complete` — verified 2026-09-14; all five rollout rows read `complete`

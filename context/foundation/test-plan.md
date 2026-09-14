@@ -450,6 +450,12 @@ payload }` when the payload matters (e.g. the member id came from the session,
 Two layers, both running the same two commands — `npm run typecheck` and
 `npm test` — so "green" has one local definition.
 
+**Activation first.** husky only runs hooks once `core.hooksPath` points at
+`.husky/_`, which the `prepare` script sets during `npm install`. That script was
+missing until 2026-09-14, so `.husky/pre-commit` had never executed in a fresh
+clone — a commit with a staged type error sailed through in 30ms. If commits look
+suspiciously fast, check `git config core.hooksPath` before trusting the gate.
+
 **At commit time** (`.husky/pre-commit` → `npx lint-staged --hide-unstaged`).
 Configured in `lint-staged.config.js`, not `package.json`. Fires only when a
 `*.{ts,tsx,astro}` file is staged, so a docs-only commit never pays for it. The

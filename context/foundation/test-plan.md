@@ -55,7 +55,7 @@ research's job, see §1 principle #3).
 | 8   | An external provider refuses or changes — a model retired, a request flag rejected, a daily quota exhausted, a credential revoked, the response envelope moved — and the failure cannot be told apart from an outage: the member is told something untrue ("try again shortly"), or a provider success that sent nothing is presented as "we sent you an email", and no server log names the cause | High   | Medium     | refresh interview Q1, Q2 (`context/changes/test-plan-refresh-2026-09-14/change.md`); archive `2026-08-01-visual-identity-themes/plan.md` (a live 429 quota exhaustion, a `:free` model rejecting a request flag); archive `2026-09-13-testing-llm-recommendation-guardrails/research.md` (unlogged non-2xx left open); `lessons.md` "Log every non-2xx branch"; hot-spot dirs `src/pages/api` (35/30d), `src/lib/services` (12/30d); research 2026-09-14 (`context/changes/test-plan-refresh-2026-09-14/research.md`) |
 | 9   | A configuration value differs between where it is documented and where production actually reads it — a setting documented as runtime-tunable frozen at build time, a wrong-but-present credential failing silently, test and example config drifting from the schema — so production behaves differently from what local and CI verified                                                          | High   | Medium     | refresh interview Q3; `lessons.md` "Push migrations to production as the final step"; `infrastructure.md` pre-mortem (secrets drifting between `.dev.vars`, GitHub Actions and Cloudflare); archive `2026-09-12-testing-per-member-state-attribution/change.md` (local `project_id` collision); hot-spot dir `.github/workflows` (4/30d); research 2026-09-14                                                                                                                                                         |
 | 10  | A quality gate or guard reports green while checking nothing, or while missing a real violation — a scan that matched zero files, a hardcoded list that fell behind the installed tooling, a gate step removed from CI — so the regression it exists to catch ships                                                                                                                                | Medium | High       | archive `2026-09-14-testing-quality-gate-wiring/reviews/impl-review.md` (F3, decision pending); the same archive's pre-commit hook that never ran in a fresh clone; hot-spot dirs `scripts` (2/30d), `.github/workflows` (4/30d); research 2026-09-14 (stale colour palette proven by fixture)                                                                                                                                                                                                                        |
-| 11  | A signed-in session breaks between layers that are each tested only in isolation — the session cookie set at sign-in is not read back by the middleware, the page gate admits an anonymous request or bounces a signed-in one, an island's request no longer matches its route — so the household cannot sign in or use a feature while every unit and route test is green                         | High   | Low        | refresh interview Q4; no automated test exercises the cookie → middleware → `locals.user` path (research 2026-09-14 §Risk D); PRD §Access Control; hot-spot dir `src/pages/api` (35/30d)                                                                                                                                                                                                                                                                                                                              |
+| 11  | A signed-in session breaks between layers that are each tested only in isolation — the session cookie set at sign-in is not read back by the middleware, the page gate admits an anonymous request or bounces a signed-in one, an island's request no longer matches its route — so the household cannot sign in or use a feature while every unit and route test is green                         | High   | Low        | refresh interview Q4; no automated test exercises the sign-in → session → next request path (research 2026-09-14 §Risk D); PRD §Access Control; hot-spot dir `src/pages/api` (35/30d)                                                                                                                                                                                                                                                                                                                                 |
 
 Risk #7 is High impact × Low likelihood, the shape that usually belongs to
 observability rather than a test. It earns a row here only because a
@@ -139,11 +139,14 @@ The refresh interview surfaced five risks, all where the app meets something out
 they map as A+B → #8, C → #9, E → #10, D → #11. Rows #1–#7 are unchanged. The 30-day
 hot-spot window at refresh was `src/pages/api` 35, `src/test/db` 19, `src/lib/services`
 12, `.github/workflows` 4, `scripts` 2 — §1's "window empty" line reflects authoring time.
+These count file-change entries (one per file per commit) over the 30 days to `c1f9a83`,
+not distinct files. The refresh widened §1's hot-spot scope to add `.github/workflows`,
+because CI configuration is where the gate and configuration risks (#9, #10) live.
 
 - **#8 vs #5.** #5 guards that the member sees a clear failure rather than an invented
   recommendation, and it is covered. #8 guards that the failure's _cause_ is attributable
-  and its copy is _true_. One unlogged branch (`recommendations.ts:114-128`) is where a
-  retired model, an exhausted quota and a bad key all land today.
+  and its copy is _true_. The unlogged non-2xx branch (`recommendations.ts:118-120`) is
+  where a retired model, an exhausted quota and a bad key all land today.
 - **#11 rating.** #11 is High × Low, the shape that usually belongs to observability. It
   earns a row because an in-process integration test is cheap and deterministic, not
   because regressions have shipped: research found no cookie or hydration defect ever
@@ -151,7 +154,7 @@ hot-spot window at refresh was `src/pages/api` 35, `src/test/db` 19, `src/lib/se
   were panel rendering and a provider hiccup.
 - **Decisions recorded as oracles (2026-09-14).** `OPENROUTER_MODEL` becomes runtime-read
   (it is `access: "public"` today, so its value is baked in at build, contradicting the
-  code comment and README); a daily-quota 429 gets its own `quota_exhausted` reason and
+  code comment that promises a swap without a code change); a daily-quota 429 gets its own `quota_exhausted` reason and
   copy; the confirm-email page uses copy that is true whether or not the address was new;
   live production parity lives in a pre-deploy checklist.
 
@@ -304,9 +307,10 @@ phase that will write it.
 
 - **Location**: next to the unit under test in `src/lib/services/`.
 - **Naming**: `<module>.test.ts`.
-- **Reference test**: `src/lib/services/gameFilters.test.ts` (100 lines) or
-  `src/lib/services/recommendations.test.ts` (206 lines) — the two largest
-  existing examples.
+- **Reference test**: `src/lib/services/recommendations.test.ts` (362 lines) or
+  `src/lib/services/recommendationView.test.ts` (149 lines) — the two largest
+  service examples as of 2026-09-14; `gameFilters.test.ts` (100 lines) is a
+  compact pure-function example.
 - **Run locally**: `npm test`.
 
 ### 6.2 Adding an integration test at an API boundary
@@ -640,10 +644,9 @@ contributors should respect these unless the underlying assumption changes.
 - **Theme and visual regression** — `lint:colors` and `lint:contrast`
   already gate the theme surface deterministically; screenshot diffs on top
   would cost more and add no signal. Re-evaluate if a theme regression ships
-  that neither script catches. (Source: Phase 2 interview Q5.) Issue #43 (porting
-  the runtime contrast audit into E2E) is deliberately outside the 2026-09-14
-  refresh, pending a separate decision; the refresh interview's Q5 kept visual
-  testing excluded.
+  that neither script catches. Issue #43 (porting the runtime contrast audit into
+  E2E) is deliberately outside the 2026-09-14 refresh, pending a separate
+  decision. (Source: Phase 2 interview Q5; refresh interview Q5.)
 - **Preference statistics accuracy** — the only nice-to-have FR (FR-006),
   low blast radius if a count is off by one. Re-evaluate if statistics
   become an input to recommendations rather than a read-only view. (Source:
@@ -694,15 +697,17 @@ contributors should respect these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-09-02
+- Strategy §1 last reviewed: 2026-09-02
+- Strategy §2–§5 last reviewed: 2026-09-14 (refresh)
 - Stack versions last verified: 2026-09-14
 - AI-native tool references last verified: 2026-09-14
 - Refresh 2026-09-14 (`context/changes/test-plan-refresh-2026-09-14/`): §2 gained
   #8–#11 (refresh risks A+B, C, E, D) with response guidance and a dated note, #1–#7
   unchanged; §3 gained Phases 6–9 and the browser paragraph became "deferred, not ruled
   out"; §4/§5 facts corrected at `c1f9a83` and four planned gates added; §6.4/§6.5 line
-  references corrected and §6.8–6.11 placeholders added; §7 gained three exclusions and
-  the browser entry was narrowed. §1 was not reviewed and stays as authored.
+  references corrected and §6.8–6.11 placeholders added; §7 gained two exclusions and
+  the browser entry was narrowed; §5's optional pre-prod smoke became the required
+  pre-deploy checklist. §1 was not reviewed and stays as authored.
 - Correction 2026-09-11: §4 CI row and §5 gate row claimed no CI test step;
   `.github/workflows/ci.yml` has run `npm test` since `04f826a`. §3 Phase 5
   narrowed accordingly. (SHA corrected 2026-09-14 by §3 Phase 5 research: the

@@ -58,7 +58,9 @@ export const POST: APIRoute = async (context) => {
   let updated;
   try {
     updated = await updateGame(supabase, id, parsed.data);
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]] could not save the changes", err);
     return context.redirect(`/catalog?error=${encodeURIComponent("Could not save changes. Please try again.")}`);
   }
 

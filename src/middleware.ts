@@ -11,16 +11,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const supabase = createClient(context.request.headers, context.cookies);
 
+  context.locals.sessionUnresolved = false;
+
   if (supabase) {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       context.locals.user = user ?? null;
-    } catch {
+    } catch (error) {
       // A transient Supabase failure must not 500 every protected route; treat an
       // unresolvable session as unauthenticated (the gate below redirects to signin).
+      // But record that it was unresolvable rather than absent: a JSON route cannot
+      // redirect, and reporting a blip as "your session expired" sends the caller to
+      // sign in again over a fault that a retry clears.
       context.locals.user = null;
+      context.locals.sessionUnresolved = true;
+      // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+      console.error("[auth] could not resolve the session", error);
     }
   } else {
     context.locals.user = null;

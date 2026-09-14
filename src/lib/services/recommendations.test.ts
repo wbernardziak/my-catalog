@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CandidateGame, RecommendationCriteria } from "@/types";
+import { initOf, providerResponse, recsResponse, stubFetch } from "@/test/providerStub";
 
 /**
  * Guardrail unit tests for the OpenRouter recommendation service.
@@ -12,12 +13,6 @@ import type { CandidateGame, RecommendationCriteria } from "@/types";
  * `OPENROUTER_API_KEY`.
  */
 
-interface ModelRec {
-  gameId: string;
-  reason: string;
-  rank: number;
-}
-
 const criteria: RecommendationCriteria = { playerCount: 4, availableMinutes: 30, genre: "party" };
 
 const candidates: CandidateGame[] = [
@@ -25,26 +20,6 @@ const candidates: CandidateGame[] = [
   { id: "b", title: "Catan", genre: "strategy", minPlayers: 3, maxPlayers: 4, averagePlayMinutes: 90 },
   { id: "c", title: "Codenames", genre: "party", minPlayers: 4, maxPlayers: 8, averagePlayMinutes: 15 },
 ];
-
-/** Build a fake OpenRouter Response whose message content is `content`. */
-function providerResponse(content: string, ok = true): Response {
-  return {
-    ok,
-    json: () => Promise.resolve({ choices: [{ message: { content } }] }),
-  } as unknown as Response;
-}
-
-/** Convenience: a successful provider response carrying the given recommendations. */
-function recsResponse(recs: ModelRec[]): Response {
-  return providerResponse(JSON.stringify({ recommendations: recs }));
-}
-
-/** Stub the global `fetch` with a vi mock and return it for assertions. */
-function stubFetch(impl: () => Promise<Response>): ReturnType<typeof vi.fn> {
-  const mock = vi.fn(impl);
-  vi.stubGlobal("fetch", mock);
-  return mock;
-}
 
 /** Fresh import of the service after the current env/module state is set. */
 async function loadRecommend() {
@@ -61,6 +36,10 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // Spies are restored here rather than at the end of each test body: an
+  // assertion that fails above an inline `mockRestore()` would otherwise leave
+  // `console.error` silenced for every case after it.
+  vi.restoreAllMocks();
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.OPENROUTER_MODEL;
 });
@@ -116,7 +95,11 @@ describe("recommend", () => {
     expect(result.recommendations.map((r) => r.gameId)).toEqual(["c"]);
   });
 
-  it("returns no_match when every recommendation is out-of-catalog", async () => {
+  // An answer whose every id was fabricated is a provider failure, not a
+  // no-match: the criteria were never the problem, so the user must not be told
+  // to adjust them (prd.md:93).
+  it("returns out_of_catalog when every recommendation is fabricated, and logs the dropped ids", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     stubFetch(() =>
       Promise.resolve(
         recsResponse([
@@ -125,6 +108,18 @@ describe("recommend", () => {
         ]),
       ),
     );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("outside the catalog"), ["zzz", "yyy"]);
+  });
+
+  // The other half of the split: the model answering "nothing suitable" is a
+  // genuine no-match, and keeps the neutral copy.
+  it("returns no_match when the model itself returns an empty list", async () => {
+    stubFetch(() => Promise.resolve(recsResponse([])));
     const recommend = await loadRecommend();
 
     const result = await recommend(criteria, candidates);
@@ -202,5 +197,166 @@ describe("recommend", () => {
 
     expect(result).toEqual({ ok: false, reason: "not_configured" });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+  // The three branches below exist in the service and were never executed by a
+  // test: a rejecting envelope parse, and two shapes of "HTTP 200 but unusable".
+  it("returns provider_error when the response envelope itself fails to parse", async () => {
+    stubFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.reject(new SyntaxError("Unexpected token < in JSON")),
+      } as unknown as Response),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: false, reason: "provider_error" });
+  });
+
+  it.each([
+    ["an empty choices array", { choices: [] }],
+    ["a choice with no message", { choices: [{}] }],
+    ["non-string content", { choices: [{ message: { content: { recommendations: [] } } }] }],
+  ])("returns invalid_response on a 200 carrying %s", async (_label, body) => {
+    stubFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve(body) } as unknown as Response));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: false, reason: "invalid_response" });
+  });
+
+  // Request shape: the parts of the call that the body cannot show. The 8s cap
+  // itself is NOT assertable — sinon fake timers do not patch
+  // `AbortSignal.timeout`, which is a platform API — so the reachable claim is
+  // that the request is bounded at all.
+  it("posts to OpenRouter with the configured key, model and a timeout signal", async () => {
+    const fetchMock = stubFetch(() => Promise.resolve(recsResponse([{ gameId: "a", reason: "fits", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    await recommend(criteria, candidates);
+
+    const init = initOf(fetchMock);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://openrouter.ai/api/v1/chat/completions");
+    expect(init.method).toBe("POST");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer test-key");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect((JSON.parse(init.body as string) as { model: string }).model).toBe("test-model");
+  });
+
+  it("falls back to the default model when OPENROUTER_MODEL is unset", async () => {
+    delete process.env.OPENROUTER_MODEL;
+    const fetchMock = stubFetch(() => Promise.resolve(recsResponse([{ gameId: "a", reason: "fits", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    await recommend(criteria, candidates);
+
+    expect((JSON.parse(initOf(fetchMock).body as string) as { model: string }).model).toBe("openai/gpt-4o-mini");
+  });
+  // Player-count fixtures sit exactly on the boundary: `<=` becoming `<` must
+  // redden the case, which a mid-range fixture would not.
+  const boundaryCandidates: CandidateGame[] = [
+    { id: "exact", title: "Exactly Four", genre: "party", minPlayers: 4, maxPlayers: 4, averagePlayMinutes: 20 },
+    { id: "duo", title: "Two Player Only", genre: "duel", minPlayers: 1, maxPlayers: 2, averagePlayMinutes: 20 },
+  ];
+
+  it("drops a game the requested party cannot play and keeps its boundary twin", async () => {
+    stubFetch(() =>
+      Promise.resolve(
+        recsResponse([
+          { gameId: "duo", reason: "ignores the player count", rank: 1 },
+          { gameId: "exact", reason: "fits exactly", rank: 2 },
+        ]),
+      ),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, boundaryCandidates);
+
+    expect(result).toEqual({
+      ok: true,
+      recommendations: [{ gameId: "exact", reason: "fits exactly", rank: 2 }],
+    });
+  });
+
+  // A guard that empties the list means one of two very different things, and
+  // only one of them is the household's fault.
+  it("returns out_of_catalog when the model ignores the count although a fitting game was offered", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "still ignores it", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, boundaryCandidates);
+
+    expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("player-count criterion"), ["duo"]);
+  });
+
+  it("returns no_match when nothing in the catalog fits the requested party", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "the only option", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, [boundaryCandidates[1]]);
+
+    expect(result).toEqual({ ok: false, reason: "no_match" });
+  });
+
+  // The mixed answer impl-review found: one fabricated id, one real game the
+  // party cannot play, while a perfect fit sat in the catalog. Before the fix
+  // this read as "adjust your criteria".
+  it("returns out_of_catalog for an answer that is part fabricated, part unplayable", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    stubFetch(() =>
+      Promise.resolve(
+        recsResponse([
+          { gameId: "zzz", reason: "fabricated", rank: 1 },
+          { gameId: "duo", reason: "ignores the count", rank: 2 },
+        ]),
+      ),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, boundaryCandidates);
+
+    expect(result).toEqual({ ok: false, reason: "out_of_catalog" });
+  });
+
+  it("applies no player-count guard when the criteria carry no count", async () => {
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "duo", reason: "anything goes", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend({ genre: "duel" }, boundaryCandidates);
+
+    expect(result).toEqual({ ok: true, recommendations: [{ gameId: "duo", reason: "anything goes", rank: 1 }] });
+  });
+
+  it("collapses a repeated gameId to one recommendation, keeping the best rank", async () => {
+    stubFetch(() =>
+      Promise.resolve(
+        recsResponse([
+          { gameId: "a", reason: "duplicate", rank: 3 },
+          { gameId: "a", reason: "best reason", rank: 1 },
+        ]),
+      ),
+    );
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: true, recommendations: [{ gameId: "a", reason: "best reason", rank: 1 }] });
+  });
+
+  // Deliberate negative: time is NOT enforced. Catan runs 90 minutes against a
+  // 30-minute budget and is still returned, because `availableMinutes` is soft
+  // in the PRD ("can account for") and a hard filter would kill near-misses.
+  it("keeps a game that exceeds the available minutes", async () => {
+    stubFetch(() => Promise.resolve(recsResponse([{ gameId: "b", reason: "long but great", rank: 1 }])));
+    const recommend = await loadRecommend();
+
+    const result = await recommend(criteria, candidates);
+
+    expect(result).toEqual({ ok: true, recommendations: [{ gameId: "b", reason: "long but great", rank: 1 }] });
   });
 });

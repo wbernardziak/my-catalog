@@ -127,8 +127,17 @@ describe("describeFailure", () => {
     expect(result.message).toMatch(/no suitable game/i);
   });
 
+  // The whole point of splitting out_of_catalog from no_match is that it must
+  // NOT render the neutral empty panel, so that claim gets its own case rather
+  // than being swept up by the distinctness loop below.
+  it("maps out_of_catalog to an error panel, not the neutral empty one", () => {
+    const result = describeFailure("out_of_catalog");
+    expect(result.kind).toBe("error");
+    expect(result.message).toMatch(/don't fit what you asked for/i);
+  });
+
   it("maps every other reason to an error panel with distinct non-empty copy", () => {
-    const reasons = ["not_configured", "timeout", "provider_error", "invalid_response"] as const;
+    const reasons = ["not_configured", "timeout", "provider_error", "invalid_response", "out_of_catalog"] as const;
     const messages = reasons.map((reason) => {
       const result = describeFailure(reason);
       expect(result.kind).toBe("error");

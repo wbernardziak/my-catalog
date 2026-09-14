@@ -55,7 +55,9 @@ export const POST: APIRoute = async (context) => {
   let result;
   try {
     result = await setPreference(supabase, id, context.locals.user.id, preference);
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]/preference] could not save the preference", err);
     return context.redirect(catalogRedirectTarget(filters, "Could not save your preference. Please try again."));
   }
 

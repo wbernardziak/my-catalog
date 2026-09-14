@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { OPENROUTER_API_KEY, OPENROUTER_MODEL } from "astro:env/server";
-import type { CandidateGame, RecommendationCriteria, RecommendationResult } from "@/types";
+import type { CandidateGame, RankedRecommendation, RecommendationCriteria, RecommendationResult } from "@/types";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -51,6 +51,10 @@ const SYSTEM_PROMPT = [
 
 /**
  * Rank caller-supplied catalog games against household criteria via OpenRouter.
+ *
+ * Returns a discriminated union rather than throwing — a guarantee that assumes
+ * `criteria` is an object, as the route's validated `parseCriteria` output always
+ * is, since the player-count guard reads a property off it.
  *
  * Returns a discriminated union rather than throwing. The catalog-only invariant
  * (a recommendation may only reference a game in `candidateGames`) is enforced in
@@ -149,14 +153,68 @@ export async function recommend(
   }
 
   // Catalog-only invariant, enforced in code: drop anything the model returned
-  // that was not in the caller's candidate list.
-  const validIds = new Set(candidateGames.map((g) => g.id));
-  const recommendations = parsed.data.recommendations
-    .filter((r) => validIds.has(r.gameId))
-    .sort((a, b) => a.rank - b.rank);
+  // that was not in the caller's candidate list. Keyed by id rather than a Set
+  // of ids because the player-count guard below needs each candidate's range.
+  const byId = new Map(candidateGames.map((g) => [g.id, g]));
+  const inCatalog = parsed.data.recommendations.filter((r) => byId.has(r.gameId)).sort((a, b) => a.rank - b.rank);
+
+  // Log every silent drop, not only a wholesale one: a partly fabricated answer
+  // is the commonest shape of provider drift and would otherwise leave no trace
+  // at all. Ids are provider-controlled strings, so truncate them the way the
+  // parse-failure logs above truncate `content`.
+  if (inCatalog.length < parsed.data.recommendations.length) {
+    const fabricated = parsed.data.recommendations.filter((r) => !byId.has(r.gameId)).map((r) => r.gameId);
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] provider named games outside the catalog", fabricated.slice(0, 20));
+  }
+
+  // Two different events used to share `no_match`. An empty answer from the
+  // model genuinely means "nothing suitable"; an answer whose every id was
+  // fabricated is a provider failure, and reporting it as a no-match sends the
+  // household off adjusting criteria that were never the problem.
+  if (inCatalog.length === 0) {
+    if (parsed.data.recommendations.length > 0) {
+      // Already logged above by the drop check.
+      return { ok: false, reason: "out_of_catalog" };
+    }
+    return { ok: false, reason: "no_match" };
+  }
+
+  // One card per game whatever the model returned: a repeated id renders twice
+  // and gives two React children the same key. Sorted ascending already, so the
+  // first occurrence is the best-ranked one.
+  const deduped = new Map<string, RankedRecommendation>();
+  for (const recommendation of inCatalog) {
+    if (!deduped.has(recommendation.gameId)) {
+      deduped.set(recommendation.gameId, recommendation);
+    }
+  }
+
+  // The PRD ranks player count first (`prd.md:102`) and the app already owns the
+  // predicate in SQL (`games.ts:37`), yet nothing verified the model honoured it.
+  // Enforced in code, inclusive on both ends, and only when a count was asked
+  // for — `playerCount` is optional on this contract, and an absent criterion
+  // cannot be violated. Time and genre stay prompt-only by decision: both are
+  // soft in the PRD, so a hard filter would kill sensible near-misses.
+  const { playerCount } = criteria;
+  const recommendations = [...deduped.values()].filter((recommendation) => {
+    if (playerCount === undefined) return true;
+    const game = byId.get(recommendation.gameId);
+    return game !== undefined && game.minPlayers <= playerCount && playerCount <= game.maxPlayers;
+  });
 
   if (recommendations.length === 0) {
-    return { ok: false, reason: "no_match" };
+    const droppedIds = [...deduped.values()].map((r) => r.gameId).slice(0, 20);
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[recommendations] every recommended game failed the player-count criterion", droppedIds);
+    // `no_match` is only honest when the catalog itself has nothing for this
+    // party. If a fitting game was on the table and the model named none of
+    // them, that is a provider failure wearing a no-match's clothes — the same
+    // conflation the `out_of_catalog` split exists to undo.
+    const someCandidateFits =
+      playerCount !== undefined &&
+      candidateGames.some((game) => game.minPlayers <= playerCount && playerCount <= game.maxPlayers);
+    return { ok: false, reason: someCandidateFits ? "out_of_catalog" : "no_match" };
   }
 
   return { ok: true, recommendations };

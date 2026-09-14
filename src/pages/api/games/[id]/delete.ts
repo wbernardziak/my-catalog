@@ -29,7 +29,9 @@ export const POST: APIRoute = async (context) => {
   let deleted;
   try {
     deleted = await softDeleteGame(supabase, id);
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]/delete] could not soft-delete the game", err);
     return context.redirect(`/catalog?error=${encodeURIComponent("Could not delete the game. Please try again.")}`);
   }
 

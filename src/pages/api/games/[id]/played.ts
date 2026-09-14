@@ -52,7 +52,9 @@ export const POST: APIRoute = async (context) => {
 
   try {
     await setPlayed(supabase, id, context.locals.user.id, parsed.data === "true");
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]/played] could not update the played state", err);
     return context.redirect(catalogRedirectTarget(filters, "Could not update played status. Please try again."));
   }
 

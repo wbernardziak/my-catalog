@@ -180,9 +180,13 @@ if (!registryMatch) {
   process.exit(1);
 }
 const registeredThemes = [...registryMatch[1].matchAll(/["']([^"']+)["']/g)].map((match) => match[1]);
-const sourceFiles = readdirSync(join(ROOT, "src"), { recursive: true, encoding: "utf8" });
+const sourceFiles = readdirSync(join(ROOT, "src"), { recursive: true, encoding: "utf8" }).map((file) =>
+  file.split("\\").join("/"),
+);
+// Tests can mention the class without rendering it; counting them would fail on a comment.
 const gradientCount = sourceFiles
   .filter((file) => /\.(astro|tsx?|jsx?|css)$/.test(file))
+  .filter((file) => !file.startsWith("test/") && !/\.test\.[jt]sx?$/.test(file))
   .reduce(
     (count, file) => count + (readFileSync(join(ROOT, "src", file), "utf8").match(/bg-clip-text/g)?.length ?? 0),
     0,
@@ -210,6 +214,18 @@ for (const theme of THEMES) {
 if (gradientCount !== GRADIENT_TEXT.length) {
   failures.push(`bg-clip-text count ${gradientCount} differs from GRADIENT_TEXT entries ${GRADIENT_TEXT.length}`);
 }
+// A matching count is not enough: a commented-out class keeps the count while the gradient is gone.
+for (const { what, where } of GRADIENT_TEXT) {
+  const [path, lineNumber] = where.split(":");
+  const file = join(ROOT, path);
+  const line = existsSync(file) ? (readFileSync(file, "utf8").split("\n")[Number(lineNumber) - 1] ?? "") : "";
+  const code = line.replace(/<!--.*?-->|\/\*.*?\*\/|\/\/.*$/g, "");
+  if (!/\bbg-clip-text\b/.test(code)) {
+    failures.push(`GRADIENT_TEXT entry for the ${what} points at ${where}, which has no bg-clip-text class`);
+  }
+}
+// Everything pushed so far is list drift, fixed in this script rather than in global.css.
+const coverageFailures = failures.length;
 
 for (const theme of THEMES) {
   const block = blockFor(css, theme.selector);
@@ -294,9 +310,15 @@ for (const theme of THEMES) {
 if (failures.length > 0) {
   console.error(`Contrast check failed — ${failures.length} of ${checks} assertions:\n`);
   for (const failure of failures) console.error(`  ${failure}`);
-  console.error("\nFix the token value in src/styles/global.css. If an ink role is unreadable on a");
-  console.error("surface it genuinely lands on, that surface needs its own variant of the role —");
-  console.error("see the card context rule for the pattern.");
+  if (coverageFailures > 0) {
+    console.error("\nKeep THEMES and GRADIENT_TEXT in scripts/check-contrast.mjs in step with");
+    console.error("src/lib/theme.ts and the bg-clip-text headings in src/, so every one is checked.");
+  }
+  if (failures.length > coverageFailures) {
+    console.error("\nFix the token value in src/styles/global.css. If an ink role is unreadable on a");
+    console.error("surface it genuinely lands on, that surface needs its own variant of the role —");
+    console.error("see the card context rule for the pattern.");
+  }
   process.exit(1);
 }
 

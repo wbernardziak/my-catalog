@@ -2,10 +2,14 @@ import { afterAll, describe, expect, it } from "vitest";
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const read = (file: string) => readFileSync(file, "utf8");
+import { repoRoot } from "./guardHarness";
+
+// Every path resolves against the repo root, so the test does not depend on the runner's cwd.
+const at = (path: string) => join(repoRoot, path);
+const read = (file: string) => readFileSync(at(file), "utf8");
 const HOOK = ".claude/hooks/quality-gate.sh";
 const PRE_COMMIT = ".husky/pre-commit";
 
@@ -37,7 +41,7 @@ function workflowJobs(source: string): Map<string, string[]> {
 
 /** Index modes from one `git ls-files -s`, which reflect what CI checks out. */
 const gitModes = new Map(
-  execFileSync("git", ["ls-files", "-s", PRE_COMMIT, HOOK], { encoding: "utf8" })
+  execFileSync("git", ["ls-files", "-s", PRE_COMMIT, HOOK], { cwd: repoRoot, encoding: "utf8" })
     .trim()
     .split("\n")
     .map((line) => {
@@ -91,7 +95,7 @@ describe("gate wiring", () => {
       ["lint:reads", "scripts/check-games-read-guard.mjs"],
     ]) {
       expect(scripts[name], name).toBe(`node ${file}`);
-      expect(existsSync(file), file).toBe(true);
+      expect(existsSync(at(file)), file).toBe(true);
     }
     expect(scripts.test).toContain("--project unit");
     expect(scripts.test).not.toContain("passWithNoTests");
@@ -99,7 +103,7 @@ describe("gate wiring", () => {
   });
 
   it("grades staged code with eslint, typecheck and the unit suite", async () => {
-    const config = (await import(pathToFileURL(resolve("lint-staged.config.js")).href)) as {
+    const config = (await import(pathToFileURL(at("lint-staged.config.js")).href)) as {
       default: Record<string, unknown>;
     };
     const task = config.default["*.{ts,tsx,astro}"];
@@ -123,17 +127,19 @@ describe("gate wiring", () => {
     const commands = (settings.hooks?.Stop ?? []).flatMap((entry) => entry.hooks ?? []).map((hook) => hook.command);
 
     expect(commands.some((command) => command?.endsWith(HOOK))).toBe(true);
-    expect(existsSync(HOOK)).toBe(true);
+    expect(existsSync(at(HOOK))).toBe(true);
   });
 
   it("keeps the Stop hook executable, parseable and loop-guarded", () => {
     expect(gitModes.get(HOOK)).toBe("100755");
-    expect(spawnSync("bash", ["-n", HOOK]).status).toBe(0);
+    expect(spawnSync("bash", ["-n", HOOK], { cwd: repoRoot }).status).toBe(0);
 
     // A fresh project dir with an unreachable git dir: the gate cannot pass on its own, so an
     // exit 0 can only come from the loop guard — which the `{}` case proves by exiting 2.
     const env = { ...process.env, CLAUDE_PROJECT_DIR: scratch, GIT_DIR: join(scratch, "missing-git") };
-    const hook = (input: string) => spawnSync("bash", [HOOK], { input, env, encoding: "utf8" }).status;
+    // The timeout bounds the damage if the guards ever fail to stop the hook reaching `npm test`.
+    const hook = (input: string) =>
+      spawnSync("bash", [HOOK], { cwd: repoRoot, input, env, encoding: "utf8", timeout: 10_000 }).status;
 
     expect(hook('{"stop_hook_active":true}')).toBe(0);
     expect(hook("{}")).toBe(2);

@@ -4,7 +4,8 @@ import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = fileURLToPath(new URL("..", import.meta.url));
+/** Resolve repo files against this, never the process cwd, so tests run from any directory. */
+export const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export function makeTree(files: Record<string, string>): string {
   const root = mkdtempSync(join(tmpdir(), "guard-fixture-"));

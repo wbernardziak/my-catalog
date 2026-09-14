@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { __unstable__loadDesignSystem } from "tailwindcss";
 import { spawnSync } from "node:child_process";
 
-import { makeTree, removeTree, runGuard } from "./guardHarness";
+import { makeTree, removeTree, repoRoot, runGuard } from "./guardHarness";
 
 const trees: string[] = [];
 const tree = (files: Record<string, string>) => {
@@ -119,6 +119,7 @@ describe("check-color-literals", () => {
 
   it("rejects unknown command-line arguments", () => {
     const result = spawnSync(process.execPath, ["scripts/check-color-literals.mjs", "typo"], {
+      cwd: repoRoot,
       encoding: "utf8",
     });
     expect(result.status).toBe(1);

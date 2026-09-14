@@ -15,16 +15,27 @@
  * this is a ratchet rather than a test — the same shape as check-color-literals.
  *
  * The rule: for every `.from("games")`, look at the chain that follows, and sort
- * it into one of three outcomes.
+ * it into one of three outcomes. The chain ends at the statement's `;` or at
+ * the next `.from(`, whichever comes first.
  *
  *   write        — reaches `.insert(`/`.update(`/`.upsert(`/`.delete(`. Not this
  *                  guard's business; a write returning its own row is fine.
- *   read         — reaches `.select(`. Must carry `.is("deleted_at", null)`.
+ *   read         — reaches `.select(`. Must carry `.is("deleted_at", null)`;
+ *                  reported as `unguarded` otherwise.
  *   unrecognised — neither. The chain was cut short, almost always because
  *                  `.from(…)` and `.select(…)` sit in separate statements. This
  *                  is REPORTED, not ignored: a scanner that silently passes what
  *                  it cannot read is worse than no scanner, because it looks
  *                  like coverage.
+ *
+ * Two file-level outcomes are reported the same way:
+ *
+ *   indirect       — a file naming the `games` literal also calls `.from(x)` with
+ *                    a non-literal argument on a lowercase receiver. The scanner
+ *                    cannot tell which table `x` is. `Array.from` and other whole
+ *                    capitalised receivers are excluded.
+ *   desynchronised — the comment blanker lost track of strings (see below), so
+ *                    no chain in the file can be trusted.
  *
  * ORDER MATTERS. The write-verb check runs FIRST, because `createGame`
  * (src/lib/services/games.ts:83) is `.from("games").insert({...}).select()` — a
@@ -32,9 +43,11 @@
  * is a write returning its own row. Check `.select(` first and this script
  * fails on correct production code.
  *
- * Comments are blanked before classification. Regex literals containing quotes
- * are a known limitation: if blanking loses sync, the file is reported instead
- * of silently accepted.
+ * Comments are blanked before classification. The blanker has no regex or JSX
+ * awareness, so it fails closed when it sees evidence of losing sync: ending
+ * inside a string, a newline inside a `'`/`"` string (two paired apostrophes),
+ * or `\//` outside a string (a regex such as /\//). Known limit: two apostrophes
+ * on one line with a same-line comment between them still pair silently.
  *
  * Exempt: `src/test/`, which reads storage directly on purpose — proving a
  * soft-deleted row is STILL THERE is the assertion that distinguishes a soft
@@ -91,12 +104,14 @@ const CHAIN_WINDOW = 1200;
  * The chain starting at `.from("games")`: everything up to the statement's end.
  * Terminated by `;` because every call site in this codebase ends its chain with
  * one, and reading to the next semicolon keeps multi-line builders (listGames
- * spans lines 31-46) intact.
+ * spans lines 31-46) intact. It also stops at the next `.from(`, so a sibling
+ * query in the same statement (`Promise.all([...])`) cannot lend this chain its
+ * predicate or a write verb.
  */
 function chainAfter(source, index) {
   const tail = source.slice(index, index + CHAIN_WINDOW);
-  const end = tail.indexOf(";");
-  return end === -1 ? tail : tail.slice(0, end);
+  const ends = [tail.indexOf(";"), tail.indexOf(".from(", 1)].filter((end) => end !== -1);
+  return ends.length === 0 ? tail : tail.slice(0, Math.min(...ends));
 }
 
 function blankComments(source) {
@@ -119,10 +134,15 @@ function blankComments(source) {
       continue;
     }
     if (state !== "normal") {
+      // A quote or apostrophe string cannot span a line, so reaching one means two unrelated
+      // apostrophes (JSX text, a regex) were paired and every comment after them is suspect.
+      if (char === "\n" && state !== "`") return null;
       if (char === "\\") index++;
       else if (char === state) state = "normal";
       continue;
     }
+    // `\//` outside a string is a regex such as /\//, not a comment; blanking from here would hide code.
+    if (char === "/" && next === "/" && source[index - 1] === "\\") return null;
     if (char === "/" && next === "/") {
       out[index] = out[index + 1] = " ";
       index++;
@@ -196,7 +216,8 @@ for (const file of files) {
   if (/["'`]games["'`]/.test(blanked)) {
     for (const indirect of blanked.matchAll(/\.from\(\s*([^\s"'`][^)]*)\)/g)) {
       const before = blanked.slice(Math.max(0, indirect.index - 40), indirect.index);
-      if (!/[A-Z][A-Za-z0-9_]*$/.test(before)) {
+      // A whole capitalised identifier (Array, Buffer), not any receiver ending in one (supabaseClient).
+      if (!/(?:^|[^\w$])[A-Z][\w$]*$/.test(before)) {
         hits.push({ file, line: blanked.slice(0, indirect.index).split("\n").length, kind: "indirect" });
       }
     }

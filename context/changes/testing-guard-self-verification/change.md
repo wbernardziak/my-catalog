@@ -1,7 +1,7 @@
 ---
 change_id: testing-guard-self-verification
 title: Testing guard self verification
-status: implementing
+status: impl_reviewed
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null

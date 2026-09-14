@@ -676,6 +676,36 @@ palette and prefix list produce no hits in `src/`.
 - Impl-review F3: `context/archive/2026-09-14-testing-quality-gate-wiring/reviews/impl-review.md`
 - Guard patterns: `scripts/check-games-read-guard.mjs:23-27` (fail-closed reporting), `.claude/hooks/quality-gate.sh:26-36` (fail-closed hook guards)
 
+## Deviations
+
+Recorded 2026-09-14 after the implementation review (`reviews/impl-review.md`, F10). None of them
+weakens a contract; each either keeps a check fail-closed or adds one the plan did not name.
+
+- **Phase 1, argument parsing.** All three guards also reject more than one argument, not only an
+  unknown one, so `--root=/a extra` cannot silently ignore `extra`.
+- **Phase 3, blanker desync kind.** The plan reports a desynchronised file as `unrecognised`. The
+  guard gives it its own kind, `desynchronised`, with a message naming the likely cause, because
+  "split across statements" advice would mislead. Both exit 1.
+- **Phase 3, blanker desync signals (review F3).** Beyond "ends inside a string", the blanker
+  also fails closed on a newline inside a `'`/`"` string and on `\//` outside a string. The plan's
+  "classify raw and blanked text" idea was rejected: when the blanker fails to blank, both texts
+  are identical and the check sees nothing.
+- **Phase 3, chain extent (review F2).** A chain ends at the next `.from(` as well as `;`, so a
+  sibling query in `Promise.all([...])` cannot lend it a predicate or write verb.
+- **Phase 3, indirect exclusion (review F1).** Only a whole capitalised identifier is excluded,
+  where the first implementation excluded any receiver ending in one (`supabaseClient`).
+- **Phase 4, gradient sites (review F6).** The `bg-clip-text` count skips `src/test/` and
+  `*.test.*`, and each `GRADIENT_TEXT` entry's `where` line must hold the class outside a comment.
+  The trailer is printed per failure kind: list drift is fixed in the script, a contrast
+  failure in `global.css`.
+- **Phase 4, registry test isolation.** Adding `neon` and removing `shelf` share one spawn, where
+  the plan asked for each mutation in its own tree. Each message is asserted separately, so each
+  is still proven; the spawn is saved.
+- **Phase 6, §2 amendment.** The Risk #10 row and a dated amendment block in test-plan §2 were
+  updated to match the research findings. Not in the Phase 6 contract.
+- **Timing baseline (review F7).** Row 1.8 was first measured at `1e69ade`, after Phase 1, and was
+  re-measured at `a11937e`.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step completes. Do not rename step titles. See `references/progress-format.md`.
@@ -694,7 +724,7 @@ palette and prefix list produce no hits in `src/`.
 
 - [x] 1.6 Deliberate break: removing the colour floor turns the empty-tree test red
 - [x] 1.7 Deliberate break: removing the games reads floor turns the write-only test red
-- [x] 1.8 `npm test` wall time before and after recorded — 2.47 s median at 1e69ade (2026-09-14)
+- [x] 1.8 `npm test` wall time before and after recorded — 2.08 s median at a11937e, pre-Phase-1 (re-measured 2026-09-14 after impl-review F7; the first baseline was taken at 1e69ade, after Phase 1)
 
 ### Phase 2: Colour guard tracks the installed Tailwind
 
@@ -749,7 +779,7 @@ palette and prefix list produce no hits in `src/`.
 
 #### Manual
 
-- [x] 5.4 `npm test` under 1.5 s slower than the Phase 1 baseline (median of 3 × `/usr/bin/time -f %e npm test`) — 2.36 s vs 2.47 s baseline, within noise
+- [x] 5.4 `npm test` under 1.5 s slower than the Phase 1 baseline (median of 3 × `/usr/bin/time -f %e npm test`) — 2.58 s vs 2.08 s pre-Phase-1, +0.50 s (interleaved runs, 2026-09-14)
 - [x] 5.5 Deliberate break: deleting the `lint:reads` step from `ci.yml` turns the CI test red
 - [x] 5.6 Deliberate break: moving that step into `db-tests` still turns it red
 - [x] 5.7 Deliberate break: clearing the hook's exec bit turns the hook-health test red (`git update-index --chmod=-x`, then restore with `--chmod=+x`)

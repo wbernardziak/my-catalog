@@ -4,10 +4,29 @@ This file provides guidance to AI Agent when working with code in this repositor
 
 ## Commands
 
+Run, build:
+
 - `npm run dev` — start dev server (Cloudflare workerd runtime)
+- `npm run dev:clean` — the same, after clearing the Vite cache
 - `npm run build` — production build (SSR via `@astrojs/cloudflare`)
 - `npm run preview` — preview production build
+
+Tests:
+
+- `npm test` — unit/integration suite (`vitest run --project unit`); no Docker needed
+- `npm run test:watch` — the same suite in watch mode
+- `npm run test:db` — RLS/database suite (`--project db`); needs a local Supabase (`npx supabase start`)
+
+Gates — each of these runs in CI, so run them before handing work back:
+
+- `npm run typecheck` — `tsc --noEmit`
 - `npm run lint` — ESLint with type-checked rules
+- `npm run lint:colors` — fails when a colour is named directly in `src/` instead of a token role
+- `npm run lint:contrast` — fails when a theme's ink is unreadable on a surface it can land on
+- `npm run lint:reads` — fails when a `games` read omits `.is("deleted_at", null)`, the only place soft-delete is enforced
+
+Fixers (not gates, and not run by CI):
+
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
 

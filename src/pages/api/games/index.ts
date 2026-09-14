@@ -93,7 +93,9 @@ export const POST: APIRoute = async (context) => {
 
   try {
     await createGame(supabase, parsed.data);
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games] could not save the game", err);
     return context.redirect(`/catalog?error=${encodeURIComponent("Could not save the game. Please try again.")}`);
   }
 

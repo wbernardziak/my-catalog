@@ -413,3 +413,61 @@ describe("a body that cannot be parsed as form data", () => {
     expect(double.writeSummary()).toEqual([]);
   });
 });
+
+/**
+ * Every one of these handlers turns a persistence failure into the house
+ * `?error=` redirect, which tells the caller what to do but tells whoever has to
+ * diagnose it nothing at all. Until 2026-09-14 each `catch` discarded the
+ * exception outright, so a real failure left no trace anywhere — the finding
+ * recorded in `context/foundation/lessons.md` ("Log every non-2xx branch a route
+ * returns"). These cases assert the trace, not the redirect: the branch that
+ * fired, and the underlying cause travelling with it.
+ */
+describe("a persistence failure is logged, not swallowed", () => {
+  it.each<{ name: string; handler: APIRoute; expected: string; options: ApiContextOptions }>([
+    { name: "create", handler: createGame, expected: "[games] could not save the game", options: { form: VALID_GAME } },
+    {
+      name: "update",
+      handler: updateGame,
+      expected: "[games/[id]] could not save the changes",
+      options: { form: VALID_GAME, params: { id: "game-1" } },
+    },
+    {
+      name: "delete",
+      handler: deleteGame,
+      expected: "[games/[id]/delete] could not soft-delete the game",
+      options: { params: { id: "game-1" } },
+    },
+    {
+      name: "loan",
+      handler: setLoan,
+      expected: "[games/[id]/loan] could not update the loan status",
+      options: { form: { loanStatus: "loaned" }, params: { id: "game-1" } },
+    },
+    {
+      name: "played",
+      handler: setPlayed,
+      expected: "[games/[id]/played] could not update the played state",
+      options: { form: { played: "true" }, params: { id: "game-1" } },
+    },
+    {
+      name: "preference",
+      handler: setPreference,
+      expected: "[games/[id]/preference] could not save the preference",
+      options: { form: { preference: "liked" }, params: { id: "game-1" } },
+    },
+  ])("$name names its branch and carries the cause", async ({ handler, expected, options }) => {
+    double = createSupabaseDouble({ fallback: { error: { message: "boom" } } });
+    holder.client = double.client;
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await handler(createApiContext({ user: testUser(), ...options }));
+
+    // Flattened to strings: the second argument is the caught error itself, and
+    // what matters is that the branch AND its cause both reach the log.
+    const logged = errorSpy.mock.calls.map((args: unknown[]) => args.map((arg) => String(arg)).join(" "));
+    expect(logged.some((line) => line.includes(expected) && line.includes("boom"))).toBe(true);
+
+    errorSpy.mockRestore();
+  });
+});

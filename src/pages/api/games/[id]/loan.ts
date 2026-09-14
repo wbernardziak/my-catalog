@@ -53,7 +53,9 @@ export const POST: APIRoute = async (context) => {
   let updated;
   try {
     updated = await setLoan(supabase, id, parsed.data);
-  } catch {
+  } catch (err) {
+    // eslint-disable-next-line no-console -- deliberate; see the matching note in catalog.astro
+    console.error("[games/[id]/loan] could not update the loan status", err);
     return context.redirect(catalogRedirectTarget(filters, "Could not update loan status. Please try again."));
   }
 

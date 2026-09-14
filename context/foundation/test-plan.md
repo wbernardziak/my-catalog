@@ -471,7 +471,11 @@ not halt the agent — it _prevents it from stopping_ and hands stderr back as t
 reason, so the agent keeps working with the failure in front of it. Two guards,
 and their order matters: `stop_hook_active` first (Claude Code overrides a Stop
 hook after eight consecutive blocks; checked second, a broken tree would burn
-eight turns first), then a working-tree check. The script talks only through
+eight turns first), then a working-tree check scoped by pathspec to
+`*.ts`/`*.tsx`/`*.astro` — the same set the commit gate's lint-staged key
+matches, so both layers trigger on the same files. Both guards fail **closed**:
+if the project directory cannot be entered or `git status` errors, the hook
+exits 2 with a reason rather than waving the turn through. The script talks only through
 exit codes and stderr — stdout is parsed as JSON only when it starts with `{`,
 so a chatty shell profile would silently void a decision.
 
@@ -495,9 +499,16 @@ roughly 10s, and a docs-only commit is unchanged. The Stop hook measured ~8s
 end to end on a dirty tree (two `npm` startups on top of the commands), and
 137ms when `stop_hook_active` short-circuits it.
 
-**Known residual.** Neither lint-staged flag hides **untracked** files, so a new
-untracked `.ts` carrying errors can still fail the commit gate even though it is
-not part of the commit. Stage it or remove it.
+**Known residual.** Untracked files count for both layers, deliberately: `tsc`
+reads them, so a broken untracked `.ts` genuinely breaks the build. The cost is
+that one can fail the commit gate even though it is not part of the commit, and
+can block the turn gate until it is fixed, staged, removed or gitignored.
+
+An earlier version of the turn gate used an unfiltered `git status --porcelain`,
+which also counted untracked files of _any_ type — one stray `.log` or editor
+backup made every turn pay the full run (measured 150ms clean vs 8340ms with a
+single untracked `.txt` present). The pathspec above fixed that; scratch files
+that `tsc` never reads no longer trigger anything.
 
 **The db suite is deliberately absent from both.** It needs Docker, and a gate
 that fails because a daemon is not running teaches people to bypass it.

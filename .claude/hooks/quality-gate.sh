@@ -27,12 +27,33 @@ if printf '%s' "$INPUT" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on(
   exit 0
 fi
 
-cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+# Fail closed, like Guard 1: a gate that cannot run must say so, not wave the
+# turn through. The eight-block cap bounds the damage if the environment is
+# genuinely broken, and stderr tells the human which part failed.
+if ! cd "${CLAUDE_PROJECT_DIR:-.}"; then
+  printf 'Quality gate: cannot enter %s\n' "${CLAUDE_PROJECT_DIR:-.}" >&2
+  exit 2
+fi
 
-# Guard 2 — nothing changed, nothing to gate. This is why a question-answering
-# turn costs nothing. It also means a turn ending in a commit runs no gate: the
-# commit hook already graded that content.
-if [ -z "$(git status --porcelain)" ]; then
+# Guard 2 — nothing *gradeable* changed, nothing to gate. This is why a
+# question-answering turn costs nothing, and why a turn ending in a commit runs
+# no gate: the commit hook already graded that content.
+#
+# The pathspec matters. An unfiltered `git status --porcelain` also reports
+# untracked files, so one stray scratch file — a .log, an editor backup, a note
+# — made every turn pay the full ~8s run until it was deleted. Measured
+# 2026-09-14: 150ms clean vs 8340ms with a single untracked .txt present. The
+# globs mirror the commit gate's lint-staged key, so both layers now trigger on
+# the same set of files. An untracked .ts still counts, deliberately: tsc reads
+# it, so it can genuinely break the build.
+#
+# Note `$(...)` captures stdout only, so a git failure would otherwise look
+# identical to a clean tree. Check the exit status before trusting emptiness.
+if ! CHANGED=$(git status --porcelain -- '*.ts' '*.tsx' '*.astro' 2>&1); then
+  printf 'Quality gate: git status failed\n%s\n' "$CHANGED" >&2
+  exit 2
+fi
+if [ -z "$CHANGED" ]; then
   exit 0
 fi
 

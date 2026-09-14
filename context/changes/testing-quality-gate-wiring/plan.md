@@ -449,9 +449,9 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Automated
 
-- [x] 3.1 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass
-- [x] 3.2 `npm run lint:colors`, `npm run lint:contrast`, `npm run lint:reads` pass
-- [x] 3.3 `npm run test:db` passes
+- [x] 3.1 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass — 0a7d3d4
+- [x] 3.2 `npm run lint:colors`, `npm run lint:contrast`, `npm run lint:reads` pass — 0a7d3d4
+- [x] 3.3 `npm run test:db` passes — 0a7d3d4
 
 #### Manual
 

@@ -521,10 +521,10 @@ None. The docs-only commit skips the code gate (lint-staged runs only `prettier 
 
 #### Automated
 
-- [x] 2.1 Prettier formats the file cleanly
-- [x] 2.2 §3 has 9 rows and exactly 4 are not started
-- [x] 2.3 Every §3 status is a parser literal
-- [x] 2.4 "No browser/e2e phase is proposed" paragraph removed
+- [x] 2.1 Prettier formats the file cleanly — 5cb4364
+- [x] 2.2 §3 has 9 rows and exactly 4 are not started — 5cb4364
+- [x] 2.3 Every §3 status is a parser literal — 5cb4364
+- [x] 2.4 "No browser/e2e phase is proposed" paragraph removed — 5cb4364
 
 #### Manual
 
@@ -535,12 +535,12 @@ None. The docs-only commit skips the code gate (lint-staged runs only `prettier 
 
 #### Automated
 
-- [ ] 3.1 Prettier formats the file cleanly
-- [ ] 3.2 Stale phrases are gone
-- [ ] 3.3 §6.8–6.11 headings exist
-- [ ] 3.4 Current counts stated
-- [ ] 3.5 npm test reports 188 passed
-- [ ] 3.6 Stale §6 line references are gone
+- [x] 3.1 Prettier formats the file cleanly
+- [x] 3.2 Stale phrases are gone
+- [x] 3.3 §6.8–6.11 headings exist
+- [x] 3.4 Current counts stated
+- [x] 3.5 npm test reports 188 passed
+- [x] 3.6 Stale §6 line references are gone
 
 #### Manual
 

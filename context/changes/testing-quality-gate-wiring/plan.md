@@ -430,12 +430,12 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Automated
 
-- [x] 2.1 `npm run typecheck` passes
-- [x] 2.2 `npm run lint` passes
-- [x] 2.3 `npm test` passes
-- [x] 2.4 `.claude/hooks/quality-gate.sh` is executable and tracked by git
-- [x] 2.5 `.claude/settings.json` is tracked by git
-- [x] 2.6 The script exits 0 and runs no commands on `{"stop_hook_active":true}` with a dirty tree
+- [x] 2.1 `npm run typecheck` passes — af28fb5
+- [x] 2.2 `npm run lint` passes — af28fb5
+- [x] 2.3 `npm test` passes — af28fb5
+- [x] 2.4 `.claude/hooks/quality-gate.sh` is executable and tracked by git — af28fb5
+- [x] 2.5 `.claude/settings.json` is tracked by git — af28fb5
+- [x] 2.6 The script exits 0 and runs no commands on `{"stop_hook_active":true}` with a dirty tree — af28fb5
 
 #### Manual
 
@@ -449,9 +449,9 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Automated
 
-- [ ] 3.1 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass
-- [ ] 3.2 `npm run lint:colors`, `npm run lint:contrast`, `npm run lint:reads` pass
-- [ ] 3.3 `npm run test:db` passes
+- [x] 3.1 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` pass
+- [x] 3.2 `npm run lint:colors`, `npm run lint:contrast`, `npm run lint:reads` pass
+- [x] 3.3 `npm run test:db` passes
 
 #### Manual
 

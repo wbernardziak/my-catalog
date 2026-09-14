@@ -162,13 +162,13 @@ Each row is a discrete rollout phase that will open its own change folder
 via `/10x-new`. Status moves left-to-right through the values below; the
 orchestrator updates Status as artifacts appear on disk.
 
-| #   | Phase name                          | Goal (one line)                                                                                                                                        | Risks covered | Test types                                              | Status        | Change folder                                                       |
-| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------------------------------------- | ------------- | ------------------------------------------------------------------- |
-| 1   | API boundary contract               | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4        | integration (route handlers)                            | complete      | `context/archive/2026-09-11-testing-api-boundary-contract/`         |
-| 2   | Per-member state attribution        | Prove played state and preference stay bound to the correct household member at both the query and the policy layer                                    | #1            | integration + DB-level RLS verification                 | complete      | `context/archive/2026-09-12-testing-per-member-state-attribution/`  |
-| 3   | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games                                           | #6            | integration (query layer) + shape gate + source ratchet | complete      | `context/archive/2026-09-13-testing-catalog-integrity-soft-delete/` |
-| 4   | LLM recommendation guardrails       | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses                  | #3, #5, #7    | contract tests with stubbed provider                    | complete      | `context/archive/2026-09-13-testing-llm-recommendation-guardrails/` |
-| 5   | Quality-gate wiring                 | Lock the floor: keep the suite non-optional in CI (the step already runs) and gate the agent's edit loop                                               | cross-cutting | gates                                                   | change opened | `context/changes/testing-quality-gate-wiring/`                      |
+| #   | Phase name                          | Goal (one line)                                                                                                                                        | Risks covered | Test types                                              | Status   | Change folder                                                       |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------------------------------------- | -------- | ------------------------------------------------------------------- |
+| 1   | API boundary contract               | Prove every endpoint denies unauthenticated callers on its own, binds per-member writes to the session, and rejects invalid input without side effects | #2, #4        | integration (route handlers)                            | complete | `context/archive/2026-09-11-testing-api-boundary-contract/`         |
+| 2   | Per-member state attribution        | Prove played state and preference stay bound to the correct household member at both the query and the policy layer                                    | #1            | integration + DB-level RLS verification                 | complete | `context/archive/2026-09-12-testing-per-member-state-attribution/`  |
+| 3   | Catalog integrity under soft-delete | Prove deleted games leave every read path but stay in storage, and filter composition never drops live games                                           | #6            | integration (query layer) + shape gate + source ratchet | complete | `context/archive/2026-09-13-testing-catalog-integrity-soft-delete/` |
+| 4   | LLM recommendation guardrails       | Prove recommendations stay inside the eligible catalog, fail visibly, and send only minimal data under adversarial provider responses                  | #3, #5, #7    | contract tests with stubbed provider                    | complete | `context/archive/2026-09-13-testing-llm-recommendation-guardrails/` |
+| 5   | Quality-gate wiring                 | Lock the floor: keep the suite non-optional in CI (the step already runs) and gate the agent's edit loop                                               | cross-cutting | gates                                                   | complete | `context/changes/testing-quality-gate-wiring/`                      |
 
 **Order rationale.** Phase 1 is the interview's own stated gap (Q4), sits at
 the cheapest layer, covers the abuse surface, and establishes the
@@ -217,18 +217,18 @@ The full set of gates that must pass before a change reaches production.
 "Required for §3 Phase N" means the gate is enforced once that rollout
 phase lands; before that, the gate is planned.
 
-| Gate                             | Where                                           | Required?                                                                                        | Catches                                                                                                                                                                                                                                                                                         |
-| -------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| lint                             | local (husky/lint-staged) + CI                  | required (wired)                                                                                 | syntactic drift                                                                                                                                                                                                                                                                                 |
-| typecheck                        | CI (`npm run typecheck` → `tsc --noEmit`)       | required (wired 2026-09-11)                                                                      | type drift. Nothing type-checked this repo before that date: husky runs `eslint --fix` only, and `astro build` transpiles without checking. ESLint's type-aware rules do not surface raw compiler diagnostics — phase 1's own harness shipped four `tsc` errors through a green lint and build. |
-| build                            | CI                                              | required (wired)                                                                                 | SSR/adapter build breakage                                                                                                                                                                                                                                                                      |
-| colour-literal + contrast checks | local                                           | required (wired)                                                                                 | theme token drift, contrast regressions                                                                                                                                                                                                                                                         |
-| unguarded `games` read check     | CI (`npm run lint:reads`)                       | required (wired 2026-09-13)                                                                      | a new catalog read path that omits `.is("deleted_at", null)`, which would return soft-deleted games to the catalog. RLS is no backstop: the `games` SELECT policy is `using (true)`.                                                                                                            |
-| unit + integration               | local + CI                                      | required (wired 2026-09-11)                                                                      | logic regressions, endpoint contract breakage                                                                                                                                                                                                                                                   |
-| database policy verification     | local (`npm run test:db`) + CI (`db-tests` job) | required (wired 2026-09-12)                                                                      | per-member attribution and RLS regressions. Writes are DB-enforced and reads are not, so the suite covers both layers; needs Docker, which is why it is a separate job rather than part of `npm test`.                                                                                          |
-| provider contract tests          | local + CI                                      | required (wired 2026-09-13)                                                                      | out-of-catalog suggestions, silent AI failures, prompt over-sharing, household data leaking into the prompt, and a recommendation the requested party cannot play                                                                                                                               |
-| CI test step + edit-loop gate    | CI on PR + local agent loop                     | CI step + non-empty-suite enforcement wired 2026-09-11; edit-loop gate required after §3 Phase 5 | regressions reaching a PR, or landing mid-edit                                                                                                                                                                                                                                                  |
-| pre-prod smoke                   | between merge and prod                          | optional                                                                                         | environment-specific failures, notably the migration-push gap in `lessons.md`                                                                                                                                                                                                                   |
+| Gate                             | Where                                           | Required?                                                                                                 | Catches                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| lint                             | local (husky/lint-staged) + CI                  | required (wired)                                                                                          | syntactic drift. Since 2026-09-14 the local hook is no longer lint-only: the `*.{ts,tsx,astro}` lint-staged entry also runs `typecheck` and `npm test` — see the edit-loop gate row below and §6.6.                                                                                                                                                 |
+| typecheck                        | CI (`npm run typecheck` → `tsc --noEmit`)       | required (wired 2026-09-11)                                                                               | type drift. Nothing type-checked this repo before that date: husky runs `eslint --fix` only, and `astro build` transpiles without checking. ESLint's type-aware rules do not surface raw compiler diagnostics — phase 1's own harness shipped four `tsc` errors through a green lint and build.                                                     |
+| build                            | CI                                              | required (wired)                                                                                          | SSR/adapter build breakage                                                                                                                                                                                                                                                                                                                          |
+| colour-literal + contrast checks | local                                           | required (wired)                                                                                          | theme token drift, contrast regressions                                                                                                                                                                                                                                                                                                             |
+| unguarded `games` read check     | CI (`npm run lint:reads`)                       | required (wired 2026-09-13)                                                                               | a new catalog read path that omits `.is("deleted_at", null)`, which would return soft-deleted games to the catalog. RLS is no backstop: the `games` SELECT policy is `using (true)`.                                                                                                                                                                |
+| unit + integration               | local + CI                                      | required (wired 2026-09-11)                                                                               | logic regressions, endpoint contract breakage                                                                                                                                                                                                                                                                                                       |
+| database policy verification     | local (`npm run test:db`) + CI (`db-tests` job) | required (wired 2026-09-12)                                                                               | per-member attribution and RLS regressions. Writes are DB-enforced and reads are not, so the suite covers both layers; needs Docker, which is why it is a separate job rather than part of `npm test`.                                                                                                                                              |
+| provider contract tests          | local + CI                                      | required (wired 2026-09-13)                                                                               | out-of-catalog suggestions, silent AI failures, prompt over-sharing, household data leaking into the prompt, and a recommendation the requested party cannot play                                                                                                                                                                                   |
+| CI test step + edit-loop gate    | CI on PR + local commit hook + local agent loop | required (CI step + non-empty-suite enforcement wired 2026-09-11; both edit-loop layers wired 2026-09-14) | regressions reaching a PR, or landing mid-edit. Two local layers running the same two commands: `lint-staged` at commit time grades the staged index rather than the working tree, and a `Stop` hook gates the agent turn on a dirty tree. Both escapable on purpose (`--no-verify`, `disableAllHooks`); CI stays the enforcing boundary. See §6.6. |
+| pre-prod smoke                   | between merge and prod                          | optional                                                                                                  | environment-specific failures, notably the migration-push gap in `lessons.md`                                                                                                                                                                                                                                                                       |
 
 ## 6. Cookbook Patterns
 
@@ -445,7 +445,64 @@ payload }` when the payload matters (e.g. the member id came from the session,
   the guard's `<=` to `<` — the boundary case (and any other fixture that sits on
   a boundary, which is a feature of those fixtures, not a leak).
 
-### 6.6 Per-rollout-phase notes
+### 6.6 The local gates: what runs when, and how to escape
+
+Two layers, both running the same two commands — `npm run typecheck` and
+`npm test` — so "green" has one local definition.
+
+**At commit time** (`.husky/pre-commit` → `npx lint-staged --hide-unstaged`).
+Configured in `lint-staged.config.js`, not `package.json`. Fires only when a
+`*.{ts,tsx,astro}` file is staged, so a docs-only commit never pays for it. The
+commands live inside lint-staged deliberately: lint-staged hides unstaged
+changes around its tasks, so the gate grades the **staged snapshot** rather than
+the working tree. A working-tree gate admits a commit whose staged content is
+broken — verified 2026-09-14 by staging a type error, fixing the working copy,
+and watching `tsc` pass. `--hide-unstaged` widens that hiding from partially
+staged files to all tracked files.
+
+The `*.{ts,tsx,astro}` entry must stay a **function**. lint-staged appends
+matched filenames to string commands, and `tsc --noEmit <file>` silently drops
+`tsconfig.json`, so every `@/*` alias fails to resolve. A function returns
+complete commands and appends filenames only to `eslint`.
+
+**At turn end** (`.claude/settings.json` → `.claude/hooks/quality-gate.sh`). A
+`Stop` hook, which takes no matcher and fires on every turn. Exit 2 there does
+not halt the agent — it _prevents it from stopping_ and hands stderr back as the
+reason, so the agent keeps working with the failure in front of it. Two guards,
+and their order matters: `stop_hook_active` first (Claude Code overrides a Stop
+hook after eight consecutive blocks; checked second, a broken tree would burn
+eight turns first), then a working-tree check. The script talks only through
+exit codes and stderr — stdout is parsed as JSON only when it starts with `{`,
+so a chatty shell profile would silently void a decision.
+
+**What the pair does not cover.** The layers partition rather than overlap: a
+turn ending in a commit leaves a clean tree, so the Stop hook sits out — the
+commit hook already graded that content. The consequence is that
+`git commit --no-verify` skips husky _and_ leaves a clean tree, so it skips the
+Stop hook too. Both miss the same commit and CI is all that remains.
+
+**The escapes are deliberate.** `git commit --no-verify` and
+`"disableAllHooks": true` both stay available; neither gate is enforceable and
+neither tries to be. CI is the enforcing boundary — these layers move the signal
+earlier, they do not replace it. If a bypass becomes routine the honest response
+is to make the gate cheaper, not to close the escape.
+
+**Costs, measured 2026-09-14** so a reader can judge rather than re-measure:
+`typecheck` 3.6–3.7s, `npm test` 1.6–1.7s. The pre-commit hook already cost
+~4.7s before this change, because ESLint here is type-aware and pays full
+project analysis even for one file; a code commit goes from roughly 5s to
+roughly 10s, and a docs-only commit is unchanged. The Stop hook measured ~8s
+end to end on a dirty tree (two `npm` startups on top of the commands), and
+137ms when `stop_hook_active` short-circuits it.
+
+**Known residual.** Neither lint-staged flag hides **untracked** files, so a new
+untracked `.ts` carrying errors can still fail the commit gate even though it is
+not part of the commit. Stage it or remove it.
+
+**The db suite is deliberately absent from both.** It needs Docker, and a gate
+that fails because a daemon is not running teaches people to bypass it.
+
+### 6.7 Per-rollout-phase notes
 
 **Phase 1 (2026-09-11).** One production defect was found and fixed by the
 tests rather than by inspection: `context.request.formData()` was called

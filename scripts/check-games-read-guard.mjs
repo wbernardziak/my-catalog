@@ -38,13 +38,26 @@
  * predicate.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const DEFAULT_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = "src";
 const EXTENSIONS = [".astro", ".tsx", ".ts", ".jsx", ".js"];
+
+function rootFromArgs() {
+  const [argument] = process.argv.slice(2);
+  if (!argument) return DEFAULT_ROOT;
+  if (!argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+    console.error("Usage: node scripts/check-games-read-guard.mjs [--root=<absolute dir>]");
+    process.exit(1);
+  }
+  return argument.slice("--root=".length);
+}
+
+const ROOT = rootFromArgs();
+if (ROOT !== DEFAULT_ROOT) console.log(`Scanned root: ${ROOT}`);
 
 /**
  * Paths whose `games` reads are deliberately unguarded. Add an entry only with a
@@ -81,13 +94,24 @@ function chainAfter(source, index) {
   return end === -1 ? tail : tail.slice(0, end);
 }
 
-const files = readdirSync(join(ROOT, SRC), { recursive: true, encoding: "utf8" })
+const srcPath = join(ROOT, SRC);
+if (!existsSync(srcPath)) {
+  console.error(`No src/ under ${ROOT}. Check the --root argument.`);
+  process.exit(1);
+}
+
+const files = readdirSync(srcPath, { recursive: true, encoding: "utf8" })
   .map((entry) => `${SRC}/${entry.split("\\").join("/")}`)
   .filter((file) => EXTENSIONS.some((ext) => file.endsWith(ext)))
   .filter((file) => !EXEMPT_PREFIXES.some((prefix) => file.startsWith(prefix)));
 
 const hits = [];
 let reads = 0;
+
+if (files.length === 0) {
+  console.error(`No source files matched under ${ROOT}; refusing an empty games-read scan.`);
+  process.exit(1);
+}
 
 for (const file of files) {
   const source = readFileSync(join(ROOT, file), "utf8");
@@ -150,6 +174,11 @@ if (hits.length > 0) {
   }
 
   console.error("Guard: scripts/check-games-read-guard.mjs");
+  process.exit(1);
+}
+
+if (reads === 0) {
+  console.error(`No \`games\` reads were classified under ${ROOT}; refusing a zero-read scan.`);
   process.exit(1);
 }
 

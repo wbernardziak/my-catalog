@@ -27,10 +27,30 @@
  * to switch the guard off.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { isAbsolute, join } from "node:path";
 
-const CSS_PATH = fileURLToPath(new URL("../src/styles/global.css", import.meta.url));
+const DEFAULT_ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+function rootFromArgs() {
+  const [argument] = process.argv.slice(2);
+  if (!argument) return DEFAULT_ROOT;
+  if (!argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+    console.error("Usage: node scripts/check-contrast.mjs [--root=<absolute dir>]");
+    process.exit(1);
+  }
+  return argument.slice("--root=".length);
+}
+
+const ROOT = rootFromArgs();
+if (ROOT !== DEFAULT_ROOT) console.log(`Scanned root: ${ROOT}`);
+const CSS_PATH = join(ROOT, "src/styles/global.css");
+
+if (!existsSync(CSS_PATH)) {
+  console.error(`No src/styles/global.css under ${ROOT}. Check the --root argument.`);
+  process.exit(1);
+}
 
 /** The theme blocks, by the selector that carries them. */
 const THEMES = [

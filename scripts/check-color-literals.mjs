@@ -16,13 +16,27 @@
  * fixed colours across themes by design.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const DEFAULT_ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = "src";
 const EXTENSIONS = [".astro", ".tsx", ".ts", ".jsx", ".js", ".css"];
+
+function rootFromArgs() {
+  const [argument] = process.argv.slice(2);
+  if (!argument) return DEFAULT_ROOT;
+  if (!argument.startsWith("--root=") || !isAbsolute(argument.slice("--root=".length))) {
+    console.error("Usage: node scripts/check-color-literals.mjs [--root=<absolute dir>]");
+    process.exit(1);
+  }
+  return argument.slice("--root=".length);
+}
+
+const ROOT = rootFromArgs();
+const overriddenRoot = ROOT !== DEFAULT_ROOT;
+if (overriddenRoot) console.log(`Scanned root: ${ROOT}`);
 
 const EXEMPT = new Set(["src/styles/global.css", "src/components/BrandMark.astro"]);
 
@@ -72,12 +86,23 @@ const RULES = [
   },
 ];
 
-const files = readdirSync(join(ROOT, SRC), { recursive: true, encoding: "utf8" })
+const srcPath = join(ROOT, SRC);
+if (!existsSync(srcPath)) {
+  console.error(`No src/ under ${ROOT}. Check the --root argument.`);
+  process.exit(1);
+}
+
+const files = readdirSync(srcPath, { recursive: true, encoding: "utf8" })
   .map((entry) => `${SRC}/${entry.split("\\").join("/")}`)
   .filter((file) => EXTENSIONS.some((ext) => file.endsWith(ext)))
   .filter((file) => !EXEMPT.has(file));
 
 const hits = [];
+
+if (files.length === 0) {
+  console.error(`No source files matched under ${ROOT}; refusing an empty colour scan.`);
+  process.exit(1);
+}
 
 for (const file of files) {
   const source = readFileSync(join(ROOT, file), "utf8");

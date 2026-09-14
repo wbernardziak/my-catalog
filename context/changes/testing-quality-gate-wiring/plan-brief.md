@@ -26,20 +26,21 @@ commands, so "green" has one local definition.
 
 ## Key decisions made
 
-| Decision            | Choice                                 | Why                                                                              | Source   |
-| ------------------- | -------------------------------------- | -------------------------------------------------------------------------------- | -------- |
-| Pre-commit contents | lint-staged + typecheck + unit         | Closes the failure §7 records — four `tsc` errors through a green lint and build | Plan     |
-| Pre-commit trigger  | Only when `.ts`/`.tsx`/`.astro` staged | A docs commit paying 10s is what produces habitual `--no-verify`                 | Plan     |
-| Agent gate          | Blocking `Stop` hook, exit 2           | Exit 2 prevents stopping and feeds stderr back — a real gate, not an alarm       | Plan     |
-| Stop-hook scope     | Skip when the tree is unchanged        | A question-answering turn should cost nothing                                    | Plan     |
-| Bypass policy       | Documented as legitimate escape        | CI is the real boundary; an openly escapable gate beats one people disable       | Plan     |
-| Close-out           | Full, matching phases 1–4              | This is the last rollout row; the guide would otherwise sit permanently stale    | Plan     |
-| `db` suite          | Excluded from both local gates         | Needs Docker; a gate failing on a stopped daemon teaches bypass                  | Research |
-| Typecheck placement | Outside lint-staged                    | `tsc --noEmit <file>` drops `tsconfig.json`; every `@/*` alias fails             | Research |
+| Decision            | Choice                                  | Why                                                                                                                                                   | Source      |
+| ------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Pre-commit contents | lint-staged + typecheck + unit          | Closes the failure §7 records — four `tsc` errors through a green lint and build                                                                      | Plan        |
+| Pre-commit trigger  | Only when `.ts`/`.tsx`/`.astro` staged  | A docs commit paying 10s is what produces habitual `--no-verify`                                                                                      | Plan        |
+| Agent gate          | Blocking `Stop` hook, exit 2            | Exit 2 prevents stopping and feeds stderr back — a real gate, not an alarm                                                                            | Plan        |
+| Stop-hook scope     | Skip when the tree is unchanged         | A question-answering turn should cost nothing                                                                                                         | Plan        |
+| Bypass policy       | Documented as legitimate escape         | CI is the real boundary; an openly escapable gate beats one people disable                                                                            | Plan        |
+| Close-out           | Full, matching phases 1–4               | This is the last rollout row; the guide would otherwise sit permanently stale                                                                         | Plan        |
+| `db` suite          | Excluded from both local gates          | Needs Docker; a gate failing on a stopped daemon teaches bypass                                                                                       | Research    |
+| Typecheck placement | Inside lint-staged, as a function entry | A worktree gate admits a broken staged commit (proven); a function entry appends no filenames, so tsc runs project-wide inside lint-staged's stashing | Plan review |
 
 ## Scope
 
-**In scope:** `.husky/pre-commit`; a new committed `.claude/settings.json` and
+**In scope:** a new `lint-staged.config.js` replacing the JSON block;
+`.husky/pre-commit`; a new committed `.claude/settings.json` and
 `.claude/hooks/quality-gate.sh`; the §6 cookbook entry and the §5/§3 row updates.
 
 **Out of scope:** CI (already complete); `test:db` in either local gate; the

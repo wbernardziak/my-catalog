@@ -66,13 +66,5 @@
   },
   "overrides": {
     "vite": "^7.3.2"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,astro}": [
-      "eslint --fix"
-    ],
-    "*.{json,css,md}": [
-      "prettier --write"
-    ]
   }
 }

@@ -411,11 +411,11 @@ exit 2 — accepting that it surfaces failures rather than blocking them.
 
 #### Automated
 
-- [ ] 1.1 `npm run typecheck` passes
-- [ ] 1.2 `npm run lint` passes
-- [ ] 1.3 `npm test` passes
-- [ ] 1.4 `npm run build` passes
-- [ ] 1.5 The configured gate refuses a staged type error: hook command exits non-zero
+- [x] 1.1 `npm run typecheck` passes
+- [x] 1.2 `npm run lint` passes
+- [x] 1.3 `npm test` passes
+- [x] 1.4 `npm run build` passes
+- [x] 1.5 The configured gate refuses a staged type error: hook command exits non-zero
 
 #### Manual
 

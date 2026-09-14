@@ -535,12 +535,12 @@ None. The docs-only commit skips the code gate (lint-staged runs only `prettier 
 
 #### Automated
 
-- [x] 3.1 Prettier formats the file cleanly
-- [x] 3.2 Stale phrases are gone
-- [x] 3.3 §6.8–6.11 headings exist
-- [x] 3.4 Current counts stated
-- [x] 3.5 npm test reports 188 passed
-- [x] 3.6 Stale §6 line references are gone
+- [x] 3.1 Prettier formats the file cleanly — 3b9ea0a
+- [x] 3.2 Stale phrases are gone — 3b9ea0a
+- [x] 3.3 §6.8–6.11 headings exist — 3b9ea0a
+- [x] 3.4 Current counts stated — 3b9ea0a
+- [x] 3.5 npm test reports 188 passed — 3b9ea0a
+- [x] 3.6 Stale §6 line references are gone — 3b9ea0a
 
 #### Manual
 

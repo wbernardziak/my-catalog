@@ -1,10 +1,10 @@
 ---
 change_id: testing-llm-recommendation-guardrails
 title: "Test rollout phase 4: LLM recommendation guardrails"
-status: impl_reviewed
+status: archived
 created: 2026-09-13
-updated: 2026-09-13
-archived_at: null
+updated: 2026-09-14
+archived_at: 2026-09-14T07:13:18Z
 ---
 
 ## Notes
